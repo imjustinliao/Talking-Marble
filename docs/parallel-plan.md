@@ -11,6 +11,8 @@ Base: local `main` at 0.6.1 (restructured: `packages/core`, `packages/react`, `a
 | Package | M7 The orb to spec | `milestone/orb-spec` | `0.7.x` | `packages/core/**`, `packages/react/**`, `e2e/package-*.spec.ts`, `e2e/fixtures/**` | e2e on ephemeral ports (its fixture) |
 | Site | M8 Hero, states, in context | `milestone/site-sections` | `0.8.x` | `apps/site/**`, `e2e/site-*.spec.ts`, `e2e/render.spec.ts` (same assertions), `.github/workflows/pages.yml` | dev 5176, e2e `E2E_PORT=5177` |
 
+Merging (Main, after the 2026-11-23 squash): both branches start at the old 0.6.2 `f510995`; rebase them with `git rebase --onto main f510995 <branch>` before merging.
+
 Main owns `docs/**` (except the sessions' own `docs/milestones/<name>.md`), `AGENTS.md`, root config, `pnpm-lock.yaml`, `prototype/`. M8 codes against today's API and adopts M7's additions (`emotion`, `label`, the new preset names) after Main merges M7; until then it keeps emotions as presets. Same rules as wave 1: no push, no merging `main` in, report first line `<Session> done: <branch> at <hash>`.
 
 ## Base

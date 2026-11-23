@@ -7,7 +7,7 @@ The handoff note for the next session, agent or account. Keep it short; newest e
 
 - **Phase**: Building <!-- Setup · Building · Shipping · Live · Paused -->
 - **Milestone**: M6 done (0.6.1). Wave 2: M7 (Package session) and M8 (Site session) in parallel per docs/parallel-plan.md › Wave 2
-- **Next action**: wait for the M7 and M8 reports; merge M7 first, then M8; then M9 (playground) and M10 (install, docs)
+- **Next action**: merge M8 (`milestone/site-sections`), then M7 (`milestone/orb-spec`) when reported. Both were cut from the pre-squash 0.6.2 (`f510995`, on `archive/local-history-2026-11-23`): bring each onto the new main with `git rebase --onto main f510995 <branch>` (trees match, so it applies cleanly), then merge with `--no-ff`
 - **In flight**: Package session (M7, `milestone/orb-spec`), Site session (M8, `milestone/site-sections`); previews: main site 5173, prototype 4173
 
 ## Milestones
@@ -48,6 +48,7 @@ Statuses: open · in progress · done · won't do (why). Remove done rows once t
 ## Decisions
 
 <!-- - **YYYY-MM-DD** (owner): Decision. Why. Rejected: alternatives. Keep the ~15 most recent. -->
+- **2026-11-23** (owner): First push to GitHub. Published as one clean commit (`415ac36`) on top of `Initial commit`, because the public repo must not mention other projects and the local history did; the full local history is kept on the local branch `archive/local-history-2026-11-23` (never pushed). The Pages deploy is gated behind the repository variable `DEPLOY_PAGES` (owner turns it on with Pages).
 - **2026-11-23** (owner): Re-scope to the overall spec approved with defaults: no colour shifts in built-in states (Q-1); keep palette editing with Reset in the playground, centred roomy layout, short one-action buttons, drop the display face (Q-2); `packages/core`, `packages/react` (npm `talking-marble`), `apps/site` (Q-3). The scroll-camera site is superseded.
 - **2026-11-23** (owner): npm package name `talking-marble`. Matches the repo and is distinctive. Rejected: `voice-orb` (generic), `marble-orb`, the scoped fallback.
 - **2026-11-23** (owner): The orb shader and design (from the owner's earlier, private projects) are Justin Liao's own and may be released under MIT, © Justin Liao. Talking Marble is Justin Liao's personal project.
