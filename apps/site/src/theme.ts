@@ -1,27 +1,20 @@
 import { useEffect, useState } from 'react';
 
-export type ThemeChoice = 'system' | 'dark' | 'light';
+export type Theme = 'dark' | 'light';
 const KEY = 'talking-marble-theme';
 
-function stored(): ThemeChoice {
-  try {
-    const v = localStorage.getItem(KEY);
-    return v === 'light' || v === 'dark' ? v : 'system';
-  } catch {
-    return 'system';
-  }
+/** The page is dark for everyone until the visitor switches to light; that choice is remembered in this browser. */
+function stored(): Theme {
+  try { return localStorage.getItem(KEY) === 'light' ? 'light' : 'dark'; } catch { return 'dark'; }
 }
 
-/** Dark by default; light when the system asks for it; a toggle overrides either (remembered in this browser). */
 export function useTheme() {
-  const [theme, setTheme] = useState<ThemeChoice>(stored);
+  const [theme, setTheme] = useState<Theme>(stored);
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'system') delete root.dataset.theme; else root.dataset.theme = theme;
-    try { if (theme === 'system') localStorage.removeItem(KEY); else localStorage.setItem(KEY, theme); } catch { /* storage unavailable */ }
+    if (theme === 'light') root.dataset.theme = 'light'; else delete root.dataset.theme;
+    try { if (theme === 'light') localStorage.setItem(KEY, 'light'); else localStorage.removeItem(KEY); } catch { /* storage unavailable: lasts this visit */ }
   }, [theme]);
-  /** The theme the page shows right now (resolving "system"). */
-  const resolved = (): 'dark' | 'light' => theme !== 'system' ? theme : matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-  const toggle = () => setTheme(resolved() === 'dark' ? 'light' : 'dark');
-  return { theme, toggle, resolved };
+  const toggle = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
+  return { theme, toggle };
 }

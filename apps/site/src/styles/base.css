@@ -1,4 +1,4 @@
-/* Talking Marble's site: dark by default, a light mode, system fonts, hairline cards.
+/* Talking Marble's site: dark for everyone by default, a light mode by toggle, system fonts, hairline cards.
    The marbles are the only saturated colour on the page. */
 
 :root {
@@ -19,22 +19,6 @@
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --gutter: clamp(20px, 5vw, 40px);
-}
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    color-scheme: light;
-    --bg: #f6f6f4;
-    --surface: #ffffff;
-    --raised: #efefec;
-    --text: #141416;
-    --text-2: #4a4a50;
-    --text-3: #64646b;
-    --hair: rgba(0, 0, 0, 0.1);
-    --hair-strong: rgba(0, 0, 0, 0.22);
-    --focus: #141416;
-    --primary-bg: #141416;
-    --primary-text: #ffffff;
-  }
 }
 :root[data-theme="light"] {
   color-scheme: light;

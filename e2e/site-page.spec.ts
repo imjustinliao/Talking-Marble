@@ -79,22 +79,29 @@ test('offscreen marbles are not live (each is a WebGL context)', async ({ page }
   expect(await page.locator('canvas').count()).toBeLessThanOrEqual(14);
 });
 
-test('themes: dark by default, light from the system, and a toggle', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/');
+test('themes: dark for everyone by default (whatever the system says), light by toggle, remembered', async ({ page }) => {
   const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  // A visitor whose system is light still lands in dark.
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/');
   await expect.poll(bg).toBe('rgb(11, 11, 13)');
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme');
   await page.getByRole('button', { name: 'Switch to light mode' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await expect.poll(bg).toBe('rgb(246, 246, 244)');
-  await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  // Remembered, and applied before first paint (no dark flash): the attribute is there as the HTML is parsed.
+  await page.reload({ waitUntil: 'commit' });
+  await page.waitForSelector('body', { state: 'attached' });
+  expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
+  await page.waitForLoadState('load');
+  await expect.poll(bg).toBe('rgb(246, 246, 244)');
+  // Same on the docs page.
+  await page.goto('/docs/');
+  await expect.poll(bg).toBe('rgb(246, 246, 244)');
   await page.getByRole('button', { name: 'Switch to dark mode' }).click();
   await expect.poll(bg).toBe('rgb(11, 11, 13)');
-  await page.emulateMedia({ colorScheme: 'light' });
-  await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await expect.poll(bg).toBe('rgb(246, 246, 244)');
+  await expect.poll(bg).toBe('rgb(11, 11, 13)');
 });
 
 test('keyboard only: skip link, cards by Tab and Enter, visible focus', async ({ page }) => {
@@ -114,8 +121,10 @@ test('keyboard only: skip link, cards by Tab and Enter, visible focus', async ({
 for (const scheme of ['dark', 'light'] as const) {
   for (const path of ['/', '/docs/']) {
     test(`axe finds no accessibility violations on ${path} (${scheme})`, async ({ page }) => {
-      await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.addInitScript(t => { try { if (t === 'light') localStorage.setItem('talking-marble-theme', 'light'); } catch { /* none */ } }, scheme);
       await page.goto(path);
+      if (scheme === 'light') await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
       if (path === '/') await walk(page);
       await page.waitForTimeout(400);
       const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
