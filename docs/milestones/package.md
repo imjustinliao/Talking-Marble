@@ -108,3 +108,107 @@ None at runtime. The original orb's source was read (never modified) to port the
 - Screenshots: `test-results/package/` holds `states-dark.png`, `states-light.png`, `halo-on.png` and `fallback-ember.png`. Playwright clears `test-results/` on each run, so copies are kept in the shared notes folder `…/side-session-notes/local_3f9eb29d-…/package-screenshots/`.
 - A fresh-eyes review subagent found six issues: touch-gesture resume, cross-origin muting, late tracks, node errors, fallback dimming on loss, and a stale resume listener. All six are fixed in 0.3.1 with tests.
 - Not checked: a physical microphone (fake device only), Safari and Firefox (Chromium only), real autoplay blocking (emulated), and the halo look on every palette by a person.
+
+---
+
+# M7 The orb to spec: report
+
+Branch: `milestone/orb-spec` (from local `main` at `f510995 0.6.2`). Commits: `b94e441 0.7.0 - The orb to spec: one material, emotions, plain presets, shared renderer, sizes, labels` and `0.7.1 - M7 report` (this section).
+
+## Built (requirement IDs)
+
+- **ORB-08 (one material):** the prototype's model is ported into `packages/core/shader/orb.frag.glsl` and the new `packages/react/src/render/motion.ts`. That covers speed, turbulence, veins, softness, detail, spin, waves, ripples (in or out), whirl, chop, glow, brightness, breath, beat, bounce, sway, wobble (voice jelly), shake, size and reactivity. The voice speeds the flow, deepens the folds, brightens the marble, pushes ripples and swells it.
+  - Every colour change is removed: no tint, no saturation. `error` reads through restless chop, backward spin, a hard beat, a shake on entry and a dimmer glow (brightness 0.85, halo 0.4).
+  - Idle is still the original, pixel for pixel. `e2e/package-fidelity.spec.ts` (unchanged) passes against `e2e/fixtures/fidelity/`: mean difference 0 on five palettes and 0.000004 on Ember.
+  - Whole-marble motion (bounce, sway, jelly, shake, beat, breath, size) is a CSS transform on the inner span. Layout and the user's `style` never move (e2e).
+- **EMO-01:** new `emotion` prop. An emotion moves each value it sets 65 % of the way from the state's value. New `emotions` export (`muted`, `happy`, `calm`), and custom emotions work through `presets`. `muted`, `happy` and `calm` are still exported one by one; the site imports them.
+- **CUST-01:** the plain preset format from Interfaces. Ranges, base values, resolution and every formula are in `packages/core/spec.md` (Parameters, Resolution, Uniforms, Motion, Small sizes). Validation and clamping work as before. `colors` (the only way a preset changes colour) and `label` (its spoken name) work per preset.
+- **ORB-06 (sharp at every size):**
+  - Backing store is CSS size × DPR (at most 3) within 4096² per marble and the GPU's limits; the 512 cap is gone. E2E at DPR 2: 20 px → 40 px backing, full viewport → 2 × the CSS size.
+  - Small-size profile, scaled by `k = clamp((48 − size)/16, 0, 1)`: broader veins, half the detail, no grain, 12 % more contrast, no whole-marble movement, a tighter halo, and no halo at 32 px and under.
+  - A device-pixel-ratio change (zoom, another display) resizes the backing.
+- **One shared renderer:** every marble draws through one WebGL2 context (`src/render/shared.ts`).
+  - Preferred path: an `OffscreenCanvas` sized to the marble renders it, and `transferToImageBitmap()` hands the frame to the marble's `bitmaprenderer` canvas. That's a zero-copy GPU handoff.
+  - Fallback where OffscreenCanvas WebGL2 is missing: a hidden canvas plus `drawImage` into a 2D canvas.
+  - One frame loop at 30 fps for all marbles, grouped by size in alternating order, so each distinct size resizes the surface at most once per frame.
+  - An exception in one marble never stops the others.
+  - Offscreen and hidden pausing, context-loss recovery (shared, with the fallback meanwhile, plus an `isContextLost` guard) and the reduced-motion still frame are kept. A settled still marble stops asking for frames.
+  - E2E: 30 marbles draw and animate, exactly one WebGL context is created, and there are no context warnings.
+- **ORB-07:**
+  - **Labels:** default `role="img"` named "Assistant, <state>", plus ", <emotion>" when one is set. `label` sets the name; custom states and emotions use their preset `label`, else their name; unknown states read as "idle". `aria-label` overrides, and `decorative` hides it. Covered by unit tests (`label.test.ts`) and e2e.
+  - **SSR:** `test/ssr.test.ts` runs `renderToString` in a Node environment with no `window` or `document`. The output is the labelled fallback picture with `data-ready="false"`.
+- **DES-02:** `e2e/package-states.spec.ts` measures the six states at 20, 48 and 240 px on dark and light, over 3.2 s.
+  - Features: brightness, flicker, detail, pattern motion, whole-marble bounce, shake, sway, pulse and squash, diameter, and halo contrast.
+  - Every pair passes by a visible margin at every size, with no exceptions (stable across a 3× run).
+  - The closest pairs are thinking/speaking at 48 and 240 px (2× margin: sway vs bounce/squash, plus halo) and idle/connecting at 20 px (pattern motion 58 %, Δluma 6.5).
+- **Bundle:** 13.93 kB gzipped (budget 15). The shipped GLSL is stripped of comments; `packages/core` keeps them.
+
+## Defaults chosen
+
+- **Mapping from the prototype to the plain fields:**
+  - `warp = 1 + 2.4·turbulence`, `scale = 1.2·2^(1−2·veins)`, `softness ×= 2^(2·softness−1)`. At 0.5 each gives the original.
+  - The prototype's `energy` is folded into `speed` (×1.45) and `brightness` (×1.055).
+  - Secondary rates are derived rather than exposed: wave speed, frequency and angle; ripple speed (6/s) and frequency (8); breath period from speed; beat rate 0.9 Hz; bounce rate from bounce.
+  - Voice strengths are fixed at the prototype's speaking values (flow 4, folds 2, brightness 0.45, size 0.12, ripples 0.22), and `reactivity` scales the voice level (listening 0.6, speaking 1).
+- **Two fields beyond the Interfaces list:** `halo` (0–1, the halo at rest) and `sway` (0–1, rocking). Both are additive.
+- **Starting values** are the prototype's with colour removed. Changes from it:
+  - connecting brightness 0.94 (design: "slightly dim")
+  - error brightness 0.85 and halo 0.4 (dimmer glow)
+  - thinking glow 0.1 and brightness 1 (prototype 0.2 and 1.055 after the energy fold), so it stays apart from speaking at 20 px
+- Springs: critically damped, 0.7 s response, sub-steps of at most 0.02 s, landing exactly within 1e-4. Level: rises at 16/s and falls at 6/s (the prototype's).
+- The accessible name includes the emotion ("Nova, speaking, happy").
+- Pixel budget: 4096² per marble.
+
+## Deviations from the docs or contracts
+
+- **A moving marble can paint past its box.** Scale up to about 1.2 (voice swell, `size` up to 1.2) plus bounce, shake and sway. At the very edge of the viewport this can widen the page's scroll area while it moves. Transforms count as scrollable overflow, and `overflow: clip` with `overflow-clip-margin` still counts in Chromium (tested), so clipping would crop the halo. Layout and `style` never move, and a resting marble adds no overflow (e2e). For the docs: give a moving marble about 20 % room at a viewport edge, or put `overflow-x: clip` on its container.
+- `resolveState()` results keep a deprecated, non-enumerable `levelResponse` getter (= `reactivity`), because `apps/site/src/home/main.tsx:51` reads it. Remove it once M8 switches to `.reactivity`.
+- The spec (`packages/core/spec.md`) is rewritten for the new model. Motion uses springs instead of 4/s easing, and the level rises at 16/s and falls at 6/s instead of 10/s.
+- `presets/examples.json` is renamed `presets/emotions.json`.
+
+## Integration steps for the coordinator
+
+1. Merge `milestone/orb-spec`. No dependency changes and no lockfile change.
+2. **Site (M8):**
+   - Move preset code to the new names. `Docs.tsx` still shows `flow`, `energy`, `tint`, `levelResponse`, `saturation`; `sanitize` ignores unknown keys, so old presets do nothing rather than break.
+   - Change `home/main.tsx:51` to `.reactivity`, then drop the alias in `packages/react/src/state.ts`.
+   - Use `emotion` instead of passing emotions as states.
+   - Note that marbles are now `role="img"` by default; pass `decorative` where the state is shown elsewhere.
+   - The full suite already passes as-is (65/65), axe included.
+3. `gen-core.mjs` now rewrites `src/generated/core.ts` only when it changes, so parallel test runs and dev servers no longer reload each other's pages.
+4. The docs should state the edge-room note (Deviations) and that one media element feeds one orb.
+
+## Contract changes requested
+
+None breaking. Additive: preset fields `halo` and `sway`, and exports `ResolvedPreset` and `BuiltInEmotion`.
+
+## Open questions for the owner
+
+- Do the derived rates (fixed wave angle, ripple and beat rates) feel right, or should some become preset fields?
+- Should a moving marble be hard-clipped to its box plus the halo instead (it would need a different halo technique)?
+
+## Verification
+
+- `pnpm test`: 61 passed. Covers the motion model, springs, emotion mixing, validation, labels, SSR without DOM globals, audio and onset.
+- `pnpm typecheck` (package and site), `pnpm build`: pass. `dist/index.js` is 41.1 kB, 13.93 kB gzipped.
+- `E2E_PORT=5175 pnpm test:e2e`: 65 passed (the whole suite with 4 workers, site specs and `render.spec.ts` included).
+  - New `package-spec.spec.ts` (7):
+    - 30 marbles through one context, all drawing and animating
+    - backing size at DPR 2 for 20/32/48/240 px and a full-viewport hero
+    - small sizes on dark and light, with no movement at 20 px
+    - emotions: happy bounces, muted damps audio, a custom emotion works
+    - layout and `style` stay fixed while moving
+    - error shakes on entry
+  - The fidelity, polish (default labels, shared-context loss), audio, mic and autoplay specs are updated to the new names and behaviour.
+- **Headless note:** Chromium in Playwright renders WebGL with SwiftShader and composites in software. Any WebGL canvas, even a bare one, logs "GPU stall due to ReadPixels" there. The 30-marble test ignores only that one driver notice, with that evidence. On a real GPU the bitmap handoff needs no readback.
+- **Screenshots:** `test-results/package/` holds `states-<bg>.png`, `emotions-<bg>.png`, `sizes-<state>-<bg>.png` (20/32/48/240 px at DPR 2), `many-30.png`, `halo-on.png` and `fallback-ember.png`. Copies are in the shared notes folder under `package-screenshots/m7/`.
+- **Review:** a fresh-eyes review subagent found nothing serious; seven of its ten smaller findings are fixed:
+  - spring sub-steps in the spec
+  - the loop surviving exceptions
+  - size-grouped resizing
+  - the `isContextLost` guard
+  - drawing the exact settled frame and stopping the loop
+  - DPR changes
+  - a stale leftover folder
+  - The remaining three: the `levelResponse` alias and overflow while moving are documented above, and spread-cloning a resolved preset loses only the deprecated alias.
+- **Not checked:** Safari and Firefox (Chromium only), a real GPU, and a person's eye on the motion feel against the prototype.
