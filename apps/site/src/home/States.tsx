@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { resolveState } from 'talking-marble';
-import { PRESETS, STATES } from '../presets';
+import { STATES, orbFor, type StateInfo } from '../presets';
 import { useSimulatedLevel } from '../simulated';
 import { LiveMarble } from '../ui/LiveMarble';
 
-/** A marble that moves with a simulated voice when its state listens. */
-function Voiced({ state, size, label }: { state: string; size: number; label?: string }) {
-  const listens = resolveState(state, PRESETS).levelResponse > 0;
+/** A marble that moves with a simulated voice when its state listens. Decorative unless it is the one being described. */
+function Voiced({ info, size, labelled = false }: { info: StateInfo; size: number; labelled?: boolean }) {
+  const { state, emotion } = orbFor(info);
+  const listens = resolveState(state, undefined, emotion).reactivity > 0;
   const level = useSimulatedLevel(listens);
-  return <LiveMarble size={size} state={state} presets={PRESETS} level={listens ? level : 0} aria-label={label} />;
+  return (
+    <LiveMarble size={size} state={state} emotion={emotion} level={listens ? level : 0}
+      {...(labelled ? { label: 'Talking Marble' } : { decorative: true })} />
+  );
 }
 
 /** Every state and emotion, live: one large preview, a grid of cards to choose from, and the small inline pills. */
@@ -19,14 +23,14 @@ export function States() {
     <section id="states" className="section" aria-labelledby="states-title">
       <header className="section__head">
         <h2 id="states-title">States</h2>
-        <p>Six states for the voice agent lifecycle, and emotions as presets. Pass your SDK’s state straight in.</p>
+        <p>Six states for the voice agent lifecycle, and three emotions that layer on them. Pass your SDK’s state straight in.</p>
       </header>
 
       <div className="states">
         <figure className="card states__preview">
-          <Voiced state={selected} size={220} label={`Talking Marble, ${selected}`} />
+          <Voiced info={info} size={220} labelled />
           <figcaption>
-            <code className="states__name">state="{selected}"</code>
+            <code className="states__name">{info.kind === 'emotion' ? `state="speaking" emotion="${info.name}"` : `state="${info.name}"`}</code>
             <span>{info.line}</span>
           </figcaption>
         </figure>
@@ -41,7 +45,7 @@ export function States() {
               aria-pressed={selected === s.name}
               onClick={() => setSelected(s.name)}
             >
-              <Voiced state={s.name} size={72} />
+              <Voiced info={s} size={72} />
               <span className="state-card__name">{s.name}</span>
               <span className="state-card__kind" aria-hidden="true">{s.kind}</span>
             </button>
@@ -54,7 +58,7 @@ export function States() {
       <ul className="pills" aria-label="Inline status">
         {STATES.filter(s => s.pill).map(s => (
           <li key={s.name} className="pill">
-            <Voiced state={s.name} size={20} />
+            <Voiced info={s} size={20} />
             <span>{s.pill}</span>
           </li>
         ))}

@@ -43,13 +43,18 @@ test('states: a live card for every state and emotion; choosing one shows it lar
   await page.locator('#states').scrollIntoViewIfNeeded();
   const grid = page.getByRole('group', { name: 'Choose a state or emotion' });
   await expect(grid.getByRole('button')).toHaveCount(STATES.length + EMOTIONS.length);
+  // States are passed as `state`; emotions layer on `speaking` through the `emotion` prop (M7).
   for (const name of [...STATES, ...EMOTIONS]) {
+    const emotion = EMOTIONS.includes(name);
+    const state = emotion ? 'speaking' : name;
     const card = grid.getByRole('button', { name, exact: true });
-    await expect(card.locator('[data-talking-marble]')).toHaveAttribute('data-state', name);
+    await expect(card.locator('[data-talking-marble]')).toHaveAttribute('data-state', state);
+    if (emotion) await expect(card.locator('[data-talking-marble]')).toHaveAttribute('data-emotion', name);
     await card.click();
     await expect(card).toHaveAttribute('aria-pressed', 'true');
-    await expect(preview(page)).toHaveAttribute('data-state', name);
-    await expect(page.locator('.states__name')).toHaveText(`state="${name}"`);
+    await expect(preview(page)).toHaveAttribute('data-state', state);
+    if (emotion) await expect(preview(page)).toHaveAttribute('data-emotion', name);
+    await expect(page.locator('.states__name')).toHaveText(emotion ? `state="speaking" emotion="${name}"` : `state="${name}"`);
   }
   // The inline pills: a 20 px marble beside its status.
   const pills = page.getByRole('list', { name: 'Inline status' }).getByRole('listitem');

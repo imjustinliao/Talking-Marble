@@ -1,5 +1,4 @@
 import { CopyButton } from '../components/CopyButton';
-import { PRESETS } from '../presets';
 import { useSimulatedLevel } from '../simulated';
 import { GITHUB } from '../ui/Chrome';
 import { ArrowIcon } from '../ui/icons';
@@ -12,7 +11,7 @@ export function Hero() {
   const level = useSimulatedLevel(true);
   return (
     <section id="top" className="hero" aria-labelledby="hero-title">
-      <LiveMarble size={280} className="hero__marble" state="speaking" presets={PRESETS} level={level} />
+      <LiveMarble size={280} className="hero__marble" state="speaking" level={level} decorative />
       <h1 id="hero-title" className="hero__title">Talking Marble</h1>
       <p className="hero__line">An audio-reactive orb for voice AI apps. React, open source.</p>
       <div className="hero__actions">

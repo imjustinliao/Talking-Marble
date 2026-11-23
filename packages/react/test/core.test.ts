@@ -80,9 +80,6 @@ describe('states and emotions', () => {
     expect(resolveState('speaking', { speaking: { halo: 0.1 } })).toMatchObject({ reactivity: 1, halo: 0.1 });
     expect(resolveState('wow', { wow: { bounce: 1, label: 'celebrating' } })).toMatchObject({ bounce: 1, speed: 1, label: 'celebrating' });
   });
-  it('keeps the deprecated levelResponse alias reading reactivity', () => {
-    expect(resolveState('listening').levelResponse).toBe(resolveState('listening').reactivity);
-  });
   it('ignores invalid preset values and clamps to the spec ranges', () => {
     const p = resolveState('x', { x: { speed: undefined, turbulence: Number.NaN, brightness: 9, halo: -1, spin: -5, rippleDirection: 'sideways' as never, colors: ['nope'], label: '  ' } });
     expect(p).toMatchObject({ speed: 1, turbulence: 0.5, brightness: 1.5, halo: 0, spin: -2, rippleDirection: 'out', colors: null, label: null });

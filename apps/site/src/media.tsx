@@ -3,7 +3,6 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { TalkingMarble, type PaletteName } from 'talking-marble';
-import { PRESETS } from './presets';
 import './styles/base.css';
 
 const q = new URLSearchParams(location.search);
@@ -24,7 +23,7 @@ function Media() {
   useEffect(() => {
     window.media = { set: next => setOrb(o => ({ ...o, ...next })) };
   }, []);
-  const orb = (px: number) => <TalkingMarble state={state} level={level} palette={palette} presets={PRESETS} size={px} />;
+  const orb = (px: number) => <TalkingMarble state={state} level={level} palette={palette} size={px} decorative />;
 
   if (mode === 'tile') {
     return (
@@ -39,7 +38,7 @@ function Media() {
       <div id="frame" className="card">
         <div className="card__marble">
           <span className="card__glow" aria-hidden="true" />
-          <TalkingMarble size={400} state={state} level={level} palette={palette} presets={PRESETS} />
+          <TalkingMarble size={400} state={state} level={level} palette={palette} decorative />
         </div>
         <div className="card__text">
           <p className="caps card__kicker">Talking Marble</p>

@@ -1,4 +1,3 @@
-import { PRESETS } from '../presets';
 import { useSimulatedLevel } from '../simulated';
 import { MicIcon, PhoneOffIcon, PlusIcon, SendIcon } from '../ui/icons';
 import { LiveMarble } from '../ui/LiveMarble';
@@ -19,7 +18,7 @@ export function InContext() {
               <span className="mock__round mock__round--plain"><PlusIcon /></span>
               <span className="mock__placeholder">Ask anything</span>
               <span className="mock__round mock__round--plain"><MicIcon /></span>
-              <span className="mock__voice"><LiveMarble size={30} state="listening" presets={PRESETS} level={level * 0.8} /><span>Voice</span></span>
+              <span className="mock__voice"><LiveMarble size={30} state="listening" level={level * 0.8} decorative /><span>Voice</span></span>
             </span>
           </div>
           <figcaption>Chat input with a voice button. <code>size={'{32}'}</code></figcaption>
@@ -29,7 +28,7 @@ export function InContext() {
           <div className="mock mock--call" aria-hidden="true">
             <span className="mock__who">Assistant</span>
             <span className="mock__time">0:42</span>
-            <LiveMarble size={168} state="speaking" presets={PRESETS} level={level} />
+            <LiveMarble size={168} state="speaking" level={level} decorative />
             <span className="mock__status">Speaking…</span>
             <span className="mock__controls">
               <span className="mock__round"><MicIcon /></span>
@@ -43,7 +42,7 @@ export function InContext() {
           <div className="mock mock--chat" aria-hidden="true">
             <span className="mock__bubble mock__bubble--user">What’s the weather tomorrow?</span>
             <span className="mock__reply">
-              <LiveMarble size={24} state="thinking" presets={PRESETS} />
+              <LiveMarble size={24} state="thinking" decorative />
               <span className="mock__bubble">Checking the forecast for you…</span>
             </span>
             <span className="mock__composer"><span>Message</span><span className="mock__round mock__round--send"><SendIcon /></span></span>

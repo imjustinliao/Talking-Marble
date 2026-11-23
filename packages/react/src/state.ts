@@ -34,8 +34,6 @@ export type OrbPreset = Partial<OrbParams> & {
 export type ResolvedPreset = OrbParams & {
   colors: OrbColors | null;
   label: string | null;
-  /** @deprecated Renamed `reactivity` (M7). Kept until the site moves over; not part of the published API. */
-  readonly levelResponse: number;
 };
 
 /** Each numeric parameter's range (packages/core/spec.md › Parameters). */
@@ -101,7 +99,7 @@ export function resolveState(name: string, presets?: Record<string, OrbPreset>, 
   const builtIn = Object.hasOwn(states, name) ? states[name as BuiltInState] : undefined;
   const custom = own(presets, name);
   const state = { ...(builtIn ?? (custom ? {} : states.idle)), ...sanitize(custom) };
-  const out = { ...baseParams, colors: null, label: null, ...state } as Omit<ResolvedPreset, 'levelResponse'>;
+  const out = { ...baseParams, colors: null, label: null, ...state } as ResolvedPreset;
   if (emotion) {
     const e = { ...(Object.hasOwn(emotions, emotion) ? emotions[emotion as BuiltInEmotion] : {}), ...sanitize(own(presets, emotion)) };
     for (const key of NUMERIC) {
@@ -111,7 +109,7 @@ export function resolveState(name: string, presets?: Record<string, OrbPreset>, 
     if (e.rippleDirection) out.rippleDirection = e.rippleDirection;
     if (e.colors) out.colors = e.colors as OrbColors;
   }
-  return Object.defineProperty(out, 'levelResponse', { get() { return this.reactivity; }, enumerable: false }) as ResolvedPreset;
+  return out;
 }
 
 /** The live, springing values the renderer draws with. */

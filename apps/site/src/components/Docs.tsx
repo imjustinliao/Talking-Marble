@@ -21,39 +21,57 @@ const AUDIO_SOURCES = `// A microphone or a remote WebRTC stream
 // A level you computed yourself, 0–1 (overrides audio)
 <TalkingMarble state="speaking" level={volume} />`;
 
-const CUSTOM_PRESETS = `import { TalkingMarble, muted, type OrbPreset } from 'talking-marble';
+const CUSTOM_PRESETS = `import { TalkingMarble, type OrbPreset } from 'talking-marble';
 
 // Any subset of the parameters; the rest come from the resting state.
 const celebrating: OrbPreset = {
-  flow: 1.5, energy: 0.8, brightness: 1.15,
-  tint: '#ffd166', tintAmount: 0.15, halo: 0.9, levelResponse: 1,
+  speed: 1.6, glow: 0.3, bounce: 0.6, reactivity: 1, label: 'celebrating',
 };
 
-<TalkingMarble state={agentState} presets={{ muted, celebrating }} />`;
+// An emotion layers on any state: built-in (muted, happy, calm) or your own preset.
+<TalkingMarble state={agentState} emotion="happy" />
+<TalkingMarble state="celebrating" presets={{ celebrating }} />`;
 
 const PROPS: [string, string, string, string][] = [
   ['state', "'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'error' | string", "'idle'", 'A built-in state or the name of one of your presets. Unknown names show idle (one warning in development).'],
+  ['emotion', "'muted' | 'happy' | 'calm' | string", '—', 'Layers on the state: built-in, or the name of one of your presets.'],
   ['audio', 'MediaStream | HTMLMediaElement | AudioNode', '—', 'Audio to react to, in states that listen. One shared AudioContext; if the browser blocks it, it resumes on the next click or key press.'],
   ['level', 'number (0–1)', '—', 'An audio level you computed. Overrides audio when given.'],
   ['palette', "PaletteName | string[]", "'pearl'", 'pearl, ember, lagoon, ink, rose, aurora, or four hex colors: ground, then three pigments.'],
   ['size', 'number', 'fills its container', 'Width and height in CSS pixels. Without it the orb is as wide as its container, and square.'],
-  ['presets', 'Record<string, OrbPreset>', '—', 'Your own states, merged over the built-ins by name.'],
+  ['presets', 'Record<string, OrbPreset>', '—', 'Your own states and emotions, merged over the built-ins by name.'],
   ['halo', 'boolean', 'true', 'The soft light behind the orb.'],
   ['paused', 'boolean', 'false', 'Stop animating without unmounting.'],
-  ['aria-label', 'string', '—', 'Makes the orb an image with this label. Without it, the orb is decorative (aria-hidden).'],
+  ['label', 'string', "'Assistant'", 'Who the orb is. It reads as an image named "Assistant, speaking", updated with the state (and emotion).'],
+  ['aria-label', 'string', '—', 'Replaces that name entirely.'],
+  ['decorative', 'boolean', 'false', 'Hides the orb from assistive technology, when the state is already shown in text.'],
   ['className, style', 'string, CSSProperties', '—', 'Applied to the outer element.'],
 ];
 
 const PARAMS: [string, string, string][] = [
-  ['flow', '0–2', 'Speed of the pigment flow.'],
-  ['energy', '0–1', 'Activity: faster, deeper, a little brighter.'],
-  ['warp', '1–3.5', 'How much the pigment folds.'],
+  ['speed', '0–4', 'How fast the pigment flows.'],
+  ['turbulence', '0–1', 'How deeply it folds.'],
+  ['veins', '0–1', 'Vein size: higher is broader, lower is finer.'],
+  ['softness', '0–1', 'Vein edges: higher is hazier, lower is crisper.'],
+  ['detail', '0–1', 'Fine detail inside the veins.'],
+  ['spin', '−2–2', 'Turning; negative turns backwards.'],
+  ['waves', '0–1', 'Swells rolling across the pattern.'],
+  ['ripples, rippleDirection', "0–1, 'out' | 'in'", 'Rings travelling through the pattern, and which way.'],
+  ['whirl', '0–3', 'A whirlpool twisting toward the centre.'],
+  ['chop', '0–1', 'Short crossing waves.'],
+  ['glow', '0–1', 'Light from within.'],
   ['brightness', '0.5–1.5', 'Overall light.'],
-  ['saturation', '0–1.5', 'Color strength.'],
-  ['tint, tintAmount', 'hex, 0–1', 'A color wash and how strong it is.'],
-  ['breath', '0–1', 'A slow scale pulse (as connecting).'],
-  ['halo', '0–1', 'Halo strength.'],
-  ['levelResponse', '0–1', 'How much audio moves the orb. 0 ignores audio.'],
+  ['halo', '0–1', 'The halo at rest.'],
+  ['breath', '0–1', 'A slow swell of the whole marble.'],
+  ['beat', '0–1.5', 'A heartbeat pulse.'],
+  ['bounce', '0–1', 'Floats (low) or bounces (high).'],
+  ['sway', '0–1', 'Rocks side to side.'],
+  ['wobble', '0–1', 'The voice squashes and stretches it.'],
+  ['shake', '0–1', 'A short shake on entering the state.'],
+  ['size', '0.5–1.2', 'Size within its box; never changes layout.'],
+  ['reactivity', '0–1', 'How strongly it answers audio. 0 ignores audio.'],
+  ['colors', 'four hex', 'The only way a preset changes colour. Built-in states never do.'],
+  ['label', 'string', 'Its name for assistive technology.'],
 ];
 
 const SECTIONS = [
@@ -99,10 +117,10 @@ export function Docs() {
             </table>
           </div>
           <p>
-            Also exported: <code>palettes</code>, <code>states</code>, <code>resolveState</code>, <code>resolvePalette</code>,
-            the example presets <code>muted</code>, <code>happy</code> and <code>calm</code>, and the types <code>OrbState</code>,{' '}
-            <code>BuiltInState</code>, <code>OrbPreset</code>, <code>OrbParams</code>, <code>OrbPalette</code>, <code>OrbColors</code>,{' '}
-            <code>PaletteName</code>, <code>OrbAudioSource</code> and <code>TalkingMarbleProps</code>.
+            Also exported: <code>palettes</code>, <code>states</code>, <code>emotions</code> (and <code>muted</code>, <code>happy</code>,
+            <code>calm</code> one by one), <code>resolveState</code>, <code>resolvePalette</code>, and the types <code>OrbState</code>,{' '}
+            <code>BuiltInState</code>, <code>OrbEmotion</code>, <code>BuiltInEmotion</code>, <code>OrbPreset</code>, <code>OrbParams</code>, <code>ResolvedPreset</code>,{' '}
+            <code>OrbPalette</code>, <code>OrbColors</code>, <code>PaletteName</code>, <code>OrbAudioSource</code> and <code>TalkingMarbleProps</code>.
           </p>
 
           <h2 id="audio-sources">Audio sources</h2>
@@ -125,8 +143,9 @@ export function Docs() {
             <code>error</code>. Every change between states eases; nothing jumps.
           </p>
           <p>
-            A state is a preset: plain data over a few parameters, the same in every port. Add your own with{' '}
-            <code>presets</code>; the package ships <code>muted</code>, <code>happy</code> and <code>calm</code> as examples.
+            A state is a preset: plain data, the same in every port. The material never changes between states; only energy,
+            motion and brightness do, and the voice drives them. Add your own states and emotions with <code>presets</code>;
+            the package ships <code>muted</code>, <code>happy</code> and <code>calm</code> as emotions.
             Values out of range are clamped; invalid ones are ignored. The playground&apos;s Preset JSON shows every parameter of the current state.
           </p>
           <Code title="Custom presets" lang="tsx" code={CUSTOM_PRESETS} />
@@ -148,8 +167,10 @@ export function Docs() {
             <li><strong>Light</strong>: <code>{'halo={false}'}</code> turns off the soft light behind the orb.</li>
             <li><strong>Your own states</strong>: any name in <code>presets</code> becomes a state you can pass to <code>state</code>.</li>
             <li><strong>Placement</strong>: <code>className</code> and <code>style</code> go on the outer element.</li>
-            <li><strong>Motion</strong>: with the system&apos;s reduced-motion setting the orb holds still and shows its state through color and light; <code>paused</code> stops it on demand.</li>
-            <li><strong>Accessibility</strong>: decorative by default; give it <code>aria-label</code> when it carries meaning.</li>
+            <li><strong>Motion</strong>: with the system&apos;s reduced-motion setting the orb holds still and shows its state through brightness; <code>paused</code> stops it on demand.</li>
+            <li><strong>Accessibility</strong>: by default an image named for its state (&ldquo;Assistant, listening&rdquo;); set <code>label</code> for the name, or <code>decorative</code> when text already says the state.</li>
+            <li><strong>Edges</strong>: a moving marble can swell and bounce past its box; near a viewport edge give it about 20% room, or put <code>overflow-x: clip</code> on its container.</li>
+            <li><strong>Media elements</strong>: one <code>&lt;audio&gt;</code> or <code>&lt;video&gt;</code> element feeds one orb at a time.</li>
           </ul>
 
           <h2 id="recipes">Recipes</h2>
