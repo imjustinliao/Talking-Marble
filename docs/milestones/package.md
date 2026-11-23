@@ -202,13 +202,5 @@ None breaking. Additive: preset fields `halo` and `sway`, and exports `ResolvedP
   - The fidelity, polish (default labels, shared-context loss), audio, mic and autoplay specs are updated to the new names and behaviour.
 - **Headless note:** Chromium in Playwright renders WebGL with SwiftShader and composites in software. Any WebGL canvas, even a bare one, logs "GPU stall due to ReadPixels" there. The 30-marble test ignores only that one driver notice, with that evidence. On a real GPU the bitmap handoff needs no readback.
 - **Screenshots:** `test-results/package/` holds `states-<bg>.png`, `emotions-<bg>.png`, `sizes-<state>-<bg>.png` (20/32/48/240 px at DPR 2), `many-30.png`, `halo-on.png` and `fallback-ember.png`. Copies are in the shared notes folder under `package-screenshots/m7/`.
-- **Review:** a fresh-eyes review subagent found nothing serious; seven of its ten smaller findings are fixed:
-  - spring sub-steps in the spec
-  - the loop surviving exceptions
-  - size-grouped resizing
-  - the `isContextLost` guard
-  - drawing the exact settled frame and stopping the loop
-  - DPR changes
-  - a stale leftover folder
-  - The remaining three: the `levelResponse` alias and overflow while moving are documented above, and spread-cloning a resolved preset loses only the deprecated alias.
+- **Review:** a fresh-eyes review subagent found nothing serious. Eight of its ten smaller findings are fixed: spring sub-steps in the spec, the loop surviving exceptions, size-grouped resizing, the `isContextLost` guard, drawing the exact settled frame, stopping the loop when still, DPR changes, and a stale leftover folder. The other two are documented under Deviations: the `levelResponse` alias (which also disappears when a resolved preset is spread-cloned) and overflow while moving.
 - **Not checked:** Safari and Firefox (Chromium only), a real GPU, and a person's eye on the motion feel against the prototype.
