@@ -1,9 +1,11 @@
 // Test page for the package's Playwright specs (e2e/package-*.spec.ts). Not shipped.
 import { createElement as h, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { TalkingMarble, states, type TalkingMarbleProps } from '../../src/index';
-import { createRenderer } from '../../src/render/renderer';
-import { hexToLinear, palettes, type PaletteName } from '../../src/colors';
+import { emotions, TalkingMarble, states, type TalkingMarbleProps } from '../../src/index';
+import { palettes, type PaletteName } from '../../src/colors';
+import { createMotion, uniformsOf } from '../../src/render/motion';
+import { renderInto, sharedCanvas } from '../../src/render/shared';
+import { easedFrom, resolveState } from '../../src/state';
 
 const params = new URLSearchParams(location.search);
 const view = params.get('view') ?? 'orb';
@@ -61,6 +63,8 @@ const harness = {
     return audio;
   },
   palettes,
+  /** The shared WebGL canvas (for context-loss tests). */
+  sharedCanvas,
 };
 Object.assign(window, { harness });
 
@@ -68,18 +72,38 @@ function cell(label: string, child: ReactNode) {
   return h('div', { className: 'cell', key: label }, child, h('span', null, label));
 }
 
+const sizesParam = (fallback: number[]) => (params.get('sizes')?.split(',').map(Number) ?? fallback);
+
 if (view === 'states') {
-  // Every built-in state at 48 and 240 px (DES-02). The states that react to audio hear a steady
-  // voice (level `voice`, default 0.6), as they would in use; the others ignore it.
+  // Every built-in state (and with `emotions=1` every emotion on idle) at each size (DES-02). The states that
+  // react to audio hear a steady voice (level `voice`, default 0.6), as they would in use.
   const palette = (params.get('palette') ?? 'pearl') as PaletteName;
   const level = Number(params.get('voice') ?? 0.6);
+  const combos: [string, string | undefined][] = params.get('emotions')
+    ? Object.keys(emotions).map(e => ['idle', e])
+    : Object.keys(states).map(s => [s, undefined]);
+  const sizes = sizesParam([240, 48, 20]);
+  const name = (s: string, e: string | undefined) => (e ? `${s}+${e}` : s);
+  const orb = (s: string, e: string | undefined, size: number) =>
+    cell(`${name(s, e)} ${size}`, h(TalkingMarble, { state: s, emotion: e, palette, size, level, 'aria-label': `${name(s, e)} ${size}` }));
+  document.documentElement.style.setProperty('--cols', String(combos.length));
+  root.render(h('div', { className: 'grid' }, ...sizes.flatMap(size => combos.map(([s, e]) => orb(s, e, size)))));
+} else if (view === 'many') {
+  // Many marbles on one page (chat messages, a state grid): all through one WebGL context.
+  const count = Number(params.get('count') ?? 30);
   const names = Object.keys(states);
-  const orb = (s: string, size: number) =>
-    cell(`${s} ${size}`, h(TalkingMarble, { state: s, palette, size, level, 'aria-label': `${s} ${size}` }));
-  root.render(h('div', { className: 'grid' }, ...names.map(s => orb(s, 240)), ...names.map(s => orb(s, 48))));
+  root.render(h('div', { className: 'many' }, ...Array.from({ length: count }, (_, i) =>
+    h(TalkingMarble, { key: i, state: names[i % names.length], size: 64, label: `Orb ${i + 1}` }))));
+} else if (view === 'sizes') {
+  // One marble per size; `full` fills the viewport's shorter side.
+  const sizes = sizesParam([20, 32, 48, 240]);
+  const full = params.get('full') === '1';
+  root.render(h('div', { className: 'row' }, full
+    ? h('div', { style: { width: 'min(100vw, 100vh)' } }, h(TalkingMarble, { label: 'full', style: { display: 'block' } }))
+    : sizes.map(size => cell(`${size}`, h(TalkingMarble, { size, label: `size ${size}`, state: params.get('state') ?? 'idle' })))));
 } else if (view === 'fidelity') {
-  // One still frame of the original look at rest (DES-01), compared with the reference images in
-  // e2e/fixtures/fidelity/, which were verified pixel-identical to the original orb on 2026-11-23.
+  // One still frame of the original look at rest (DES-01), drawn through the shared renderer exactly as a
+  // marble is, compared with the reference images in e2e/fixtures/fidelity/ (pixel-identical to the original orb).
   const palette = (params.get('palette') ?? 'pearl') as PaletteName;
   const time = Number(params.get('t') ?? 2.5);
   const size = Number(params.get('size') ?? 240);
@@ -88,9 +112,9 @@ if (view === 'states') {
   ours.width = ours.height = size;
   ours.style.width = ours.style.height = `${size}px`;
   document.getElementById('root')!.replaceWith(ours);
-  const r = createRenderer(ours)!;
-  r.resize(size, size);
-  r.setColors(palettes[palette].map(hexToLinear));
-  r.draw({ uTime: time, uSwirl: 0, uLevel: 0, uEnergy: 0, uWarp: 2.2, uBrightness: 1, uSaturation: 1, uTint: [1, 1, 1], uTintAmount: 0 });
+  const motion = createMotion();
+  motion.time = time;
+  const uniforms = uniformsOf(motion, easedFrom(resolveState('idle')).x, 0, false);
+  renderInto(ours, size, palettes[palette], uniforms);
   document.body.dataset.done = 'true';
 }

@@ -12,17 +12,22 @@ export type Uniforms = Readonly<Record<string, UniformValue>>;
 export interface Renderer {
   /** Sets the drawing buffer size in device pixels. */
   resize(width: number, height: number): void;
+  /** The context's largest drawable side in pixels. */
+  readonly maxSide: number;
+  /** True once the context is lost (even if no lost event arrived). */
+  lost(): boolean;
   /** Ground and three pigments, linear light. */
   setColors(colors: readonly Linear[]): void;
-  draw(uniforms: Uniforms): void;
+  /** Draws one frame into the bottom-left `width` × `height` pixels (default: the whole buffer). */
+  draw(uniforms: Uniforms, width?: number, height?: number): void;
   dispose(): void;
 }
 
 /** A WebGL2 renderer for one canvas, or null when WebGL2 or the shader is unavailable. Framework-free. */
-export function createRenderer(canvas: HTMLCanvasElement): Renderer | null {
+export function createRenderer(canvas: HTMLCanvasElement | OffscreenCanvas): Renderer | null {
   const gl = canvas.getContext('webgl2', {
     alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, powerPreference: 'low-power',
-  });
+  }) as WebGL2RenderingContext | null;
   if (!gl) return null;
 
   const compile = (type: number, source: string) => {
@@ -68,7 +73,11 @@ export function createRenderer(canvas: HTMLCanvasElement): Renderer | null {
     else gl.uniform3f(location(name), value[0], value[1], value[2]);
   };
 
+  const dims = gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array | null;
+  const maxSide = Math.min(dims?.[0] ?? 4096, dims?.[1] ?? 4096, (gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) as number) || 4096);
   return {
+    maxSide,
+    lost: () => gl.isContextLost(),
     resize(width, height) {
       const w = Math.max(1, Math.round(width));
       const h = Math.max(1, Math.round(height));
@@ -83,8 +92,8 @@ export function createRenderer(canvas: HTMLCanvasElement): Renderer | null {
         if (c) set(name, c);
       });
     },
-    draw(uniforms) {
-      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    draw(uniforms, width = gl.drawingBufferWidth, height = gl.drawingBufferHeight) {
+      gl.viewport(0, 0, width, height);
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       for (const name in uniforms) set(name, uniforms[name]!);
@@ -95,7 +104,7 @@ export function createRenderer(canvas: HTMLCanvasElement): Renderer | null {
       gl.deleteProgram(program);
       // Release the context only on a real unmount (the canvas has left the document). React's
       // development remount reuses a connected canvas, and getContext would return the lost context.
-      if (!canvas.isConnected) gl.getExtension('WEBGL_lose_context')?.loseContext();
+      if (!('isConnected' in canvas) || !canvas.isConnected) gl.getExtension('WEBGL_lose_context')?.loseContext();
     },
   };
 }

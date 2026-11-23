@@ -1,13 +1,15 @@
-import { hexToLinear, type OrbColors } from '../colors';
-import { approach, easedFrom, easeToward, resolveState, SHADER_PARAMS, uniformName, type Eased, type OrbParams, type OrbPreset } from '../state';
+import type { OrbColors } from '../colors';
+import { easedFrom, resolveState, settled, type Eased, type OrbPreset, type ResolvedPreset } from '../state';
 import { fallbackShadow, haloShadow } from './css';
-import { createRenderer, type Renderer, type UniformValue } from './renderer';
+import { createMotion, haloOpacityOf, smallness, stepMotion, transformOf, uniformsOf, type Motion } from './motion';
+import type { UniformValue } from './renderer';
+import { backingSize, renderInto, rendererReady, watchRenderer } from './shared';
 
-/** One orb's live controller: state easing, the clock, visibility and drawing. Framework-free. */
+/** One orb's live controller: springs, the clocks, visibility and drawing. Framework-free. */
 export interface OrbController {
   /** True while the shader is drawing; false means the fallback picture shows. */
   readonly ready: boolean;
-  setState(name: string, presets?: Record<string, OrbPreset>): void;
+  setState(state: string, presets?: Record<string, OrbPreset>, emotion?: string | null): void;
   setColors(colors: OrbColors): void;
   /** Where raw audio level (0–1) comes from each frame; null for none. */
   setLevelSource(source: (() => number) | null): void;
@@ -16,10 +18,11 @@ export interface OrbController {
 }
 
 export interface OrbElements {
-  /** The square element the orb fills; it is scaled for `breath`. Keep it inside the user-styled element, never the same. */
+  /** The square element the orb fills; it carries the whole-marble movement. Keep it inside the user-styled element, never the same. */
   host: HTMLElement;
+  /** The orb's own canvas; the shared renderer hands each frame to it (`bitmaprenderer`, or `2d` as a fallback). */
   canvas: HTMLCanvasElement;
-  /** Optional halo layer; its opacity follows `halo` and level, its glow the orb's size and colors. */
+  /** Optional halo layer; its opacity follows `halo`, the beat and level, its glow the orb's size and colors. */
   halo?: HTMLElement | null;
   /** Optional CSS picture shown while the shader is not drawing; it is shaded to the orb's size and dimmed to the state. */
   fallback?: HTMLElement | null;
@@ -27,34 +30,60 @@ export interface OrbElements {
 
 export interface OrbOptions {
   state: string;
+  emotion?: string | null;
   colors: OrbColors;
   presets?: Record<string, OrbPreset>;
   /** Called whenever the shader starts or stops drawing (first frame, context lost, context restored). */
   onReady?: (ready: boolean) => void;
 }
 
-const FRAME = 1 / 30;
-const uniformNames = Object.fromEntries(SHADER_PARAMS.map(key => [key, uniformName(key)])) as Record<(typeof SHADER_PARAMS)[number], string>;
-const MAX_PIXELS = 512;
+const FRAME = 1000 / 30;
+
+// One frame loop for every orb on the page, at most 30 frames a second.
+// `frame` returns false when the orb has nothing left to animate (a settled still frame); the loop stops when
+// every orb says so, and any change wakes it again.
+interface Live { frame(now: number): boolean; running(): boolean; side(): number }
+const live = new Set<Live>();
+let loopId = 0, lastFrame = 0, ascending = true;
+function loop(now: number) {
+  // Scheduled first, so an exception in one orb never stops the others.
+  loopId = requestAnimationFrame(loop);
+  const due = [...live].filter(orb => orb.running());
+  if (due.length && now - lastFrame < FRAME - 2) return;
+  lastFrame = now;
+  // Grouped by size, in alternating order, so consecutive draws (and frames) share the shared surface's
+  // size and it is resized once per distinct size at most.
+  ascending = !ascending;
+  due.sort((a, b) => (ascending ? a.side() - b.side() : b.side() - a.side()));
+  let active = false;
+  for (const orb of due) {
+    try {
+      if (orb.frame(now)) active = true;
+    } catch (error) {
+      active = true;
+      console.error('[talking-marble]', error);
+    }
+  }
+  if (!active) { cancelAnimationFrame(loopId); loopId = 0; }
+}
+function wakeLoop() { if (!loopId && typeof requestAnimationFrame === 'function') loopId = requestAnimationFrame(loop); }
 
 export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial: OrbOptions): OrbController {
-  let renderer: Renderer | null = createRenderer(canvas);
   let ready = false;
   let colors = initial.colors;
-  let target: OrbParams = resolveState(initial.state, initial.presets);
-  const current: Eased = easedFrom(target);
-  let levelSource: (() => number) | null = null;
-  // Reused every frame.
+  let target: ResolvedPreset = resolveState(initial.state, initial.presets, initial.emotion);
+  const eased: Eased = easedFrom(target);
+  const motion: Motion = createMotion();
   const uniforms: Record<string, UniformValue> = {};
-  let time = 0, swirl = 0, level = 0, breathPhase = 0, size = 0;
-  let paused = false, onScreen = true, frameId = 0, last = 0, pending = 0;
+  let levelSource: (() => number) | null = null;
+  let css = 0, side = 0, last = 0, dirty = true;
+  let paused = false, onScreen = true, disposed = false, wasSettled = false;
 
-  const motion = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-  const reduced = () => motion?.matches ?? false;
-
+  const media = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const reduced = () => media?.matches ?? false;
   const visible = () => onScreen && !document.hidden;
-  // Without the shader the loop still eases the halo and the fallback's dimming.
-  const running = () => visible() && !paused;
+
+  const drawColors = () => target.colors ?? colors;
 
   function setReady(next: boolean) {
     if (next === ready) return;
@@ -62,111 +91,115 @@ export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial
     initial.onReady?.(ready);
   }
 
+  /** Draws the current values: canvas (or the fallback's dimming), halo and the whole marble's transform. */
   function draw() {
+    if (disposed) return;
     const still = reduced();
-    host.style.transform = current.breath > 0.001 && !still ? `scale(${(1 - current.breath * 0.03 * (0.5 + 0.5 * Math.cos(breathPhase))).toFixed(4)})` : '';
-    if (halo) halo.style.opacity = Math.min(1, current.halo + level * 0.4).toFixed(3);
-    if (!renderer) {
-      if (fallback) fallback.style.filter = `brightness(${current.brightness.toFixed(3)}) saturate(${current.saturation.toFixed(3)})`;
-      return;
+    const k = smallness(css);
+    const x = eased.x;
+    host.style.transform = transformOf(motion, x, k, still);
+    if (halo) {
+      halo.style.opacity = haloOpacityOf(motion, x).toFixed(3);
+      halo.style.visibility = k >= 1 ? 'hidden' : '';
     }
-    uniforms.uTime = time;
-    uniforms.uSwirl = swirl;
-    uniforms.uLevel = still ? 0 : level;
-    uniforms.uTint = current.tint;
-    for (const key of SHADER_PARAMS) uniforms[uniformNames[key]] = current[key];
-    renderer.draw(uniforms);
-    if (size > 0) setReady(true);
+    const drew = side > 0 && renderInto(canvas, side, drawColors(), uniformsOf(motion, x, k, still, uniforms));
+    if (!drew && fallback) fallback.style.filter = `brightness(${x.brightness.toFixed(3)})`;
+    else if (fallback) fallback.style.filter = '';
+    setReady(drew);
+    dirty = false;
   }
 
-  function step(dt: number) {
-    easeToward(current, target, dt);
-    // Only read the audio when the state listens; reading an analyser costs a little every frame.
-    const raw = levelSource && target.levelResponse > 0 ? Math.min(1, Math.max(0, levelSource() || 0)) : 0;
-    level = approach(level, raw * target.levelResponse, 1 - Math.exp(-dt * 10));
-    if (!reduced()) {
-      time += dt * current.flow * (1 + current.energy * 0.45);
-      swirl += dt * level * 1.4;
-      breathPhase += (dt * 2 * Math.PI) / 1.6;
-    }
-  }
+  const running = () => !disposed && visible() && !paused;
 
-  function tick(now: number) {
-    frameId = 0;
-    if (!running()) { last = 0; pending = 0; return; }
-    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
-    last = now;
-    pending += dt;
-    if (pending >= FRAME - 0.002 || dt === 0) {
-      step(Math.min(0.1, pending));
-      pending = 0;
+  const orb: Live = {
+    running,
+    side: () => side,
+    frame(now) {
+      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
+      last = now;
+      const still = reduced();
+      const raw = levelSource && target.reactivity > 0 ? levelSource() : 0;
+      const before = motion.level;
+      stepMotion(motion, eased, target, raw, dt, still);
+      const isSettled = still && motion.level === before && settled(eased, target);
+      // A still orb that has settled (and drawn that exact frame) draws nothing new: skip the GPU and, unless
+      // it listens to audio, stop asking for frames until something changes.
+      if (isSettled && wasSettled && !dirty) {
+        const listening = levelSource !== null && target.reactivity > 0;
+        if (!listening) last = 0;
+        return listening;
+      }
+      wasSettled = isSettled;
       draw();
-    }
-    frameId = requestAnimationFrame(tick);
-  }
-  const wake = () => { if (!frameId && running()) frameId = requestAnimationFrame(tick); };
+      return true;
+    },
+  };
+  const wake = () => { if (running()) { live.add(orb); wakeLoop(); } };
 
   function applyColors() {
-    renderer?.setColors(colors.map(hexToLinear));
-    if (halo && size > 0) halo.style.boxShadow = haloShadow(colors, size);
+    if (halo && css > 0) halo.style.boxShadow = haloShadow(drawColors(), css, smallness(css));
+    dirty = true;
   }
 
   function resize() {
-    size = Math.min(host.offsetWidth, host.offsetHeight);
-    if (size <= 0) return;
-    if (halo) halo.style.boxShadow = haloShadow(colors, size);
-    if (fallback) fallback.style.boxShadow = fallbackShadow(size);
-    if (renderer) {
-      const density = Math.min(window.devicePixelRatio || 1, 3, MAX_PIXELS / size);
-      renderer.resize(size * density, size * density);
-    }
+    css = Math.min(host.offsetWidth, host.offsetHeight);
+    if (css <= 0) return;
+    side = backingSize(css, window.devicePixelRatio);
+    if (canvas.width !== side || canvas.height !== side) { canvas.width = side; canvas.height = side; }
+    if (fallback) fallback.style.boxShadow = fallbackShadow(css);
+    applyColors();
     draw();
   }
 
-  // Context loss (GPU reset, too many contexts): show the fallback, then rebuild on restore.
-  const onLost = (event: Event) => {
-    event.preventDefault();
-    renderer = null;
-    setReady(false);
-    draw(); // dims the fallback to the state now, even when paused or off screen
-  };
-  const onRestored = () => {
-    renderer = createRenderer(canvas);
-    if (!renderer) return;
-    if (fallback) fallback.style.filter = '';
-    applyColors();
-    resize();
-    wake();
-  };
-  canvas.addEventListener('webglcontextlost', onLost);
-  canvas.addEventListener('webglcontextrestored', onRestored);
+  const stopWatching = watchRenderer(isReady => {
+    if (isReady) { dirty = true; draw(); wake(); } else { setReady(false); draw(); }
+  });
 
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(host);
-  const intersection = new IntersectionObserver(entries => { onScreen = entries[entries.length - 1]?.isIntersecting ?? true; wake(); });
+  const intersection = new IntersectionObserver(entries => {
+    onScreen = entries[entries.length - 1]?.isIntersecting ?? true;
+    last = 0;
+    wake();
+  });
   intersection.observe(host);
-  const onVisibility = () => wake();
+  const onVisibility = () => { last = 0; wake(); };
   document.addEventListener('visibilitychange', onVisibility);
+  const onMotion = () => { dirty = true; wake(); };
+  media?.addEventListener?.('change', onMotion);
+  // A new device pixel ratio (zoom, another display) needs a new backing size.
+  let dprQuery: MediaQueryList | null = null;
+  const onDpr = () => { watchDpr(); resize(); };
+  function watchDpr() {
+    dprQuery?.removeEventListener?.('change', onDpr);
+    dprQuery = typeof matchMedia === 'function' ? matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`) : null;
+    dprQuery?.addEventListener?.('change', onDpr);
+  }
+  watchDpr();
 
   const controller: OrbController = {
     get ready() { return ready; },
-    setState(name, presets) { target = resolveState(name, presets); wake(); },
+    setState(state, presets, emotion) {
+      target = resolveState(state, presets, emotion);
+      wasSettled = false;
+      applyColors();
+      wake();
+    },
     setColors(next) { colors = next; applyColors(); draw(); },
     setLevelSource(source) { levelSource = source; wake(); },
-    setPaused(next) { paused = next; wake(); },
+    setPaused(next) { paused = next; last = 0; wake(); },
     dispose() {
-      cancelAnimationFrame(frameId);
-      frameId = 0;
+      disposed = true;
+      live.delete(orb);
+      stopWatching();
       resizeObserver.disconnect();
       intersection.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
-      canvas.removeEventListener('webglcontextlost', onLost);
-      canvas.removeEventListener('webglcontextrestored', onRestored);
-      renderer?.dispose();
-      renderer = null;
+      media?.removeEventListener?.('change', onMotion);
+      dprQuery?.removeEventListener?.('change', onDpr);
     },
   };
-  applyColors();
+  void rendererReady();
   resize();
   wake();
   return controller;

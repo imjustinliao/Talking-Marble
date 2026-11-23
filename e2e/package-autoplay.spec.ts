@@ -5,7 +5,7 @@ test('the shared AudioContext waits, then resumes on the next gesture', async ({
   await recordAudioContexts(page, { blockAutoplay: true });
   await page.goto(testPage);
   await page.evaluate(async () => {
-    window.harness.render({ state: 'probe', presets: { probe: { halo: 0, levelResponse: 1 } }, audio: await window.harness.stream(0.5) });
+    window.harness.render({ state: 'probe', presets: { probe: { halo: 0, reactivity: 1 } }, audio: await window.harness.stream(0.5) });
   });
   await page.waitForTimeout(300);
   expect(await sharedContexts(page)).toEqual(['suspended']);

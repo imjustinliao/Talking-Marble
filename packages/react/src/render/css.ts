@@ -21,10 +21,12 @@ export function fallbackShadow(size: number): string {
 }
 
 /**
- * The halo: soft light in pigments 2 and 1 around the sphere (as the original orb's halo, scaled to the orb).
+ * The halo: soft light in pigments 2 and 1 around the sphere (the original orb's halo, scaled to the orb).
  * Drawn as box-shadows, which are paint only: they never change layout or add scroll overflow.
+ * `k` is the small-size factor (spec › Small sizes): the halo tightens as it rises, and is hidden at 1.
  */
-export function haloShadow([, c1, c2]: OrbColors, size: number): string {
-  const px = (f: number) => `${(size * f).toFixed(1)}px`;
+export function haloShadow([, c1, c2]: OrbColors, size: number, k = 0): string {
+  const t = 1 - 0.6 * k;
+  const px = (f: number) => `${(size * f * t).toFixed(1)}px`;
   return `0 0 ${px(0.12)} ${px(0.03)} ${rgba(c2, 0.7)}, 0 0 ${px(0.3)} ${px(0.07)} ${rgba(c1, 0.45)}`;
 }

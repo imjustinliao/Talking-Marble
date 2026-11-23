@@ -9,8 +9,10 @@
       body { background: #101114; color: #eee; }
       body[data-bg="light"] { background: #f7f5f0; color: #222; }
       #root { padding: 24px; }
-      .grid { display: grid; grid-template-columns: repeat(6, auto); gap: 28px 36px; align-items: center; justify-items: center; }
+      .grid { display: grid; grid-template-columns: repeat(var(--cols, 6), auto); gap: 28px 36px; align-items: center; justify-items: center; }
       .cell { display: grid; gap: 10px; justify-items: center; }
+      .many { display: flex; flex-wrap: wrap; gap: 8px; }
+      .row { display: flex; gap: 32px; align-items: center; }
       .pair { display: inline-flex; gap: 24px; padding: 24px; }
     </style>
   </head>

@@ -1,5 +1,0 @@
-{
-  "muted": { "flow": 0.6, "brightness": 0.85, "saturation": 0.3, "halo": 0.25 },
-  "happy": { "flow": 1.25, "energy": 0.5, "brightness": 1.1, "tint": "#ffb070", "tintAmount": 0.12, "halo": 0.7, "levelResponse": 1 },
-  "calm":  { "flow": 0.7, "brightness": 0.96, "tint": "#8ab4ff", "tintAmount": 0.1, "halo": 0.4 }
-}

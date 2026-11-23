@@ -1,101 +1,164 @@
-import { exampleData, stateData } from './generated/core';
-import { hexToLinear, type Linear } from './colors';
+import { emotionData, stateData } from './generated/core';
+import { resolvePalette, type OrbColors } from './colors';
 
 /** The six built-in states, the common voice-agent lifecycle (LiveKit, Deepgram, Stream). */
 export type BuiltInState = keyof typeof stateData.states;
 /** A built-in state, or the name of one of your presets. */
 export type OrbState = BuiltInState | (string & {});
+/** A built-in emotion. */
+export type BuiltInEmotion = keyof typeof emotionData;
+/** A built-in emotion, or the name of one of your presets. */
+export type OrbEmotion = BuiltInEmotion | (string & {});
 
-/** Everything a state can set (packages/core/spec.md › Parameters). */
-export interface OrbParams {
-  flow: number;
-  energy: number;
-  warp: number;
-  brightness: number;
-  saturation: number;
-  tint: string;
-  tintAmount: number;
-  breath: number;
-  halo: number;
-  levelResponse: number;
-}
-/** A preset: any subset of the parameters, on top of the resting values. */
-export type OrbPreset = Partial<OrbParams>;
-
-export const baseParams: OrbParams = stateData.base;
-/** The built-in states, each only the parameters it changes. */
-export const states: Record<BuiltInState, OrbPreset> = stateData.states;
-/** Example presets (not built-in states): pass them in `presets`, e.g. `presets={{ muted }}`. */
-export const { muted, happy, calm }: Record<'muted' | 'happy' | 'calm', OrbPreset> = exampleData;
-
-export const NUMERIC = ['flow', 'energy', 'warp', 'brightness', 'saturation', 'tintAmount', 'breath', 'halo', 'levelResponse'] as const;
+/** The numeric parameters, in packages/core/spec.md › Parameters order. The one list every other place derives from. */
+export const NUMERIC = [
+  'speed', 'turbulence', 'veins', 'softness', 'detail', 'spin', 'waves', 'ripples', 'whirl', 'chop',
+  'glow', 'brightness', 'halo', 'breath', 'beat', 'bounce', 'sway', 'wobble', 'shake', 'size', 'reactivity',
+] as const;
 export type NumericKey = (typeof NUMERIC)[number];
 
+/** Everything a state or emotion can set (packages/core/spec.md › Parameters). */
+export type OrbParams = Record<NumericKey, number> & {
+  /** Which way rings travel: `out` from the centre or `in` toward it. */
+  rippleDirection: 'out' | 'in';
+};
 /**
- * Parameters the controller consumes itself (clock, view scale, halo, level); every other numeric
- * parameter goes straight to the shader as `u` + its name (`warp` → `uWarp`), and `tint` as `uTint`.
- * A new shader parameter is one entry in NUMERIC, base and paramRanges, plus its uniform in the shader.
+ * A preset: plain data, any subset of the parameters, plus optional `colors` (four hex colors, ground first:
+ * the only way a preset changes color) and `label` (its name for assistive technology, e.g. "celebrating").
  */
-export const CONTROLLER_PARAMS: ReadonlySet<NumericKey> = new Set(['flow', 'breath', 'halo', 'levelResponse']);
-export const SHADER_PARAMS = NUMERIC.filter(key => !CONTROLLER_PARAMS.has(key));
-export const uniformName = (key: string) => `u${key[0]!.toUpperCase()}${key.slice(1)}`;
+export type OrbPreset = Partial<OrbParams> & {
+  colors?: readonly string[] | null;
+  label?: string | null;
+};
+/** A fully resolved preset: every parameter, plus the colors and label it sets (or null). */
+export type ResolvedPreset = OrbParams & {
+  colors: OrbColors | null;
+  label: string | null;
+  /** @deprecated Renamed `reactivity` (M7). Kept until the site moves over; not part of the published API. */
+  readonly levelResponse: number;
+};
 
-/** True for a name the orb knows: a built-in state or one of `presets`. */
+/** Each numeric parameter's range (packages/core/spec.md › Parameters). */
+export const paramRanges: Record<NumericKey, readonly [number, number]> = {
+  speed: [0, 4], turbulence: [0, 1], veins: [0, 1], softness: [0, 1], detail: [0, 1], spin: [-2, 2],
+  waves: [0, 1], ripples: [0, 1], whirl: [0, 3], chop: [0, 1], glow: [0, 1], brightness: [0.5, 1.5],
+  halo: [0, 1], breath: [0, 1], beat: [0, 1.5], bounce: [0, 1], sway: [0, 1], wobble: [0, 1], shake: [0, 1],
+  size: [0.5, 1.2], reactivity: [0, 1],
+};
+
+/** The resting values: the original orb. */
+export const baseParams: OrbParams = stateData.base as OrbParams;
+/** The built-in states, each only the parameters it changes. */
+export const states: Record<BuiltInState, OrbPreset> = stateData.states as Record<BuiltInState, OrbPreset>;
+/** The built-in emotions, which layer on a state (`emotion` prop). Each is an ordinary preset. */
+export const emotions: Record<BuiltInEmotion, OrbPreset> = emotionData as Record<BuiltInEmotion, OrbPreset>;
+/** The built-in emotions one by one. */
+export const { muted, happy, calm } = emotions;
+
+/** How far an emotion moves a state's values toward its own (packages/core/spec.md › Resolution). */
+export const EMOTION_WEIGHT = 0.65;
+
+/** True for a state name the orb knows: a built-in state or one of `presets`. */
 export function isKnownState(name: string, presets?: Record<string, OrbPreset>): boolean {
   return Object.hasOwn(states, name) || (presets !== undefined && Object.hasOwn(presets, name));
 }
+/** True for an emotion name the orb knows: a built-in emotion or one of `presets`. */
+export function isKnownEmotion(name: string, presets?: Record<string, OrbPreset>): boolean {
+  return Object.hasOwn(emotions, name) || (presets !== undefined && Object.hasOwn(presets, name));
+}
 
-/** Each numeric parameter's allowed range (packages/core/spec.md › Parameters). */
-export const paramRanges: Record<NumericKey, readonly [number, number]> = {
-  flow: [0, 2], energy: [0, 1], warp: [1, 3.5], brightness: [0.5, 1.5], saturation: [0, 1.5],
-  tintAmount: [0, 1], breath: [0, 1], halo: [0, 1], levelResponse: [0, 1],
-};
-const TINT = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
-
-/** A preset's values, keeping only valid ones: numbers finite and clamped to range, tint a hex color. */
-function sanitize(preset: OrbPreset | undefined): OrbPreset {
+/** A preset's valid values only: numbers finite and clamped to range, colors and label well formed. */
+export function sanitize(preset: unknown): OrbPreset {
   const clean: OrbPreset = {};
-  if (!preset) return clean;
+  if (!preset || typeof preset !== 'object') return clean;
+  const p = preset as Record<string, unknown>;
   for (const key of NUMERIC) {
-    const value = preset[key];
+    const value = p[key];
     if (typeof value === 'number' && Number.isFinite(value)) {
       const [min, max] = paramRanges[key];
       clean[key] = Math.min(max, Math.max(min, value));
     }
   }
-  if (typeof preset.tint === 'string' && TINT.test(preset.tint.trim())) clean.tint = preset.tint.trim();
+  if (p.rippleDirection === 'in' || p.rippleDirection === 'out') clean.rippleDirection = p.rippleDirection;
+  if (Array.isArray(p.colors) && p.colors.length > 0) {
+    const colors = resolvePalette(p.colors as string[]);
+    // resolvePalette falls back to Pearl when the ground is invalid: then the preset sets no colors.
+    if (typeof p.colors[0] === 'string' && colors[0] === (p.colors[0] as string).trim()) clean.colors = colors;
+  }
+  if (typeof p.label === 'string' && p.label.trim()) clean.label = p.label.trim().slice(0, 80);
   return clean;
 }
 
-/** Base, then the built-in state, then a custom preset of the same name. Unknown names are idle. */
-export function resolveState(name: string, presets?: Record<string, OrbPreset>): OrbParams {
+const own = (presets: Record<string, OrbPreset> | undefined, name: string) =>
+  presets && Object.hasOwn(presets, name) ? presets[name] : undefined;
+
+/**
+ * The parameters to draw: base → the state → the developer's preset of the same name; then the emotion
+ * (built-in, then the developer's of the same name) moves each value it sets 65 % of the way toward its own.
+ * Unknown states are idle; unknown emotions are ignored.
+ */
+export function resolveState(name: string, presets?: Record<string, OrbPreset>, emotion?: string | null): ResolvedPreset {
   const builtIn = Object.hasOwn(states, name) ? states[name as BuiltInState] : undefined;
-  const custom = presets && Object.hasOwn(presets, name) ? presets[name] : undefined;
-  return { ...baseParams, ...(builtIn ?? (custom ? {} : states.idle)), ...sanitize(custom) };
+  const custom = own(presets, name);
+  const state = { ...(builtIn ?? (custom ? {} : states.idle)), ...sanitize(custom) };
+  const out = { ...baseParams, colors: null, label: null, ...state } as Omit<ResolvedPreset, 'levelResponse'>;
+  if (emotion) {
+    const e = { ...(Object.hasOwn(emotions, emotion) ? emotions[emotion as BuiltInEmotion] : {}), ...sanitize(own(presets, emotion)) };
+    for (const key of NUMERIC) {
+      const target = e[key];
+      if (target !== undefined) out[key] += (target - out[key]) * EMOTION_WEIGHT;
+    }
+    if (e.rippleDirection) out.rippleDirection = e.rippleDirection;
+    if (e.colors) out.colors = e.colors as OrbColors;
+  }
+  return Object.defineProperty(out, 'levelResponse', { get() { return this.reactivity; }, enumerable: false }) as ResolvedPreset;
 }
 
-/** The values the renderer draws with: numbers eased per frame, tint in linear light. */
-export type Eased = Record<NumericKey, number> & { tint: Linear };
+/** The live, springing values the renderer draws with. */
+export interface Eased {
+  x: Record<NumericKey, number>;
+  v: Record<NumericKey, number>;
+}
 
 export function easedFrom(params: OrbParams): Eased {
-  const eased = { tint: hexToLinear(params.tint) } as Eased;
-  for (const key of NUMERIC) eased[key] = params[key];
-  return eased;
+  const x = {} as Record<NumericKey, number>, v = {} as Record<NumericKey, number>;
+  for (const key of NUMERIC) { x[key] = params[key]; v[key] = 0; }
+  return { x, v };
 }
 
-/** Below this distance an eased value lands on its target, so a settled orb is exactly still (packages/core/spec.md › Motion). */
+/** Spring response in seconds (packages/core/spec.md › Motion). */
+export const RESPONSE = 0.7;
+/** Within these of the target and at rest, a spring lands exactly, so a settled orb draws the identical frame. */
 export const SNAP = 1e-4;
+const SNAP_SPEED = 1e-3;
 
-/** One exponential easing step from `value` toward `target` with factor `k`, snapping when close. */
+/** One step of a critically damped spring (no overshoot), from `x` with velocity `v` toward `target`. */
+export function spring(x: number, v: number, target: number, dt: number, response = RESPONSE): [number, number] {
+  const w = (2 * Math.PI) / response;
+  // Sub-steps keep the explicit step stable for long frames (dt up to 0.1 s).
+  const n = Math.max(1, Math.ceil(dt / 0.02));
+  const h = dt / n;
+  for (let i = 0; i < n; i++) {
+    v += (-w * w * (x - target) - 2 * w * v) * h;
+    x += v * h;
+  }
+  if (Math.abs(x - target) < SNAP && Math.abs(v) < SNAP_SPEED) return [target, 0];
+  return [x, v];
+}
+
+/** Springs every parameter of `current` toward `target` by `dt` seconds. */
+export function easeToward(current: Eased, target: OrbParams, dt: number): void {
+  for (const key of NUMERIC) [current.x[key], current.v[key]] = spring(current.x[key], current.v[key], target[key], dt);
+}
+
+/** True when every parameter sits exactly on its target. */
+export function settled(current: Eased, target: OrbParams): boolean {
+  for (const key of NUMERIC) if (current.x[key] !== target[key] || current.v[key] !== 0) return false;
+  return true;
+}
+
+/** One exponential step from `value` toward `target` with factor `k`, snapping when close (the level). */
 export function approach(value: number, target: number, k: number): number {
   const next = value + (target - value) * k;
   return Math.abs(target - next) < SNAP ? target : next;
-}
-
-/** Moves `current` toward `target` by one frame of `dt` seconds (rate 4/s, packages/core/spec.md › Motion). */
-export function easeToward(current: Eased, target: OrbParams, dt: number): void {
-  const k = 1 - Math.exp(-dt * 4);
-  for (const key of NUMERIC) current[key] = approach(current[key], target[key], k);
-  const tint = hexToLinear(target.tint);
-  for (let i = 0; i < 3; i++) current.tint[i] = approach(current.tint[i]!, tint[i]!, k);
 }

@@ -1,0 +1,8 @@
+{
+  "muted": {
+    "speed": 0.1, "size": 0.9, "brightness": 0.85, "softness": 0.84, "detail": 0.3, "glow": 0, "halo": 0.15,
+    "reactivity": 0, "waves": 0, "ripples": 0, "wobble": 0, "bounce": 0
+  },
+  "happy": { "speed": 1.6, "bounce": 1, "waves": 0.5, "brightness": 1.1, "glow": 0.12, "halo": 0.75 },
+  "calm": { "speed": 0.4, "waves": 1, "veins": 0.75, "softness": 0.79, "detail": 0.3, "breath": 1, "bounce": 0.27, "halo": 0.4 }
+}

@@ -9,7 +9,7 @@ test('the orb follows a getUserMedia microphone stream', async ({ page, testPage
   await page.evaluate(async () => {
     const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
     window.source = mic;
-    window.harness.render({ state: 'probe', presets: { probe: { halo: 0, levelResponse: 1 } }, audio: mic });
+    window.harness.render({ state: 'probe', presets: { probe: { halo: 0, reactivity: 1 } }, audio: mic });
   });
   let peak = 0;
   for (let i = 0; i < 30; i++) {

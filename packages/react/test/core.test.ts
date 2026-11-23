@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { hexToLinear, palettes, resolvePalette } from '../src/colors';
-import { calm, easedFrom, easeToward, happy, isKnownState, muted, resolveState, SHADER_PARAMS, states, uniformName } from '../src/state';
-import { fragmentSource, stateData } from '../src/generated/core';
+import { calm, easedFrom, easeToward, emotions, happy, isKnownState, muted, NUMERIC, paramRanges, resolveState, settled, spring, states } from '../src/state';
+import { createMotion, uniformsOf } from '../src/render/motion';
+import { emotionData, fragmentSource, stateData } from '../src/generated/core';
 
 describe('core data', () => {
   it('has the six built-in states with the exact lifecycle names', () => {
@@ -14,16 +15,41 @@ describe('core data', () => {
       for (const c of colors) expect(c).toMatch(/^#[0-9a-f]{6}$/);
     }
   });
-  it('only uses parameters defined in base', () => {
+  it('only uses parameters defined in base, and base defines every parameter', () => {
     const keys = Object.keys(stateData.base);
-    for (const preset of Object.values(stateData.states)) for (const k of Object.keys(preset)) expect(keys).toContain(k);
+    expect(keys.sort()).toEqual([...NUMERIC, 'rippleDirection'].sort());
+    for (const preset of [...Object.values(stateData.states), ...Object.values(emotionData)]) for (const k of Object.keys(preset)) expect(keys).toContain(k);
   });
-  it('ships the shader with every uniform the renderer sets', () => {
-    const fromState = SHADER_PARAMS.map(uniformName);
-    expect(fromState).toEqual(['uEnergy', 'uWarp', 'uBrightness', 'uSaturation', 'uTintAmount']);
-    for (const u of ['uTime', 'uLevel', 'uSwirl', 'uTint', 'uBase', 'uColor1', 'uColor2', 'uColor3', ...fromState]) {
+  it('keeps every built-in value inside its range', () => {
+    for (const preset of [stateData.base, ...Object.values(stateData.states), ...Object.values(emotionData)]) {
+      for (const [k, v] of Object.entries(preset)) {
+        if (typeof v !== 'number') continue;
+        const [min, max] = paramRanges[k as keyof typeof paramRanges];
+        expect(v, k).toBeGreaterThanOrEqual(min);
+        expect(v, k).toBeLessThanOrEqual(max);
+      }
+    }
+  });
+  it('never changes colour in a built-in state or emotion (one material, Q-1)', () => {
+    for (const preset of [...Object.values(stateData.states), ...Object.values(emotionData)]) {
+      expect(Object.keys(preset)).not.toContain('colors');
+      for (const k of Object.keys(preset)) expect(['tint', 'tintAmount', 'saturation', 'hue']).not.toContain(k);
+    }
+  });
+  it('ships the shader with every uniform the motion model sets', () => {
+    const set = Object.keys(uniformsOf(createMotion(), easedFrom(resolveState('idle')).x, 0, false));
+    for (const u of [...set, 'uBase', 'uColor1', 'uColor2', 'uColor3']) {
       expect(fragmentSource).toMatch(new RegExp(`uniform (float|vec3) ${u};`));
     }
+    // And sets every uniform the shader declares.
+    const declared = [...fragmentSource.matchAll(/uniform (?:float|vec3) (\w+);/g)].map(m => m[1]);
+    for (const u of declared) if (!/^uBase$|^uColor\d$/.test(u!)) expect(set).toContain(u);
+  });
+  it('gives the original uniforms at rest (idle is the original orb)', () => {
+    const u = uniformsOf(createMotion(), easedFrom(resolveState('idle')).x, 0, false);
+    expect(u).toMatchObject({ uWarp: 2.2, uScale: 1.2, uSoftness: 1, uDetail: 0.5, uGrain: 1, uContrast: 1, uGlow: 0, uBrightness: 1, uWaveAmp: 0, uRippleAmp: 0, uVortex: 0, uChop: 0, uLevel: 0 });
+    expect(u.uWarp).toBe(2.2);
+    expect(u.uScale).toBe(1.2);
   });
 });
 
@@ -45,21 +71,44 @@ describe('colors', () => {
   });
 });
 
-describe('states', () => {
+describe('states and emotions', () => {
   it('layers base, built-in state and custom preset', () => {
-    expect(resolveState('idle')).toEqual(stateData.base);
-    expect(resolveState('speaking').levelResponse).toBe(1);
-    expect(resolveState('speaking', { speaking: { halo: 0.1 } })).toMatchObject({ levelResponse: 1, halo: 0.1 });
-    expect(resolveState('muted', { muted: { saturation: 0.3 } })).toMatchObject({ saturation: 0.3, flow: 1 });
+    const idle = resolveState('idle');
+    expect({ ...idle }).toMatchObject(stateData.base);
+    expect(idle.colors).toBeNull();
+    expect(resolveState('speaking').reactivity).toBe(1);
+    expect(resolveState('speaking', { speaking: { halo: 0.1 } })).toMatchObject({ reactivity: 1, halo: 0.1 });
+    expect(resolveState('wow', { wow: { bounce: 1, label: 'celebrating' } })).toMatchObject({ bounce: 1, speed: 1, label: 'celebrating' });
+  });
+  it('keeps the deprecated levelResponse alias reading reactivity', () => {
+    expect(resolveState('listening').levelResponse).toBe(resolveState('listening').reactivity);
   });
   it('ignores invalid preset values and clamps to the spec ranges', () => {
-    const p = resolveState('x', { x: { flow: undefined, energy: Number.NaN, brightness: 9, halo: -1, tint: 'nope' } });
-    expect(p).toMatchObject({ flow: 1, energy: 0, brightness: 1.5, halo: 0, tint: '#ffffff' });
+    const p = resolveState('x', { x: { speed: undefined, turbulence: Number.NaN, brightness: 9, halo: -1, spin: -5, rippleDirection: 'sideways' as never, colors: ['nope'], label: '  ' } });
+    expect(p).toMatchObject({ speed: 1, turbulence: 0.5, brightness: 1.5, halo: 0, spin: -2, rippleDirection: 'out', colors: null, label: null });
   });
-  it('exports the example presets', () => {
-    expect(Object.keys(muted)).toContain('saturation');
-    expect(happy.levelResponse).toBe(1);
-    expect(calm.flow).toBeLessThan(1);
+  it('lets a preset set its own colors', () => {
+    expect(resolveState('x', { x: { colors: ['#000000', '#ff0000'] } }).colors).toEqual(['#000000', '#ff0000', '#000000', '#000000']);
+  });
+  it('mixes an emotion 65 % of the way over the state, only for values it sets', () => {
+    const s = resolveState('speaking'), e = emotions.happy;
+    const mixed = resolveState('speaking', undefined, 'happy');
+    expect(mixed.speed).toBeCloseTo(s.speed + (e.speed! - s.speed) * 0.65, 9);
+    expect(mixed.bounce).toBeCloseTo(s.bounce + (1 - s.bounce) * 0.65, 9);
+    expect(mixed.turbulence).toBe(s.turbulence);
+    expect(mixed.reactivity).toBe(1);
+    expect(resolveState('speaking', undefined, 'muted').reactivity).toBeCloseTo(0.35, 9);
+  });
+  it('lets the developer override a built-in emotion and define new ones', () => {
+    expect(resolveState('idle', { happy: { speed: 4 } }, 'happy').speed).toBeCloseTo(1 + 3 * 0.65, 9);
+    expect(resolveState('idle', { giddy: { bounce: 1, colors: ['#ffffff'] } }, 'giddy')).toMatchObject({ bounce: 0.65, colors: ['#ffffff', '#ffffff', '#ffffff', '#ffffff'] });
+    expect(resolveState('idle', undefined, 'nope')).toEqual(resolveState('idle'));
+  });
+  it('exports the emotions, also one by one', () => {
+    expect(Object.keys(emotions)).toEqual(['muted', 'happy', 'calm']);
+    expect(muted.reactivity).toBe(0);
+    expect(happy.bounce).toBe(1);
+    expect(calm.speed).toBeLessThan(1);
   });
   it('treats unknown names as idle', () => {
     expect(resolveState('dancing')).toEqual(resolveState('idle'));
@@ -67,13 +116,22 @@ describe('states', () => {
     expect(isKnownState('dancing', { dancing: {} })).toBe(true);
     expect(isKnownState('toString')).toBe(false);
   });
-  it('eases toward the target at rate 4/s without overshooting', () => {
+  it('springs toward the target without overshooting, then lands exactly', () => {
     const current = easedFrom(resolveState('idle'));
     const target = resolveState('thinking');
-    easeToward(current, target, 0.25);
-    expect(current.energy).toBeCloseTo(1 - Math.exp(-1), 5);
-    for (let i = 0; i < 100; i++) easeToward(current, target, 0.1);
-    expect(current.energy).toBeCloseTo(1, 5);
-    expect(current.energy).toBeLessThanOrEqual(1);
+    let peak = 0;
+    for (let i = 0; i < 30; i++) { easeToward(current, target, 1 / 30); peak = Math.max(peak, current.x.speed); }
+    expect(current.x.speed).toBeGreaterThan(3);
+    expect(peak).toBeLessThanOrEqual(target.speed);
+    for (let i = 0; i < 120; i++) easeToward(current, target, 1 / 30);
+    expect(current.x.speed).toBe(target.speed);
+    expect(settled(current, target)).toBe(true);
+  });
+  it('starts a new spring from where the marble is, with its velocity (no jump)', () => {
+    const [x, v] = spring(0, 0, 1, 1 / 30);
+    expect(x).toBeGreaterThan(0);
+    expect(x).toBeLessThan(0.2);
+    const [x2] = spring(x, v, 0, 1 / 30);
+    expect(Math.abs(x2 - x)).toBeLessThan(0.1);
   });
 });

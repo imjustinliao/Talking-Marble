@@ -1,14 +1,32 @@
 {
   "base": {
-    "flow": 1, "energy": 0, "warp": 2.2, "brightness": 1, "saturation": 1,
-    "tint": "#ffffff", "tintAmount": 0, "breath": 0, "halo": 0.5, "levelResponse": 0
+    "speed": 1, "turbulence": 0.5, "veins": 0.5, "softness": 0.5, "detail": 0.5,
+    "spin": 0, "waves": 0, "ripples": 0, "rippleDirection": "out", "whirl": 0, "chop": 0,
+    "glow": 0, "brightness": 1, "halo": 0.5, "breath": 0, "beat": 0, "bounce": 0, "sway": 0, "wobble": 0, "shake": 0,
+    "size": 1, "reactivity": 0
   },
   "states": {
-    "idle":       {},
-    "connecting": { "flow": 0.8, "warp": 2.0, "brightness": 0.86, "saturation": 0.7, "breath": 1, "halo": 0.35 },
-    "listening":  { "energy": 0.2, "brightness": 1.04, "halo": 0.55, "levelResponse": 0.5 },
-    "thinking":   { "energy": 1, "warp": 2.7, "brightness": 1.06, "halo": 0.7 },
-    "speaking":   { "energy": 1, "brightness": 1.05, "halo": 0.7, "levelResponse": 1 },
-    "error":      { "flow": 0.45, "warp": 2.0, "brightness": 0.9, "saturation": 0.35, "tint": "#ff4a4a", "tintAmount": 0.28, "halo": 0.4 }
+    "idle": {},
+    "connecting": {
+      "speed": 0.6, "whirl": 1.6, "spin": 1.2, "ripples": 0.5, "rippleDirection": "in",
+      "beat": 0.5, "breath": 0.6, "bounce": 0.27, "size": 0.9, "brightness": 0.94, "halo": 0.35
+    },
+    "listening": {
+      "speed": 0.8, "softness": 0.57, "glow": 0.15, "waves": 0.8, "rippleDirection": "in",
+      "bounce": 0.2, "reactivity": 0.6, "halo": 0.6
+    },
+    "thinking": {
+      "speed": 3.48, "turbulence": 0.833, "veins": 0.21, "softness": 0.24, "detail": 0.8,
+      "spin": 1.8, "whirl": 2.4, "chop": 0.25, "glow": 0.1, "brightness": 1, "beat": 0.3, "sway": 0.75, "halo": 0.7
+    },
+    "speaking": {
+      "speed": 2.32, "turbulence": 0.625, "veins": 0.44, "softness": 0.29, "detail": 0.6,
+      "waves": 0.5, "ripples": 0.3, "rippleDirection": "out", "brightness": 1.055,
+      "reactivity": 1, "wobble": 1, "bounce": 0.4, "halo": 0.8
+    },
+    "error": {
+      "speed": 2, "turbulence": 1, "veins": 0.29, "softness": 0.07, "detail": 0.9,
+      "chop": 0.7, "spin": -0.8, "beat": 1.2, "shake": 1, "brightness": 0.85, "halo": 0.4
+    }
   }
 }

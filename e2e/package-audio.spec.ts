@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, haloOpacity as opacity, recordAudioContexts, sharedContexts, test } from '../packages/react/test/page/fixture';
 
 // A probe state: no resting halo and full level response, so halo opacity = smoothed level * 0.4 exactly.
-const PROBE = { state: 'probe', presets: { probe: { halo: 0, levelResponse: 1 } } };
+const PROBE = { state: 'probe', presets: { probe: { halo: 0, reactivity: 1 } } };
 
 async function open(page: Page, url: string) {
   await recordAudioContexts(page);
@@ -66,9 +66,9 @@ test('states that do not listen ignore audio; listening reacts gently', async ({
   });
   await page.waitForTimeout(800);
   expect(await opacity(page)).toBeCloseTo(0.5, 2);
-  // listening: halo 0.55 + level (1 × levelResponse 0.5) × 0.4 = 0.75.
+  // listening: halo 0.6 + level (1 × reactivity 0.6) × 0.4 = 0.84.
   await page.evaluate(() => window.harness.render({ state: 'listening', audio: window.source }));
-  await expect.poll(() => opacity(page), { timeout: 3000 }).toBeGreaterThan(0.72);
+  await expect.poll(() => opacity(page), { timeout: 3000 }).toBeGreaterThan(0.8);
 });
 
 test('removing the audio or unmounting releases it and never stops the stream', async ({ page, testPage }) => {

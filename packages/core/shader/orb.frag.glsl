@@ -3,21 +3,38 @@
 // A lit sphere of flowing pigment on one quad:
 // - Pigment: domain-warped fBm, q = fbm(p), r = fbm(p + q) (Quilez, "Domain Warping").
 // - Globe: analytic sphere; normal (x, y, sqrt(1 - x^2 - y^2)); edge antialiased with fwidth.
+// - Water: the pattern rolls in swells, ripples out or in from the centre, drains in a whirlpool or turns choppy.
 // - Output: ACES filmic fit (Narkowicz), sRGB encode, interleaved gradient noise dither (Jimenez 2014).
-// Uniforms are defined in packages/core/spec.md. Colors arrive in linear light.
+// One material in every state: states change only energy, motion and brightness (core/spec.md).
+// With every uniform at its resting value (spec.md › Parameters) this is the original orb, pixel for pixel.
+// Uniforms are defined in core/spec.md › Uniforms. Colors arrive in linear light.
 precision highp float;
 in vec2 vUv;
 out vec4 outColor;
 
-uniform float uTime;        // seconds of flow, already scaled by flow and energy
-uniform float uEnergy;      // 0..1, eased
-uniform float uLevel;       // 0..1, eased audio level after levelResponse
+uniform float uTime;        // seconds of flow, already scaled by speed
 uniform float uSwirl;       // extra flow the voice has run ahead
+uniform float uSpin;        // radians the pattern has turned about the vertical axis
+uniform float uLevel;       // 0..1, smoothed voice level after reactivity
 uniform float uWarp;        // pigment fold depth, 2.2 at rest
-uniform float uBrightness;  // 1 at rest
-uniform float uSaturation;  // 1 at rest
-uniform float uTintAmount;  // 0..1
-uniform vec3 uTint;         // linear
+uniform float uVoiceWarp;   // extra fold depth at full voice
+uniform float uVoiceBright; // extra light at full voice
+uniform float uScale;       // pattern scale, 1.2 at rest (larger is finer veins)
+uniform float uSoftness;    // vein edge width multiplier, 1 at rest
+uniform float uDetail;      // fine detail 0..1, 0.5 at rest
+uniform float uGrain;       // film grain amount, 1 at rest
+uniform float uContrast;    // 1 at rest; small sizes raise it a little
+uniform float uGlow;        // light from within, 0 at rest
+uniform float uBrightness;  // overall light, 1 at rest
+uniform float uWaveAmp;     // swells rolling across
+uniform float uWaveFreq;
+uniform float uWaveTime;
+uniform float uWaveAngle;   // radians
+uniform float uRippleAmp;   // rings travelling out (or in)
+uniform float uRippleFreq;
+uniform float uRipplePhase;
+uniform float uVortex;      // whirlpool twist toward the centre
+uniform float uChop;        // short crossing waves
 uniform vec3 uBase;         // ground, linear
 uniform vec3 uColor1;       // pigments, linear
 uniform vec3 uColor2;
@@ -31,11 +48,14 @@ float noise(vec3 p) {
              mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
 }
 const mat3 ROT = mat3(.00,.80,.60, -.80,.36,-.48, -.60,-.48,.64);
+// Each octave is k of the last: detail .5 gives .38 (the original); lower is smoother, higher is richer.
 float fbm(vec3 p) {
-  float result = 0.0, amplitude = .62;
-  for (int i = 0; i < 3; i++) { result += noise(p) * amplitude; p = ROT * p * 2.03 + 7.19; amplitude *= .38; }
+  float result = 0.0, amplitude = .62, k = mix(.2, .56, uDetail);
+  for (int i = 0; i < 3; i++) { result += noise(p) * amplitude; p = ROT * p * 2.03 + 7.19; amplitude *= k; }
   return result;
 }
+// A vein's edge: at softness 1 these are the original's smoothstep bounds.
+float vein(float v, float center, float width) { float w = width * uSoftness; return smoothstep(center - w, center + w, v); }
 vec3 pigment(vec3 p, float t, float warp) {
   vec3 drift = vec3(sin(t * .73), cos(t * .57), sin(t * .41)) * .38;
   vec3 q = vec3(fbm(p + drift + vec3(t * .19, 0, 0)), fbm(p + vec3(4.7, 1.3, 8.1) - drift), fbm(p + vec3(9.2, 5.8, 2.3) + vec3(0, t * .23, 0)));
@@ -43,9 +63,9 @@ vec3 pigment(vec3 p, float t, float warp) {
   float a = fbm(r + vec3(0, 0, t * .24));
   float b = fbm(r * 1.14 + vec3(6.2, -t * .21, 3.5));
   float c = fbm(r * .83 + vec3(t * .16, 8.4, 1.9));
-  vec3 color = mix(uBase, uColor1, smoothstep(.33, .65, a) * .95);
-  color = mix(color, uColor2, smoothstep(.43, .69, b) * .9);
-  return mix(color, uColor3, smoothstep(.47, .70, c) * .86);
+  vec3 color = mix(uBase, uColor1, vein(a, .49, .16) * .95);
+  color = mix(color, uColor2, vein(b, .56, .13) * .9);
+  return mix(color, uColor3, vein(c, .585, .115) * .86);
 }
 vec3 aces(vec3 x) { return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0.0, 1.0); }
 vec3 srgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - .055, step(.0031308, c)); }
@@ -59,8 +79,20 @@ void main() {
   vec2 uv = vUv / .985;
   vec3 n = normalize(vec3(uv, sqrt(max(0.0, 1.0 - dot(uv, uv)))));
   float t = uTime * 1.1 + uSwirl;
-  vec3 color = pigment(n * 1.2, t, uWarp + uLevel * .9);
-  color = mix(color, uTint, uTintAmount);
+
+  // The pattern's own coordinates: turned, then moved like water.
+  float cs = cos(uSpin), sn = sin(uSpin);
+  vec3 q = vec3(cs * n.x + sn * n.z, n.y, -sn * n.x + cs * n.z);
+  float ang = uVortex * (1.15 - length(q.xy));                       // whirlpool: more twist toward the centre
+  q.xy = mat2(cos(ang), -sin(ang), sin(ang), cos(ang)) * q.xy;
+  vec2 dir = vec2(cos(uWaveAngle), sin(uWaveAngle));                // swells rolling across
+  float along = dot(q.xy, dir);
+  q.xy += dir * uWaveAmp * sin(along * uWaveFreq * 3.1416 - uWaveTime);
+  q.z += uWaveAmp * .6 * cos(along * uWaveFreq * 3.1416 - uWaveTime);
+  q.xy *= 1.0 + uRippleAmp * sin(length(q.xy) * uRippleFreq * 3.1416 - uRipplePhase); // rings out or in
+  q += uChop * .09 * (sin(q.yzx * 6.3 + t * 3.1) + .6 * sin(q.zxy * 9.7 - t * 4.3));  // chop
+
+  vec3 color = pigment(q * uScale, t, uWarp + uLevel * uVoiceWarp);
   vec3 key = normalize(vec3(-.65, .8, 1.2));
   float diffuse = max(dot(n, key), 0.0);
   float rim = pow(1.0 - max(n.z, 0.0), 3.0);
@@ -69,14 +101,15 @@ void main() {
   float ribbon = exp(-pow((reflected.x + .57) * 8.0, 2.0) - pow((reflected.y - .48) * 2.4, 2.0));
   float back = pow(max(dot(n, normalize(vec3(.9, -.25, .2))), 0.0), 6.0);
   vec3 lit = color * (.48 + diffuse * .62);
+  lit += color * uGlow * (1.0 - rim) * (.6 + .4 * n.z);              // a little light from within
   lit += vec3(1.0, .97, .92) * (softbox * .65 + ribbon * .23);
   lit += mix(vec3(.83, .91, 1.0), uColor3, .22) * rim * (.22 + back * .34);
   lit += uColor1 * back * .075;
-  lit *= uBrightness * (1.0 + uEnergy * .055 + uLevel * .14);
+  lit *= uBrightness * (1.0 + uLevel * uVoiceBright);
   // Fine stationary film grain gives the pigment its tactile, in-focus surface.
-  lit += (hash(vec3(gl_FragCoord.xy, 19.7)) - .5) * .045;
+  lit += (hash(vec3(gl_FragCoord.xy, 19.7)) - .5) * .045 * uGrain;
   vec3 mapped = aces(lit);
-  mapped = mix(vec3(dot(mapped, vec3(.2126, .7152, .0722))), mapped, uSaturation);
+  if (uContrast != 1.0) mapped = clamp((mapped - .5) * uContrast + .5, 0.0, 1.0);
   vec3 display = srgb(mapped) + (ign(gl_FragCoord.xy) - .5) / 255.0;
   outColor = vec4(display * coverage, coverage);
 }
