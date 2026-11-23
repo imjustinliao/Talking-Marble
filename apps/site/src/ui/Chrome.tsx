@@ -6,8 +6,8 @@ export const NPM = 'https://www.npmjs.com/package/talking-marble';
 const base = import.meta.env.BASE_URL;
 
 export function TopBar({ page }: { page: 'home' | 'docs' }) {
-  const { theme, toggle, resolved } = useTheme();
-  const dark = theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && resolved() === 'dark');
+  const { theme, toggle } = useTheme();
+  const dark = theme === 'dark';
   const home = page === 'home' ? '' : base;
   return (
     <>

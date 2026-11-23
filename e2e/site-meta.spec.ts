@@ -86,7 +86,7 @@ test('the head has complete, absolute link-preview and SEO tags', async ({ page 
   }
   expect(await meta('og:image:type')).toBe('image/jpeg');
   expect(await meta('og:video:type')).toBe('video/mp4');
-  await expect(page.locator('meta[name="theme-color"]')).toHaveCount(2);
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0b0b0d'); // dark for everyone
 
   // Structured data parses and points at the repository.
   const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!);

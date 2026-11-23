@@ -285,3 +285,10 @@ The scroll camera, intro, dust, floor, palette curve, word drum and conversation
 
 ### Waiting on M7
 The `emotion` prop and `label`, the new preset names, and the shared renderer (more live marbles at once).
+
+## F-10 Dark by default (0.8.1)
+
+- **Dark for everyone**: the site is now dark whatever the visitor's system says; the "follow the system" behavior is gone.
+- **Light by toggle**: the top-bar toggle switches to light, and the choice is remembered in `localStorage`. An inline script applies it before first paint, so there is no dark flash.
+- **Code**: `theme.ts` (`'dark' | 'light'`), the `prefers-color-scheme` block removed from `base.css`, and a single `theme-color` meta (`#0b0b0d`) with `color-scheme: dark` on both pages.
+- **E2E**: the theme test checks that a light-system visitor lands in dark, the toggle, that light is applied before first paint after a reload, the docs page, and back to dark. The axe tests set light through the stored choice. 40 passed on 4 workers; both builds and typecheck pass.
