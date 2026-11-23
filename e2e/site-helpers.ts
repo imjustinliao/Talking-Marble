@@ -1,10 +1,6 @@
-import { expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
-export type ShotId = 'intro' | 'colors' | 'pick' | 'talk' | 'install';
-const LABEL: Record<ShotId, string> = { intro: 'Marble', colors: 'Colors', pick: 'Pick', talk: 'Talk', install: 'Install' };
-
-export const mainOrb = (page: Page) => page.locator('[data-testid="main-marble"] [data-talking-marble]');
-export const shot = (page: Page, id: ShotId) => page.locator(`section#${id}`);
+export const preview = (page: Page) => page.locator('[data-talking-marble][role="img"]');
 
 /** Collects console errors and warnings (Chromium's own GPU driver notes are not the page's). */
 export function trackErrors(page: Page) {
@@ -17,17 +13,8 @@ export function trackErrors(page: Page) {
   return errors;
 }
 
-/** Opens the home page and skips the intro (any key skips it). */
-export async function home(page: Page) {
-  await page.goto('/');
-  await expect(mainOrb(page)).toHaveAttribute('data-ready', 'true');
-  await page.keyboard.press('Shift');
-  await expect(page.locator('.experience')).not.toHaveAttribute('data-intro', 'play');
-}
-
-/** Moves the camera to a shot with the scene index, and waits until its controls are live. */
-export async function toShot(page: Page, id: ShotId) {
-  await page.getByRole('navigation', { name: 'Scenes' }).getByRole('link', { name: new RegExp(LABEL[id]) }).click();
-  await expect(shot(page, id)).toHaveClass(/is-on/);
-  await expect(shot(page, id)).not.toHaveAttribute('aria-hidden', 'true');
+/** Scrolls through the whole page so every section reveals (and its marbles mount), then back to the top. */
+export async function walk(page: Page) {
+  const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  for (let y = 0; y < height; y += 400) { await page.evaluate(v => scrollTo(0, v), y); await page.waitForTimeout(80); }
 }

@@ -3,10 +3,8 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { TalkingMarble, type PaletteName } from 'talking-marble';
-import { PRESETS } from './gallery/items';
-import { Marble } from './ui/Marble';
+import { PRESETS } from './presets';
 import './styles/base.css';
-import './styles/home.css';
 
 const q = new URLSearchParams(location.search);
 const mode = q.get('mode') ?? 'orb';
@@ -40,7 +38,8 @@ function Media() {
     return (
       <div id="frame" className="card">
         <div className="card__marble">
-          <Marble size="400px" state={state} level={level} palette={palette} presets={PRESETS} />
+          <span className="card__glow" aria-hidden="true" />
+          <TalkingMarble size={400} state={state} level={level} palette={palette} presets={PRESETS} />
         </div>
         <div className="card__text">
           <p className="caps card__kicker">Talking Marble</p>
@@ -57,8 +56,10 @@ const style = document.createElement('style');
 style.textContent = `
   /* Transparent renders (icons, gallery stills): nothing behind the marble, not even the stage's black */
   html, body { margin: 0; background: ${mode === 'orb' ? 'transparent' : bg} !important; }
-  body::after { ${mode === 'card' ? '' : 'display: none;'} }
+  
   .card { width: 1200px; height: 630px; background: #000; color: #f5f5f7; display: grid; grid-template-columns: 540px 1fr; align-items: center; padding: 70px 80px 0 40px; box-sizing: border-box; overflow: hidden; }
+  .card__marble { position: relative; display: grid; place-items: center; }
+  .card__glow { position: absolute; width: 560px; height: 160px; bottom: -40px; background: radial-gradient(closest-side, rgba(239,159,197,.28), transparent); }
   .card__text { display: grid; gap: 26px; padding-bottom: 70px; }
   .card__kicker { color: rgba(215,215,215,.8); font-size: 15px; letter-spacing: .3em; }
   .card__title { font-size: 56px; line-height: 1.08; }

@@ -7,9 +7,9 @@
     <title>Docs: Talking Marble, an audio-reactive orb for voice AI apps</title>
     <meta name="description" content="Install, props, audio sources, states, custom presets and recipes for OpenAI Realtime, ElevenLabs and LiveKit for Talking Marble, the audio-reactive orb React component." />
     <link rel="canonical" href="https://imjustinliao.github.io/Talking-Marble/docs/" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#f6f6f4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0d" media="(prefers-color-scheme: dark)" />
 
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -65,8 +65,12 @@
         ]
       }
     </script>
+    <script>
+      // Apply a saved theme before first paint, so the page does not flash.
+      try { var t = localStorage.getItem('talking-marble-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+    </script>
   </head>
-  <body style="background:#000">
+  <body>
     <div id="root"></div>
     <noscript>
       <p>Talking Marble docs: install with <code>npm i talking-marble</code>, then render <code>&lt;TalkingMarble state="speaking" audio={stream} /&gt;</code>. A plain-text guide is at <a href="https://imjustinliao.github.io/Talking-Marble/llms.txt">llms.txt</a>; the source and README are on <a href="https://github.com/imjustinliao/Talking-Marble">GitHub</a>.</p>

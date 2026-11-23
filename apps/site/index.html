@@ -7,10 +7,9 @@
     <title>Talking Marble: an audio-reactive orb for voice AI apps</title>
     <meta name="description" content="Talking Marble is an audio-reactive orb React component for voice AI apps: six agent states, any audio source (mic, stream, level), MIT licensed." />
     <link rel="canonical" href="https://imjustinliao.github.io/Talking-Marble/" />
-    <meta name="color-scheme" content="dark" />
-    <!-- One black stage in every system theme (docs/design.md › The site) -->
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#f6f6f4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0d" media="(prefers-color-scheme: dark)" />
 
     <!-- Icons (rendered from the real orb by scripts/render-media.mjs) -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
@@ -79,8 +78,12 @@
         ]
       }
     </script>
+    <script>
+      // Apply a saved theme before first paint, so the page does not flash.
+      try { var t = localStorage.getItem('talking-marble-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+    </script>
   </head>
-  <body style="background:#000">
+  <body>
     <div id="root"></div>
     <noscript>
       <p>Talking Marble is an audio-reactive orb React component for voice AI apps. Install it with <code>npm i talking-marble</code>. The playground needs JavaScript; the docs are also at <a href="https://github.com/imjustinliao/Talking-Marble">github.com/imjustinliao/Talking-Marble</a>.</p>

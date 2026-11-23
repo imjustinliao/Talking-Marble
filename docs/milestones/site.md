@@ -234,3 +234,54 @@ None.
 - `E2E_PORT=5177 pnpm test:e2e`: 16 passed — Main's `render.spec.ts` plus `site-page.spec.ts` (sections and no console errors/warnings, hero cycles, every state and example preset, palette + color picker, size, sim/slider/none audio, halo, copy buttons with clipboard read-back, theme toggle and persistence, keyboard-only with visible focus, axe WCAG 2.2 AA in light and dark), `site-mic.spec.ts` (denied via Playwright's default, denied stub from the hero button, no device), `site-mic-allowed.spec.ts` (fake mic device: stream to `audio`, state switch, every track `ended` after switching away). The page test ignores Chromium's own "GL Driver Message … GPU stall due to ReadPixels" warnings, which come from the GPU driver, not the page.
 - Checked by eye at 1280 and 375 px, both themes, keyboard only; no horizontal scroll at 375 (`scrollWidth` 375). Screenshots (gitignored, regenerate with a Playwright run of the dev server on 5176): `test-results/site/desktop-1280-{light,dark}-{hero,full}.png`, `test-results/site/mobile-375-{light,dark}-{hero,full}.png`, `test-results/site/{desktop-1280,mobile-375}-keyboard-focus.png`.
 - Not checked: Safari and Firefox; a real microphone (fake device only); the Pages workflow itself (runs only after Main pushes); a screen reader beyond axe.
+
+## M8 Hero, states, in context (0.8.x, 2026-11-23)
+
+Branch `milestone/site-sections`, cut from `main` at 0.6.2. It replaces the scroll-camera experience; the 0.4.11–0.4.12 experience work stays on `milestone/site` (ffcbb19) and is superseded.
+
+### Built
+- **Hero**: the live marble (speaking, simulated voice), "Talking Marble", the plain line "An audio-reactive orb for voice AI apps. React, open source.", the install command as one control (the whole pill copies; the icon turns into a check and screen readers hear "Copied"), and Docs and GitHub links. Centred, roomy.
+- **States** (SITE-01/02 slot): a grid of nine cards (six states and three emotions as presets), each with its own live marble (72 px). A card is a button that shows its state in a large preview (220 px, the page's one labelled marble, with `state="…"` and one plain line). Below the grid are the inline pills: a 20 px marble beside "Listening…", "Thinking…", "Speaking…".
+- **In context**: three pictures of everyday UIs with live marbles: a chat input bar with a Voice button (32 px, listening), a full-screen call (168 px, speaking) and an inline chat reply (24 px, thinking). They are `aria-hidden` pictures with plain captions; nothing in them is interactive.
+- **Footer**: GitHub, npm, MIT © Justin Liao.
+- **Themes**: dark by default (`#0b0b0d`); light when the system asks (`#f6f6f4`); a sun/moon toggle in the top bar, remembered and applied before first paint. Tokens: bg, surface, raised, text, text-2, text-3, hairlines, focus and primary, in both themes. System fonts only; the Instrument Serif face was dropped (Q-2).
+- **Slots**: `home/main.tsx` marks where `<Playground />` (M9) and `<Install />` (M10) go. `/docs/` still builds (M10 rewrites it).
+
+### Removed
+The scroll camera, intro, dust, floor, palette curve, word drum and conversation demo, liquid glass and the pointer light (the `scene/`, `demo/`, `gallery/`, `home/Shots`, `useExperience` and `ui/Marble` code). Their tests went too: `site-demo`, `site-path` and `site-mic-allowed`.
+
+### Kept for later
+- `CopyButton`, `Code` and the icons.
+- `ColorPicker` (for M9's palette editing).
+- `palettes.ts` with `orbProps()` (the code generator).
+- `Docs`/`Recipes`.
+- The media script and `media.html`, re-rendered.
+- The SEO files and the Pages workflow.
+
+### Defaults chosen
+- **States**: the cards select into one large preview. That keeps a single labelled marble on the page and gives `render.spec.ts` its six exact-name buttons.
+- **Copy**: one line per state, for screen readers (`aria-describedby`) and under the preview.
+- **Live marbles mount only near the screen** (`ui/LiveMarble`, an IntersectionObserver with a 120 px margin); offscreen ones are a still CSS gradient in their palette. At most ~13 are live at once (preview, 9 cards, 3 pills), under the browser's ~16 WebGL contexts, and the hero unmounts when scrolled away. M7's shared renderer will lift this.
+
+### Tests (`E2E_PORT=5177 pnpm test:e2e`, 4 workers): **40 passed**
+- **`render.spec.ts`**: Main's assertions are unchanged. Only how it reaches the controls changed: it clicks "States" in the nav, as a visitor would.
+- **`site-page.spec.ts`**:
+  - sections in order;
+  - hero copy and links;
+  - the install pill with one control;
+  - every card live, and choosing one fills the preview;
+  - the pills at 20 px;
+  - the three in-context UIs with their states;
+  - offscreen marbles are not live;
+  - themes (default, system light, toggle, remembered);
+  - keyboard (skip link, cards, visible focus);
+  - axe in both themes on `/` and `/docs/`.
+- `site-docs` and `site-meta` pass unchanged.
+
+### Checked
+- Both builds and typecheck pass.
+- 375 and 1280 px in both themes, reduced motion, keyboard focus and `/docs/`: screenshots in `test-results/site/`.
+- No horizontal scroll.
+
+### Waiting on M7
+The `emotion` prop and `label`, the new preset names, and the shared renderer (more live marbles at once).

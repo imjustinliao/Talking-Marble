@@ -1,6 +1,4 @@
-/* Docs: a calm reading page on the same stage (no camera). */
-.docs-stage { position: fixed; inset: 0; z-index: -1; background: radial-gradient(ellipse 70% 30% at 50% 100%, rgba(255, 255, 255, 0.06), transparent 70%), radial-gradient(ellipse 40% 25% at 85% 0%, color-mix(in srgb, var(--marble) 12%, transparent), transparent 70%), #000; }
-.topbar--solid { background: rgba(0, 0, 0, 0.6); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-bottom: 1px solid var(--hair); }
+/* Docs: a slim index on the side, one column of text, code in cards. */
 .docs {
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
@@ -16,7 +14,7 @@
   border-left: 1px solid var(--hair); color: var(--text-2); text-decoration: none; font-size: 15px;
   transition: color 0.25s ease, border-color 0.25s ease, text-shadow 0.35s ease;
 }
-.docs__index a:hover, .docs__index a:focus-visible { color: #fff; border-left-color: #fff; text-shadow: var(--lit-text-glow); }
+.docs__index a:hover, .docs__index a:focus-visible { color: #fff; border-left-color: #fff;  }
 .docs__body { min-width: 0; max-width: 760px; animation: docs-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 @keyframes docs-in { from { opacity: 0; transform: translateY(20px); } }
 .docs__header { display: grid; gap: 14px; margin-bottom: 40px; }

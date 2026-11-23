@@ -32,16 +32,10 @@ test('the orb draws in all six states, with no console errors', async ({ page })
   await page.goto('/');
   // Opaque page background so screenshots measure the orb, not the page.
   await page.emulateMedia({ colorScheme: 'dark' });
+  // The state controls live in the States section: go there as a visitor would (the nav link).
+  await page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'States' }).click();
   const orb = page.locator('[data-talking-marble][role="img"]');
   await expect(orb).toHaveAttribute('data-ready', 'true');
-  // The site is a scroll-camera experience (docs/design.md › The site): skip the intro as a visitor would (any key),
-  // then move to the talk shot (Page Down through colors and pick), where the state controls live, and let the camera settle.
-  await page.keyboard.press('Shift');
-  for (const shot of ['colors', 'pick', 'talk']) {
-    await page.keyboard.press('PageDown');
-    await expect(page.locator(`section#${shot}`)).toHaveClass(/is-on/);
-  }
-  await page.waitForTimeout(2000);
 
   const frames: string[] = [];
   for (const state of STATES) {
