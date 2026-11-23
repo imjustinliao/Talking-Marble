@@ -1,0 +1,31 @@
+# Secrets: never commit them. Example files with names only (.env.example, secrets.example.h) are fine.
+.env
+.env.*
+!.env.example
+.envrc
+.dev.vars
+secrets/
+secrets.h
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+credentials.json
+*.tfstate
+*.tfstate.*
+
+# Local agent and editor state
+.claude/settings.local.json
+.DS_Store
+
+# Dependencies and build output (add your stack's own)
+node_modules/
+dist/
+build/
+.venv/
+__pycache__/
+packages/react/src/generated/
+test-results/
+playwright-report/
+*.tsbuildinfo

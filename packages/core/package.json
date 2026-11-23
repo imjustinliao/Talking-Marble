@@ -1,0 +1,14 @@
+{
+  "name": "@talking-marble/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Talking Marble's platform-neutral core: the orb shader, the presets and the spec every port follows.",
+  "license": "MIT",
+  "author": "Justin Liao",
+  "files": ["shader", "presets", "spec.md"],
+  "exports": {
+    "./shader/*": "./shader/*",
+    "./presets/*": "./presets/*",
+    "./spec.md": "./spec.md"
+  }
+}

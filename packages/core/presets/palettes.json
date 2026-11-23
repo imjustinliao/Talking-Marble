@@ -1,0 +1,8 @@
+{
+  "pearl":  ["#f6f5ee", "#ef9fc5", "#61d9d0", "#f3c76f"],
+  "ember":  ["#fff0cf", "#ff6028", "#931c30", "#ffc43d"],
+  "lagoon": ["#e8ffef", "#14bfa2", "#064c65", "#d5ee71"],
+  "ink":    ["#080a12", "#6b68df", "#e0e8f3", "#a84174"],
+  "rose":   ["#fff0f3", "#e4487d", "#681d42", "#ffb077"],
+  "aurora": ["#0a1117", "#5adfab", "#a275ff", "#ffbe77"]
+}

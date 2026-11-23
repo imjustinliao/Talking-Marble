@@ -1,0 +1,225 @@
+/* The experience: one continuous scene, a scroll camera, and words that belong to shots. */
+
+@keyframes rise-in { from { opacity: 0; transform: translateY(14px); } }
+@keyframes fade-in { from { opacity: 0; } }
+
+body { overscroll-behavior-y: none; }
+html { scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
+
+/* ── The scene ── */
+.viewport { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: #000; perspective: 1000px; perspective-origin: 50% 50%; }
+.world { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; will-change: transform; }
+.world > * { position: absolute; left: 0; top: 0; }
+.horizon {
+  /* Drawn small and scaled up: giant layers would exhaust the browser's raster tiles */
+  width: 3000px; height: 450px;
+  transform: translate3d(-1500px, -225px, -12000px) scale(20);
+  background: radial-gradient(ellipse 22% 5% at 50% 50%, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.03) 45%, transparent 75%);
+}
+.floor {
+  /* A glossy sheen around the marble, fading to nothing well before the plane's edge */
+  width: 2000px; height: 2000px;
+  transform: translate3d(-1000px, -1000px, 0) rotateX(90deg) scale(4);
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.014) 45%, transparent 100%);
+}
+.pool { background: radial-gradient(closest-side, color-mix(in srgb, var(--marble) var(--strength), transparent), color-mix(in srgb, var(--marble) calc(var(--strength) / 4), transparent) 55%, transparent); border-radius: 50%; }
+.dust { width: 2000px; height: 1300px; overflow: hidden; pointer-events: none; }
+.dust__drift { position: absolute; inset: 0 -256px -256px 0; background-size: 256px; animation: drift linear infinite; }
+@keyframes drift { to { transform: translate3d(-256px, -256px, 0); } }
+
+.actor { transform-origin: 50% 50%; }
+.reflect { -webkit-box-reflect: below 4px linear-gradient(transparent 60%, rgba(255, 255, 255, 0.3)); }
+.hero-marble__orb { display: block; width: 100%; height: 100%; }
+.vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55)); }
+
+/* The palette curve */
+.curve { transform-style: preserve-3d; }
+.curve > * { position: absolute; left: 0; top: 0; }
+.cmarble { position: relative; display: block; width: 100%; height: 100%; border-radius: 50%; }
+.cmarble:focus-visible { outline-offset: 12px; }
+.cmarble__orb { position: relative; display: block; width: 100%; height: 100%; transition: opacity 0.2s linear; }
+.cmarble__orb > * { animation: fade-in 0.6s ease both; }
+.cmarble__name { position: absolute; left: 50%; top: calc(100% + 34px); transform: translateX(-50%); font-size: 30px; letter-spacing: 0.02em; color: var(--text-2); white-space: nowrap; opacity: 0; transition: opacity 0.4s ease, color 0.3s ease; }
+.experience[data-shot="pick"] .cmarble__name { opacity: 1; }
+.cmarble[aria-pressed="true"] .cmarble__name { color: #fff; }
+.experience[data-shot="pick"] .cmarble[aria-pressed="true"]::after { content: ""; position: absolute; inset: -18px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.85); box-shadow: 0 0 40px rgba(255, 255, 255, 0.25); }
+.nebula { position: absolute; inset: -20%; pointer-events: none; background-image: var(--nebula); background-size: 1600px; opacity: 0.5; animation: nebula 120s linear infinite alternate; }
+@keyframes nebula { to { transform: translate3d(-6%, 3%, 0) scale(1.08); } }
+
+/* ── The intro: a point of light ignites, swells, and becomes the marble ── */
+.spark { position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; margin: -6px; border-radius: 50%; background: #fff; box-shadow: 0 0 20px 6px rgba(255, 255, 255, 0.8), 0 0 80px 30px color-mix(in srgb, var(--marble) 50%, transparent); opacity: 0; pointer-events: none; }
+@keyframes spark { 0% { opacity: 0; transform: scale(0); } 18% { opacity: 1; transform: scale(1); } 46% { opacity: 1; transform: scale(5); } 100% { opacity: 0; transform: scale(18); } }
+@keyframes form { 0% { opacity: 0; transform: scale(0.25); } 100% { opacity: 1; transform: none; } }
+/* The intro's animations stay attached after it ends (removing them can leave a stale frame on screen);
+   skipping just makes them finish now. Reduced motion has no intro. */
+.experience[data-intro] .spark { animation: spark 1.7s cubic-bezier(0.3, 0, 0.2, 1) 0.2s both; }
+.experience[data-intro] .hero-marble__orb { animation: form 1.4s var(--ease) 0.75s both; }
+.experience[data-intro] .pool { animation: fade-in 1.4s ease 0.9s both; }
+.experience[data-intro] .horizon, .experience[data-intro] .floor { animation: fade-in 1.6s ease 0.4s both; }
+@keyframes letter-in { 0% { opacity: 0; transform: translateY(0.18em) scale(0.98); } 100% { opacity: 1; transform: none; } }
+.experience[data-intro] .hero__letter { animation: letter-in 0.7s var(--ease) both; animation-delay: calc(1.25s + var(--i) * 45ms); }
+.experience[data-intro] .shot--intro .hero__line, .experience[data-intro] .shot--intro .hero__actions { animation: rise-in 0.8s var(--ease) 2s both; }
+.experience[data-intro] .topbar, .experience[data-intro] .index, .experience[data-intro] .progress { animation: fade-in 0.8s ease 2.1s both; }
+.experience[data-intro="skip"] *, .experience[data-intro="skip"] { animation-delay: 0s !important; animation-duration: 0.01ms !important; }
+
+/* ── Shots: words and controls fixed over the scene ── */
+.shot { position: fixed; inset: 0; z-index: 10; pointer-events: none; display: grid; padding: 88px clamp(96px, 9vw, 150px) 48px clamp(20px, 6vw, 88px); transition: opacity 0.35s linear; }
+.shot > * { pointer-events: auto; }
+.shot .rise { opacity: 0; transform: translateY(12px); transition: opacity 0.7s var(--ease), transform 0.9s var(--ease); transition-delay: calc(var(--i, 0) * 90ms); }
+.shot.is-on .rise { opacity: 1; transform: none; }
+.track { width: 1px; }
+
+/* Shot 1: intro. One column, one rhythm: name, line, then the two ways in on one row. */
+.hero { align-self: center; justify-self: start; display: grid; gap: 22px; width: min(620px, 100%); }
+.hero__title { font-size: clamp(3.2rem, 1.8rem + 5.2vw, 6.6rem); display: block; white-space: nowrap; }
+.hero__letter { display: inline-block; }
+.hero__line { font-family: var(--display); font-weight: 300; font-size: clamp(1.15rem, 1rem + 0.6vw, 1.5rem); color: var(--text-2); letter-spacing: -0.01em; }
+.hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 10px; }
+.install-pill { display: inline-flex; align-items: center; gap: 2px; min-height: 48px; padding: 0 4px 0 18px; border-radius: 999px; }
+.install-pill code { font-size: 14px; color: var(--text); margin-right: 6px; }
+.hero__usage { width: 100%; animation: rise-in 0.45s var(--ease); }
+
+/* Panels (glass, right of the marble; a bottom sheet on phones) */
+.panel { align-self: center; justify-self: end; width: min(400px, 100%); border-radius: 22px; padding: 22px 22px 20px; display: grid; gap: 14px; }
+.panel__title { font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-3); }
+.panel__line { color: var(--text-2); font-size: 14px; }
+.panel__actions { display: flex; gap: 8px; }
+.colors__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.colors__name { font-size: 2.6rem; }
+.colors__nav { display: flex; gap: 6px; }
+.colors__swatches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.panel { overflow: visible; }
+/* The colour picker: a round swatch, and a glass popover with a field, a hue rail and a hex */
+.cpick { position: relative; display: grid; justify-items: center; gap: 8px; }
+.cpick__swatch { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--hair-strong); transition: border-color 0.25s ease, box-shadow 0.35s ease; }
+.cpick__swatch span { width: 40px; height: 40px; border-radius: 50%; background: var(--c); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -2px 6px rgba(0, 0, 0, 0.35); }
+.cpick__swatch:hover, .cpick__swatch:focus-visible, .cpick__swatch[aria-expanded="true"] { border-color: rgba(255, 255, 255, 0.85); box-shadow: 0 0 22px color-mix(in srgb, var(--c) 45%, transparent); }
+.cpick__label { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.cpick__pop { position: absolute; z-index: 20; top: calc(100% + 8px); left: 50%; width: 236px; transform: translateX(-50%); border-radius: 18px; padding: 12px; display: grid; gap: 12px; animation: rise-in 0.3s var(--ease); }
+.cpick__pop.is-above { top: auto; bottom: calc(100% + 8px); }
+.colors__swatches .cpick:first-child .cpick__pop { left: 0; transform: none; }
+.colors__swatches .cpick:last-child .cpick__pop { left: auto; right: 0; transform: none; }
+.cpick__field { position: relative; height: 140px; border-radius: 12px; cursor: crosshair; touch-action: none; background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, var(--hue)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+.cpick__field:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cpick__thumb { position: absolute; width: 18px; height: 18px; margin: -9px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.5); pointer-events: none; }
+.cpick__hue { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; cursor: pointer; }
+.cpick__hue::-webkit-slider-runnable-track { height: 10px; border-radius: 999px; background: linear-gradient(90deg, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15); }
+.cpick__hue::-moz-range-track { height: 10px; border-radius: 999px; background: linear-gradient(90deg, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00); }
+.cpick__hue::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.5); }
+.cpick__hue::-moz-range-thumb { width: 20px; height: 20px; border: 0; border-radius: 50%; background: #fff; }
+.cpick__hue:focus-visible { outline: none; }
+.cpick__hue:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px #000, 0 0 0 5px #fff; }
+.cpick__hex { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; background: rgba(0, 0, 0, 0.3); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+.cpick__hex:focus-within { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6); }
+.cpick__dot { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3); flex: none; }
+.cpick__hex input { flex: 1; min-width: 0; background: none; border: 0; color: var(--text); font-size: 14px; letter-spacing: 0.04em; outline: none; }
+
+/* Shot 3: pick */
+.pick { align-self: end; justify-self: center; display: grid; justify-items: center; gap: 10px; text-align: center; margin-bottom: 24px; }
+.pick__title { font-size: clamp(2rem, 1.4rem + 2vw, 3rem); }
+.pick__line { display: inline-flex; align-items: center; gap: 10px; color: var(--text-2); font-size: 16px; }
+.pick__dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+
+/* The word drum */
+.drum { position: relative; width: 130px; height: 220px; perspective: 420px; }
+.drum__track {
+  height: 100%; overflow-y: auto; scroll-snap-type: y mandatory; padding-block: 88px;
+  scrollbar-width: none; overscroll-behavior: contain; touch-action: pan-y; cursor: grab; transform-style: preserve-3d;
+  -webkit-mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+  mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+}
+.drum__track::-webkit-scrollbar { display: none; }
+.drum__word { display: block; width: 100%; height: 44px; scroll-snap-align: center; font-family: var(--display); font-size: 20px; font-weight: 300; letter-spacing: -0.01em; color: var(--text-2); backface-visibility: hidden; transition: color 0.25s ease; }
+.drum__word[data-group="emotion"] { font-style: italic; }
+.drum__word[aria-pressed="true"] { color: #fff; }
+.drum__word:focus-visible { outline-offset: -3px; border-radius: 8px; }
+.drum__lens { position: absolute; left: 4px; right: 4px; top: 50%; height: 44px; transform: translateY(-50%); border-radius: 999px; border: 1px solid var(--hair); pointer-events: none; }
+
+/* Shot 3: talk */
+.talk { align-self: center; justify-self: end; display: grid; gap: 14px; width: min(560px, 100%); }
+.talk__title { font-size: clamp(2.2rem, 1.6rem + 2vw, 3.2rem); }
+.talk__body { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; }
+.talk__words { display: grid; gap: 14px; }
+.talk__line { color: var(--text-2); font-size: 16px; max-width: 34ch; }
+.caption { display: grid; gap: 6px; min-height: 7.4em; align-content: start; }
+.caption__text { font-family: var(--display); font-weight: 300; font-size: clamp(1.25rem, 1rem + 0.9vw, 1.7rem); line-height: 1.4; letter-spacing: -0.012em; }
+.caption__word { color: rgba(255, 255, 255, 0.24); transition: color 0.2s ease; }
+.caption__word.is-lit { color: #fff; }
+[data-who="You"] .caption__word { color: var(--text-2); }
+.talk__actions { display: flex; gap: 8px; }
+.talk__note { color: var(--text-2); font-size: 14px; min-height: 1.4em; }
+
+/* Shot 5: install */
+.install { align-self: center; justify-self: start; display: grid; gap: 18px; width: min(560px, 100%); }
+.install__title { font-size: clamp(2.6rem, 1.8rem + 3vw, 4.4rem); }
+.install__line { color: var(--text-2); font-size: 17px; }
+.install__links { display: flex; flex-wrap: wrap; gap: 8px; }
+.install__footer { margin-top: 18px; }
+
+/* A marble on its own floor (the close look) */
+.marble { position: relative; width: var(--size); max-width: 100%; margin-inline: auto; padding-bottom: calc(var(--size) * 0.3); isolation: isolate; }
+.marble__orb { position: relative; z-index: 1; -webkit-box-reflect: below 4px linear-gradient(transparent 60%, rgba(255, 255, 255, 0.3)); }
+.marble__pool { position: absolute; z-index: 0; left: 50%; top: calc(var(--size) * 0.8); width: calc(var(--size) * 1.8); height: calc(var(--size) * 0.42); transform: translateX(-50%); background: radial-gradient(closest-side, color-mix(in srgb, var(--light) 30%, transparent), transparent); filter: blur(calc(var(--size) * 0.03)); pointer-events: none; }
+.marble__floor { position: absolute; z-index: 2; left: -45%; right: -45%; top: calc(var(--size) * 1.004); height: calc(var(--size) * 0.62); background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.82) 55%, #000 92%); -webkit-mask-image: radial-gradient(ellipse 50% 100% at 50% 0%, #000 50%, transparent 100%); mask-image: radial-gradient(ellipse 50% 100% at 50% 0%, #000 50%, transparent 100%); pointer-events: none; }
+
+/* ── Index and progress ── */
+.index { position: fixed; right: clamp(8px, 2vw, 28px); top: 50%; z-index: 30; transform: translateY(-50%); display: grid; }
+.index a { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-height: 44px; min-width: 44px; padding: 0 6px; text-decoration: none; color: var(--text-3); font-size: 11px; }
+.index__label { letter-spacing: 0.16em; text-transform: uppercase; opacity: 0; transform: translateX(6px); transition: opacity 0.3s ease, transform 0.4s var(--ease); }
+.index__num { letter-spacing: 0.04em; }
+.index a:hover .index__label, .index a:focus-visible .index__label, .index a[aria-current="step"] .index__label { opacity: 1; transform: none; }
+.index a[aria-current="step"], .index a:hover, .index a:focus-visible { color: #fff; }
+.progress { position: fixed; left: 0; top: 0; bottom: 0; z-index: 30; width: 2px; background: rgba(255, 255, 255, 0.06); }
+.progress__fill { height: 100%; background: linear-gradient(#fff, rgba(255, 255, 255, 0.5)); transform-origin: top; transform: scaleY(0); }
+
+/* ── Phones: the same shots, gentler moves; words at the bottom, the dials as a sheet ── */
+@media (max-width: 720px), (max-aspect-ratio: 1/1) {
+  .shot { padding: 72px 20px 24px; }
+  .hero, .talk, .install { align-self: end; justify-self: stretch; max-width: none; width: 100%; }
+  .hero { gap: 12px; }
+  .hero__title { font-size: 2.8rem; }
+  .panel { position: fixed; left: 0; right: 0; bottom: 0; width: auto; justify-self: stretch; max-height: 56svh; border-radius: 22px 22px 0 0; padding: 18px 18px 20px; border-bottom: 0; }
+  .colors__name { font-size: 2rem; }
+  .hero__title { white-space: normal; }
+  .drum { width: 110px; height: 176px; }
+  .drum__track { padding-block: 66px; }
+  .talk__body { grid-template-columns: minmax(0, 1fr) 110px; gap: 12px; }
+  .caption { min-height: 6em; }
+  .index { display: none; }
+}
+
+/* Short landscape screens (phones on their side): a compact scale so every shot fits */
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .shot { padding-top: 60px; padding-bottom: 12px; }
+  .hero { gap: 12px; }
+  .hero__title { font-size: clamp(2.2rem, 1rem + 4vw, 3.4rem); }
+  .hero__line { font-size: 1rem; }
+  .panel { padding: 14px 16px; gap: 10px; }
+  .colors__name { font-size: 1.8rem; }
+  .cpick__swatch { width: 44px; height: 44px; }
+  .cpick__swatch span { width: 34px; height: 34px; }
+  .talk__title, .install__title, .pick__title { font-size: 1.8rem; }
+  .caption { min-height: 4.5em; }
+  .caption__text { font-size: 1.1rem; }
+  .talk { width: min(420px, 100%); gap: 8px; }
+  .talk__line { font-size: 14px; }
+  .talk__body { grid-template-columns: minmax(0, 1fr) 110px; gap: 12px; }
+  .drum { width: 110px; }
+  .panel { width: min(360px, 100%); }
+  .drum { height: 176px; }
+  .drum__track { padding-block: 66px; }
+  .install { gap: 8px; width: min(400px, 100%); }
+  .install__title { font-size: 1.5rem; }
+  .install .code figcaption { padding-block: 0; }
+  .install .code pre { padding: 6px 14px; font-size: 11.5px; line-height: 1.4; }
+  .install__footer { display: none; }
+  .index a { min-height: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shot .rise { transform: none; transition: opacity 0.3s linear; transition-delay: 0s; }
+  .dust__drift { animation: none; }
+  .grain { animation: none; }
+  .nebula { animation: none; }
+}

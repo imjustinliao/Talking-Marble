@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>talking-marble test page</title>
+    <style>
+      html, body { margin: 0; font: 12px system-ui, sans-serif; }
+      body { background: #101114; color: #eee; }
+      body[data-bg="light"] { background: #f7f5f0; color: #222; }
+      #root { padding: 24px; }
+      .grid { display: grid; grid-template-columns: repeat(6, auto); gap: 28px 36px; align-items: center; justify-items: center; }
+      .cell { display: grid; gap: 10px; justify-items: center; }
+      .pair { display: inline-flex; gap: 24px; padding: 24px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

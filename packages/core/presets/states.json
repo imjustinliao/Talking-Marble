@@ -1,0 +1,14 @@
+{
+  "base": {
+    "flow": 1, "energy": 0, "warp": 2.2, "brightness": 1, "saturation": 1,
+    "tint": "#ffffff", "tintAmount": 0, "breath": 0, "halo": 0.5, "levelResponse": 0
+  },
+  "states": {
+    "idle":       {},
+    "connecting": { "flow": 0.8, "warp": 2.0, "brightness": 0.86, "saturation": 0.7, "breath": 1, "halo": 0.35 },
+    "listening":  { "energy": 0.2, "brightness": 1.04, "halo": 0.55, "levelResponse": 0.5 },
+    "thinking":   { "energy": 1, "warp": 2.7, "brightness": 1.06, "halo": 0.7 },
+    "speaking":   { "energy": 1, "brightness": 1.05, "halo": 0.7, "levelResponse": 1 },
+    "error":      { "flow": 0.45, "warp": 2.0, "brightness": 0.9, "saturation": 0.35, "tint": "#ff4a4a", "tintAmount": 0.28, "halo": 0.4 }
+  }
+}
