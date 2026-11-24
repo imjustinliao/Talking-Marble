@@ -34,21 +34,21 @@ test('trying: switch bars for state and emotion, a toggle for halo, reach every 
   await open(page);
   const top = () => walkShot(page).locator('.walk__name').evaluate(el => el.getBoundingClientRect().top);
   const before = await top();
-  // Five at a time (F-90): one row each; the arrow turns to the rest.
-  for (const label of ['State', 'Emotion']) {
+  // A loop (F-90): one row; only the real options are in the accessibility tree.
+  for (const [label, count] of [['State', 7], ['Emotion', 9]] as const) {
     const bar = walkShot(page).getByRole('group', { name: label, exact: true });
-    await expect(bar.locator('.seg__opt')).toHaveCount(5);
+    await expect(bar.getByRole('button')).toHaveCount(count);
     const tops = await bar.locator('.seg__opt').evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().top)));
     expect(new Set(tops).size, `${label} on one row`).toBe(1);
   }
   for (const state of ['idle', 'connecting', 'listening', 'thinking', 'searching', 'speaking', 'error']) {
-    await (await option(walkShot(page), 'State', state)).click();
+    await option(walkShot(page), 'State', state).pick();
     await expect(word(page, state)).toHaveAttribute('aria-pressed', 'true');
     for (const orb of await orbs(page).all()) await expect(orb).toHaveAttribute('data-state', state);
   }
-  await (await option(walkShot(page), 'Emotion', 'sad')).click();
+  await option(walkShot(page), 'Emotion', 'sad').pick();
   for (const orb of await orbs(page).all()) await expect(orb).toHaveAttribute('data-emotion', 'sad');
-  await (await option(walkShot(page), 'Emotion', 'happy')).click();
+  await option(walkShot(page), 'Emotion', 'happy').pick();
   for (const orb of await orbs(page).all()) await expect(orb).toHaveAttribute('data-emotion', 'happy');
   await word(page, 'none').click();
   await expect(orbs(page).first()).not.toHaveAttribute('data-emotion');
@@ -61,7 +61,7 @@ test('trying: switch bars for state and emotion, a toggle for halo, reach every 
   await halo.click();
   await expect(orbs(page).first().locator('[data-halo]')).toBeVisible();
   // Walking on keeps what you tried.
-  await (await option(walkShot(page), 'State', 'thinking')).click();
+  await option(walkShot(page), 'State', 'thinking').pick();
   await walkShot(page).getByRole('button', { name: 'Next palette' }).click();
   await expect(walkShot(page).locator('.walk__name')).toHaveText('Ember');
   await expect(word(page, 'thinking')).toHaveAttribute('aria-pressed', 'true');
@@ -147,3 +147,76 @@ for (const scheme of ['dark'] as const) {
     expect((await axe()).violations.map(v => v.id)).toEqual([]);
   });
 }
+
+test('the switch bar loop (F-90): five in focus, the next faint at both ends, a fixed width, the key still while the strip glides, wrapping round', async ({ page }) => {
+  await open(page);
+  const bar = walkShot(page).getByRole('group', { name: 'Emotion', exact: true });
+  const view = bar.locator('.loop');
+  /** Every frame for `ms` after `act` runs in the page: the view's width, the key's centre, width and light, and the strip's place. */
+  const watch = (act: string, ms = 800) => view.evaluate((el, [act, ms]) => new Promise<{ vw: number; kc: number; kw: number; ko: number; sx: number; cw: number }[]>(done => {
+    const key = el.querySelector('.loop__key')!, strip = el.querySelector('.loop__strip')!;
+    const frames: { vw: number; kc: number; kw: number; ko: number; sx: number; cw: number }[] = [];
+    // One copy of the list, start to start (the strip holds three).
+    const copyWidth = () => { const c = strip.children, n = c.length / 3; return c[n]!.getBoundingClientRect().left - c[0]!.getBoundingClientRect().left; };
+    const t0 = performance.now();
+    new Function('el', act)(el);
+    const tick = () => {
+      const k = key.getBoundingClientRect();
+      frames.push({ vw: el.getBoundingClientRect().width, kc: k.left + k.width / 2, kw: k.width, ko: +getComputedStyle(key).opacity, sx: strip.getBoundingClientRect().left, cw: copyWidth() });
+      if (performance.now() - t0 < +ms) requestAnimationFrame(tick); else done(frames);
+    };
+    requestAnimationFrame(tick);
+  }), [act, ms] as const);
+  const check = (frames: Awaited<ReturnType<typeof watch>>, what: string) => {
+    // Nothing changes size or jumps: the view keeps its width, the key keeps its centre and stays lit.
+    expect(Math.max(...frames.map(f => f.vw)) - Math.min(...frames.map(f => f.vw)), `${what}: view width`).toBeLessThan(0.5);
+    expect(Math.max(...frames.map(f => f.kc)) - Math.min(...frames.map(f => f.kc)), `${what}: key centre`).toBeLessThan(0.5);
+    expect(Math.min(...frames.map(f => f.ko)), `${what}: key lit`).toBeGreaterThan(0.95);
+    // The strip glides one way, over many frames. Settling back onto the middle copy after a wrap moves it by one
+    // whole copy in a single frame: the same picture, so it is taken out first.
+    const copy = frames[0]!.cw;
+    const xs = frames.map(f => f.sx);
+    for (let i = 1; i < xs.length; i++) {
+      const d = xs[i]! - xs[i - 1]!;
+      if (Math.abs(Math.abs(d) - copy) < 2) for (let j = i; j < xs.length; j++) xs[j]! -= Math.sign(d) * copy;
+    }
+    const left = xs.at(-1)! < xs[0]!;
+    for (let i = 1; i < xs.length; i++) expect(left ? xs[i]! <= xs[i - 1]! + 0.5 : xs[i]! >= xs[i - 1]! - 0.5, `${what}: one way`).toBe(true);
+    expect(new Set(xs.map(x => Math.round(x))).size, `${what}: glides`).toBeGreaterThan(5);
+  };
+  // In focus: the chosen one and two each side; further ones are faint.
+  const faint = () => view.locator('.seg__opt').evaluateAll(els => els.filter(e => e.getBoundingClientRect().width && +getComputedStyle(e).opacity < 0.5).length);
+  expect(await faint()).toBeGreaterThan(0);
+  // Clicking a faint option at the right end brings it to the middle.
+  check(await watch("const v = el.getBoundingClientRect(); document.elementFromPoint(v.right - 30, v.top + v.height / 2).click();"), 'right end');
+  await expect(bar.locator('[aria-pressed="true"]')).toHaveText('curious');
+  // Wrapping: from the first option, one step left is the last, one step away (not a sweep across the list).
+  await option(walkShot(page), 'Emotion', 'none').pick();
+  await page.waitForTimeout(900);
+  const one = await view.evaluate(el => (el.querySelector('[data-on]') as HTMLElement).offsetWidth);
+  await bar.getByRole('button', { name: 'none', exact: true }).focus();
+  const frames = await watch("el.querySelector('[aria-pressed=\"true\"]').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));");
+  check(frames, 'wrap left');
+  await expect(bar.locator('[aria-pressed="true"]')).toHaveText('muted');
+  const moved = Math.abs(frames.at(-1)!.sx - frames[0]!.sx) % frames[0]!.cw;
+  expect(Math.min(moved, frames[0]!.cw - moved), 'one step').toBeLessThan(one * 2 + 20);
+  // The arrow keys move focus with the choice.
+  await expect(bar.getByRole('button', { name: 'muted', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(bar.locator('[aria-pressed="true"]')).toHaveText('none');
+  // A swipe steps through the loop.
+  const box = (await view.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2 + 60, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 - 20, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.up();
+  await expect(bar.locator('[aria-pressed="true"]')).toHaveText('happy');
+  // Fits a phone.
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.waitForTimeout(500);
+  for (const g of await walkShot(page).locator('.loop').all()) {
+    const r = (await g.boundingBox())!;
+    expect(r.x, 'inside the screen').toBeGreaterThanOrEqual(0);
+    expect(r.x + r.width).toBeLessThanOrEqual(375);
+  }
+});

@@ -1,14 +1,12 @@
 import type { Locator, Page } from '@playwright/test';
 
 /**
- * An option of a switch bar inside `scope` (F-90: five at a time). Turns the bar's pages with its arrow until the
- * option shows, then returns it; `label` is the bar's group name ("State", "Emotion").
+ * An option of a switch bar inside `scope`; `label` is the bar's group name ("State", "Emotion"). In a loop (F-90)
+ * an option can sit outside the view, so `pick` chooses it the way a script would, with a click event.
  */
-export async function option(scope: Locator, label: string, name: string): Promise<Locator> {
-  const bar = scope.getByRole('group', { name: label, exact: true });
-  const opt = bar.getByRole('button', { name, exact: true });
-  for (let i = 0; i < 4 && !(await opt.isVisible()); i++) await bar.locator('.seg__more').click();
-  return opt;
+export function option(scope: Locator, label: string, name: string) {
+  const opt = scope.getByRole('group', { name: label, exact: true }).getByRole('button', { name, exact: true });
+  return { opt, pick: () => opt.evaluate(b => (b as HTMLElement).click()) };
 }
 
 export const preview = (page: Page) => page.locator('[data-talking-marble][role="img"]');

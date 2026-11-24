@@ -42,7 +42,7 @@ test('the orb draws in all six states, with no console errors', async ({ page })
 
   const frames: string[] = [];
   for (const state of STATES) {
-    await (await option(page.locator('#create'), 'State', state)).click();
+    await option(page.locator('#create'), 'State', state).pick();
     await expect(orb).toHaveAttribute('data-state', state);
     await page.waitForTimeout(600);
     const m = await measure(page, orb);

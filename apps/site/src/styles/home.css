@@ -126,26 +126,30 @@ body { overscroll-behavior-y: none; }
 .seg__opt:hover { color: var(--text); background: var(--glass-edge); }
 /* The lit key is one element that glides to the chosen option (F-71); the option itself only changes its ink. */
 .seg { position: relative; }
-.seg__glide { position: absolute; left: 0; top: 0; border-radius: 10px; background: var(--key); box-shadow: var(--key-glow), var(--key-depth); pointer-events: none; }
+.seg__glide { position: absolute; left: 0; top: 0; border-radius: 10px; background: var(--key); box-shadow: var(--key-glow), var(--key-depth); pointer-events: none; transition: opacity 0.18s ease; }
 .seg[data-glide] .seg__glide { transition: transform 0.46s cubic-bezier(0.22, 1, 0.36, 1), width 0.46s cubic-bezier(0.22, 1, 0.36, 1), height 0.46s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease; }
 .seg__opt { position: relative; }
 .seg__opt[aria-pressed="true"] { color: var(--key-text); background: transparent; transition-delay: 0.08s; }
 @media (prefers-reduced-motion: reduce) { .seg[data-glide] .seg__glide { transition: opacity 0.2s ease; } }
-/* Five at a time on one row (F-90); the arrow at the end turns to the rest. The track hugs what it shows. */
-.seg[data-paged] { flex-wrap: nowrap; align-items: center; }
-.seg__page { display: contents; }
-.seg[data-paged] .seg__opt { animation: seg-in 0.32s var(--ease) both; }
-@keyframes seg-in { from { opacity: 0; transform: translateX(6px); } }
-.seg__more { position: relative; display: inline-grid; place-items: center; flex: none; width: 32px; min-height: 32px; margin-left: 3px; border-radius: 10px; color: var(--text-3); transition: color 0.2s ease, background-color 0.2s ease; }
-.seg__more::before { content: ""; position: absolute; left: -3px; top: 7px; bottom: 7px; width: 1px; background: var(--glass-edge); }
-.seg__more:hover { color: var(--text); background: var(--glass-edge); }
-.seg__more svg { width: 15px; height: 15px; }
-@media (prefers-reduced-motion: reduce) { .seg[data-paged] .seg__opt { animation: none; } }
-/* Narrow phones: five options and the arrow still on one row */
+/* A loop past five options (F-90): five in focus, the next ones faint at both ends, wrapping round. The view is a
+   fixed width; the strip glides under a lit key that stays in the middle and only eases its width. */
+.seg--loop { padding: 4px; }
+.loop { position: relative; max-width: calc(100vw - 2 * var(--gutter) - 8px); overflow: clip; touch-action: pan-y; -webkit-mask-image: linear-gradient(90deg, transparent, #000 44px, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(90deg, transparent, #000 44px, #000 calc(100% - 44px), transparent); }
+.loop__strip { display: flex; gap: 3px; width: max-content; }
+.loop[data-ease] .loop__strip { transition: transform 0.52s var(--ease); }
+.loop__key { opacity: 0; }
+.loop[data-ease] .loop__key { transition: transform 0.52s var(--ease), width 0.52s var(--ease), opacity 0.2s ease; }
+.loop .seg__opt { flex: none; transition: color 0.3s ease, opacity 0.4s ease; }
+.loop .seg__opt[data-far] { opacity: 0.42; }
+.loop .seg__opt:hover { background: none; color: var(--text); }
+.loop .seg__opt[aria-pressed="true"]:hover, .loop .seg__opt[data-on]:hover { color: var(--key-text); }
+.loop .seg__opt[aria-pressed="true"], .loop .seg__opt[data-on] { color: var(--key-text); }
+@media (prefers-reduced-motion: reduce) { .loop[data-ease] .loop__strip, .loop[data-ease] .loop__key { transition: none; } }
+/* Narrow phones: the five in focus still fit */
 @media (max-width: 440px) {
-  .seg[data-paged] { gap: 1px; padding: 3px; }
-  .seg[data-paged] .seg__opt { padding: 0 6.5px; font-size: 12px; }
-  .seg[data-paged] .seg__more { width: 28px; }
+  .seg--loop { padding: 3px; }
+  .loop__strip { gap: 1px; }
+  .loop .seg__opt { padding: 0 7px; font-size: 12px; }
 }
 .toggle { position: relative; width: 46px; height: 26px; border-radius: 999px; background-color: var(--track); box-shadow: 0 0 0 rgba(255, 255, 255, 0), inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-edge); transition: background-color 0.3s var(--ease), box-shadow 0.3s var(--ease); }
 .toggle::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--glass); pointer-events: none; }

@@ -66,10 +66,10 @@ test('try it: every state and emotion, your own state too, the halo strength int
   const orb = stage(page).locator('[data-talking-marble]');
   await step(page, 'Try it').click();
   for (const s of ['idle', 'listening', 'thinking', 'error']) {
-    await (await option(create(page), 'State', s)).click();
+    await option(create(page), 'State', s).pick();
     await expect(orb).toHaveAttribute('data-state', s);
   }
-  await (await option(create(page), 'Emotion', 'calm')).click();
+  await option(create(page), 'Emotion', 'calm').pick();
   await expect(orb).toHaveAttribute('data-emotion', 'calm');
   await create(page).getByRole('slider', { name: /Halo/ }).fill('0.5');
   await step(page, 'Code').click();
@@ -79,7 +79,7 @@ test('try it: every state and emotion, your own state too, the halo strength int
   await create(page).getByRole('slider', { name: /^Speed/ }).fill('3');
   await expect(orb).toHaveAttribute('data-state', 'mine');
   await step(page, 'Try it').click();
-  await expect(await option(create(page), 'State', 'mine')).toBeVisible();
+  await expect(option(create(page), 'State', 'mine').opt).toBeAttached();
   // Naming it (F-86) names its state and its label: "Sparkle" → presets={{ sparkle }}, label="Sparkle".
   await step(page, 'Name').click();
   await create(page).getByRole('textbox', { name: 'Name your marble' }).fill('Sparkle');

@@ -85,18 +85,23 @@ test('dark only, for everyone: no theme switch, and an old light choice is ignor
   }
 });
 
-test('keyboard only: skip link, words by Tab and Enter, visible focus', async ({ page }) => {
+test('keyboard only: skip link; a switch bar is one Tab stop on its choice, the arrow keys choose (F-90); visible focus', async ({ page }) => {
   await page.goto('/');
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
-  const word = page.locator('#palettes').getByRole('button', { name: 'thinking', exact: true });
-  await word.focus();
+  const bar = page.locator('#palettes').getByRole('group', { name: 'State', exact: true });
+  const chosen = bar.locator('[aria-pressed="true"]');
+  await chosen.focus();
   await page.keyboard.press('Tab');
   await page.keyboard.press('Shift+Tab');
-  await expect(word).toBeFocused();
-  expect(await word.evaluate(el => getComputedStyle(el).outlineStyle)).not.toBe('none');
-  await page.keyboard.press('Enter');
+  await expect(chosen).toBeFocused();
+  expect(await chosen.evaluate(el => getComputedStyle(el).outlineStyle)).not.toBe('none');
+  // speaking → searching → thinking
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('ArrowLeft');
+  const word = bar.getByRole('button', { name: 'thinking', exact: true });
   await expect(word).toHaveAttribute('aria-pressed', 'true');
+  await expect(word).toBeFocused();
   await expect(page.locator('.gmarble__orb [data-talking-marble]').first()).toHaveAttribute('data-state', 'thinking');
 });
 

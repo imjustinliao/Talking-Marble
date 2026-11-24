@@ -35,6 +35,7 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-92 | Paging glitches (the key jumps, the width snaps); instead a loop: five in focus, the next ones faint left and right, no obvious arrows | built 0.16.0: the loop; a frame-by-frame test checks fixed width, a still lit key and a one-way glide, wrapping included | |
 | F-91 | A README with the latest: demo images and video, plain language, what it is, how it works, how to use it | built 0.15.0: README with an animated demo, state, emotion, palette and site pictures, quick start, SDK mapping, props; media rendered from the real component | |
 | F-90 | Eight emotions wrap into an uneven second row with an awkward gap: keep five per bar, with a switch to the rest | built 0.14.1: five at a time on one row (most used first), an arrow at the end turns to the rest; fits a 375 px phone | |
 | F-89 | Link previews show the title starting lowercase ("an audio-reactive orb…"); capitalise it | built 0.14.0: "Talking Marble: An audio-reactive orb…" (iMessage drops the site name, so the rest leads) | |

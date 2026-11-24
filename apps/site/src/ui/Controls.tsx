@@ -1,10 +1,9 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { LeftIcon, RightIcon } from './icons';
+import { useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 
 /**
  * The lit key of a switch bar glides to the chosen option (F-71), like a light sliding along the track, instead of
  * switching on and off. Returns the bar's ref and the key to render as its first child; it follows the option
- * marked aria-pressed, and re-measures when the bar changes size (wrapping onto two rows included).
+ * marked aria-pressed, and re-measures when the bar changes size.
  */
 export function useGlide(value: unknown) {
   const bar = useRef<HTMLDivElement>(null);
@@ -30,44 +29,170 @@ export function useGlide(value: unknown) {
   return { bar, glide: <span ref={key} className="seg__glide" aria-hidden="true" /> };
 }
 
+/** How many options a switch bar shows in focus (F-90): past this it becomes a loop. */
+export const IN_FOCUS = 5;
 
-/** How many options a switch bar shows at once (F-90): more than this wrap into an uneven second row. */
-export const PER_PAGE = 5;
+type SwitchProps<T> = {
+  scope?: string; label: string; options: readonly T[]; value: T; onChange: (v: T) => void; render?: (v: T) => ReactNode;
+};
 
 /**
  * A switch bar (F-37): one glass track of rounded-square options; the chosen one is a lit key. Buttons with
- * aria-pressed, so each is one Tab stop and reads as "pressed". Past five options (F-90) it shows five at a time on
- * one row, with an arrow at its end that turns to the rest (and back); it opens on the page holding the choice.
+ * aria-pressed, so each is one Tab stop and reads as "pressed". Past five options it is a loop (F-90).
  */
-export function Switch<T extends string | null>({ label, options, value, onChange, render, scope = 'try' }: {
-  scope?: string; label: string; options: readonly T[]; value: T; onChange: (v: T) => void; render?: (v: T) => ReactNode;
-}) {
-  const pages = Math.max(1, Math.ceil(options.length / PER_PAGE));
-  const pageOf = (v: T) => Math.max(0, Math.floor(options.indexOf(v) / PER_PAGE));
-  const [page, setPage] = useState(() => pageOf(value));
-  const [seen, setSeen] = useState(value);
-  // A choice made elsewhere (another bar, the walk) shows its page.
-  if (seen !== value) { setSeen(value); if (options.includes(value)) setPage(pageOf(value)); }
-  const shown = page < pages ? page : 0;
-  const { bar, glide } = useGlide(`${String(value)}|${shown}`);
-  const last = shown === pages - 1;
-  const what = label.toLowerCase();
+export function Switch<T extends string | null>(props: SwitchProps<T>) {
+  return props.options.length > IN_FOCUS ? <Loop {...props} /> : <Plain {...props} />;
+}
+
+function Plain<T extends string | null>({ label, options, value, onChange, render, scope = 'try' }: SwitchProps<T>) {
+  const { bar, glide } = useGlide(value);
   return (
     <div className="try__row">
       <p className="group-name" id={`${scope}-${label}`}>{label}</p>
-      <div ref={bar} className="seg" data-paged={pages > 1 ? '' : undefined} role="group" aria-labelledby={`${scope}-${label}`}>
+      <div ref={bar} className="seg" role="group" aria-labelledby={`${scope}-${label}`}>
         {glide}
-        <span key={shown} className="seg__page">
-          {options.slice(shown * PER_PAGE, shown * PER_PAGE + PER_PAGE).map(o => (
-            <button key={String(o)} type="button" className="seg__opt" aria-pressed={o === value} onClick={() => onChange(o)}>{render ? render(o) : String(o)}</button>
-          ))}
-        </span>
-        {pages > 1 && (
-          <button type="button" className="seg__more" onClick={() => setPage(last ? 0 : shown + 1)}
-            aria-label={last ? `Back to the first ${what} options` : `More ${what} options`}>
-            {last ? <LeftIcon /> : <RightIcon />}
-          </button>
-        )}
+        {options.map(o => (
+          <button key={String(o)} type="button" className="seg__opt" aria-pressed={o === value} onClick={() => onChange(o)}>{render ? render(o) : String(o)}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** The faded room at each end of a loop, where the next options show through (px). */
+const EDGE = 44;
+const COPIES = 3;
+
+/**
+ * A switch bar past five options (F-90): a loop, like a dial seen edge-on. The chosen option sits in the middle
+ * under the lit key; the two on each side are in focus; beyond them the next ones show faintly at both ends, so
+ * you see what comes next, and the list wraps round. Choosing glides the strip under the key (the key only eases
+ * its width); a faded option at an end is one click away, and a swipe, a sideways scroll or the arrow keys step.
+ * The width never changes. The strip holds the list three times so it can wrap; after a glide into a copy it settles
+ * back onto the middle one unseen. Only the middle copy is in the accessibility tree.
+ */
+function Loop<T extends string | null>({ label, options, value, onChange, render, scope = 'try' }: SwitchProps<T>) {
+  const n = options.length;
+  const view = useRef<HTMLDivElement>(null);
+  const strip = useRef<HTMLDivElement>(null);
+  const key = useRef<HTMLSpanElement>(null);
+  const items = useRef(new Map<number, HTMLButtonElement>());
+  // Which rendered item is centred, as a place along the strip (copy × n + index).
+  const at = useRef(n + Math.max(0, options.indexOf(value)));
+  const [, redraw] = useState(0);
+  // A choice made elsewhere (another bar, the walk): go the short way round to it.
+  const want = options.indexOf(value);
+  if (want >= 0 && ((at.current % n) + n) % n !== want) {
+    let d = want - (((at.current % n) + n) % n);
+    if (d > n / 2) d -= n;
+    if (d < -n / 2) d += n;
+    at.current += d;
+  }
+  const choose = (place: number) => {
+    at.current = Math.min(COPIES * n - 1, Math.max(0, place));
+    const next = options[((place % n) + n) % n]!;
+    if (next === value) redraw(x => x + 1); else onChange(next);
+  };
+
+  useLayoutEffect(() => {
+    const v = view.current, s = strip.current, k = key.current;
+    if (!v || !s || !k) return;
+    const centre = () => {
+      const el = items.current.get(at.current);
+      if (!el) return;
+      const mid = v.clientWidth / 2;
+      s.style.transform = `translateX(${mid - (el.offsetLeft + el.offsetWidth / 2)}px)`;
+      k.style.width = `${el.offsetWidth}px`;
+      k.style.height = `${el.offsetHeight}px`;
+      k.style.transform = `translateX(${mid - el.offsetWidth / 2}px)`;
+      k.style.opacity = want >= 0 ? '1' : '0';
+      for (const [place, item] of items.current) item.toggleAttribute('data-far', Math.abs(place - at.current) > 2);
+    };
+    // As wide as the widest five in focus can need, either side of the middle, plus the faded ends: fixed.
+    const fit = () => {
+      const w = Array.from({ length: n }, (_, i) => items.current.get(n + i)?.offsetWidth ?? 0);
+      const gap = parseFloat(getComputedStyle(s).columnGap) || 0;
+      let half = 0;
+      for (let i = 0; i < n; i++) {
+        for (const dir of [-1, 1]) {
+          let side = w[i]! / 2;
+          for (let k2 = 1; k2 <= 2; k2++) side += gap + w[(((i + dir * k2) % n) + n) % n]!;
+          half = Math.max(half, side);
+        }
+      }
+      v.style.width = `${Math.ceil(2 * (half + EDGE))}px`;
+      centre();
+    };
+    fit();
+    const raf = requestAnimationFrame(() => v.setAttribute('data-ease', ''));
+    // After a glide into the first or last copy, settle onto the same option in the middle copy without moving.
+    const settle = (e: TransitionEvent) => {
+      if (e.target !== s || e.propertyName !== 'transform') return;
+      const middle = n + (((at.current % n) + n) % n);
+      if (middle === at.current) return;
+      at.current = middle;
+      v.removeAttribute('data-ease');
+      centre();
+      void s.offsetWidth;
+      v.setAttribute('data-ease', '');
+    };
+    s.addEventListener('transitionend', settle);
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit);
+    ro?.observe(s);
+    return () => { cancelAnimationFrame(raf); s.removeEventListener('transitionend', settle); ro?.disconnect(); };
+  });
+
+  // Swipe and sideways scroll step through the loop.
+  const press = useRef<{ x: number; id: number } | null>(null);
+  const swiped = useRef(false);
+  const wheel = useRef(0);
+  const step = (by: number) => choose(at.current + by);
+  const onKey = (e: KeyboardEvent) => {
+    const by = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    if (!by) return;
+    e.preventDefault();
+    step(by);
+    const i = (((at.current % n) + n) % n);
+    requestAnimationFrame(() => items.current.get(n + i)?.focus({ preventScroll: true }));
+  };
+
+  return (
+    <div className="try__row">
+      <p className="group-name" id={`${scope}-${label}`}>{label}</p>
+      <div className="seg seg--loop" role="group" aria-labelledby={`${scope}-${label}`}>
+        <div
+          ref={view} className="loop"
+          onPointerDown={e => { press.current = { x: e.clientX, id: e.pointerId }; }}
+          onPointerUp={e => {
+            const p = press.current; press.current = null;
+            if (!p || p.id !== e.pointerId) return;
+            const dx = e.clientX - p.x;
+            swiped.current = Math.abs(dx) > 28;
+            if (swiped.current) step(-Math.sign(dx) * Math.max(1, Math.round(Math.abs(dx) / 70)));
+          }}
+          onWheel={e => {
+            if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+            wheel.current += e.deltaX;
+            if (Math.abs(wheel.current) > 60) { step(Math.sign(wheel.current)); wheel.current = 0; }
+          }}
+        >
+          <span ref={key} className="seg__glide loop__key" aria-hidden="true" />
+          <div ref={strip} className="loop__strip">
+            {Array.from({ length: COPIES * n }, (_, place) => {
+              const o = options[place % n]!;
+              const real = place >= n && place < 2 * n;
+              return (
+                <button
+                  key={place} ref={el => { if (el) items.current.set(place, el); else items.current.delete(place); }}
+                  type="button" className="seg__opt" tabIndex={real && o === value ? 0 : -1}
+                  aria-pressed={real ? o === value : undefined} aria-hidden={real ? undefined : true}
+                  data-on={place === at.current ? '' : undefined}
+                  onClick={() => { if (swiped.current) { swiped.current = false; return; } choose(place); }} onKeyDown={real ? onKey : undefined}
+                >{render ? render(o) : String(o)}</button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
