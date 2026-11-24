@@ -10,8 +10,6 @@ import { useSimulatedLevel } from '../simulated';
 import { MOCKS, Mock, type MockKind } from '../ui/Mocks';
 import { LeftIcon, MicIcon, RightIcon } from '../ui/icons';
 
-const STATE_NAMES = STATE_PICKS;
-const EMOTIONS = EMOTION_PICKS;
 
 const PHASE_LINE: Record<string, string> = {
   listening: 'Listening. Speak, then pause. Audio stays in this browser.',
@@ -45,15 +43,15 @@ export function PalettesShot({ step, onStep }: { step: number; onStep: (by: numb
       <p className="walk__name" aria-live="polite">{paletteLabel(id)}</p>
       {talk.phase === 'off' ? (
         <div className="try">
-          <Switch label="State" options={STATE_NAMES} value={trying.state} onChange={state => setTrying({ state })} />
-          <Switch label="Emotion" options={EMOTIONS} value={trying.emotion} onChange={emotion => setTrying({ emotion })} render={v => v ?? 'none'} />
+          <Switch label="State" options={STATE_PICKS} value={trying.state} onChange={state => setTrying({ state })} />
+          <Switch label="Emotion" options={EMOTION_PICKS} value={trying.emotion} onChange={emotion => setTrying({ emotion })} render={v => v ?? 'none'} />
           <Toggle label="Halo" on={trying.halo} onChange={halo => setTrying({ halo })} />
         </div>
       ) : (
         <div className="try try--talking">
           <p className="shot__line" aria-live="polite">{(talk.stream ? PHASE_LINE : SIM_LINE)[talk.phase]}</p>
           <Switch label="Seen in" options={MOCKS.map(m => m.id)} value={ui} onChange={setUi} render={v => MOCKS.find(m => m.id === v)!.label} />
-          <Mock kind={ui} state={talk.phase} level={talk.phase === 'thinking' ? 0 : level} audio={talk.phase === 'listening' ? talk.stream : null} palette={colorsOf(id, {})} />
+          <Mock kind={ui} state={talk.phase} level={talk.phase === 'thinking' ? 0 : level} audio={talk.phase === 'listening' ? talk.stream : null} palette={colorsOf(id)} />
         </div>
       )}
       {/* By the marble, at the bottom (F-41): Talk (End while talking) above the way from one palette to the next. */}

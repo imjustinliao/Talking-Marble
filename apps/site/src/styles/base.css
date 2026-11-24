@@ -26,7 +26,7 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: var(--bg); scroll-padding-top: 72px; }
-body { background: var(--bg); color: var(--text); font: 16px/1.6 var(--ui); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; overflow-x: clip; transition: background-color 0.25s ease, color 0.25s ease; }
+body { background: var(--bg); color: var(--text); font: 16px/1.6 var(--ui); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; overflow-x: clip; }
 a { color: inherit; }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 code, pre, .mono { font-family: var(--mono); }
@@ -61,8 +61,6 @@ html[data-tier="low"] :is(.talk::before, .install-pill::before, .word::after, .m
 .btn.talk:hover { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--text); border-color: transparent; }
 .talk:hover, .install-pill:hover { box-shadow: 0 0 22px -6px color-mix(in srgb, var(--m1) 55%, transparent); }
 .btn:active { transform: scale(0.98); }
-.btn--primary { background: var(--primary-bg); color: var(--primary-text); border-color: var(--primary-bg); }
-.btn--primary:hover { background: var(--primary-bg); opacity: 0.88; }
 .btn svg { margin-right: -2px; }
 .icon-btn { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--text-2); transition: background-color 0.2s ease, color 0.2s ease; }
 .icon-btn:hover { color: var(--text); background: var(--raised); }
@@ -71,8 +69,7 @@ html[data-tier="low"] :is(.talk::before, .install-pill::before, .word::after, .m
 
 
 /* Top bar */
-.topbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 8px; padding: 10px var(--gutter); background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 1px solid var(--hair); }
-.topbar { justify-content: center; padding-top: 22px; } /* a little more air above the logo and name (F-58) */
+.topbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 22px var(--gutter) 10px; /* a little more air above the logo and name (F-58) */ background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 1px solid var(--hair); }
 .brand { display: inline-flex; align-items: center; gap: 12px; min-height: 48px; text-decoration: none; font-family: var(--display); font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
 .brand__logo { display: inline-flex; width: 30px; height: 30px; }
 
@@ -88,5 +85,11 @@ html[data-tier="low"] :is(.talk::before, .install-pill::before, .word::after, .m
 .links { display: flex; flex-wrap: wrap; gap: 10px; }
 .btn--link svg { margin: 0; }
 
-@media (max-width: 640px) { .hide-sm { display: none !important; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+/* Code tinted with the marble's pigments (the Guide and the docs). */
+.tok--kw, .tok--punct { color: var(--text-3); }
+.tok--comment { color: var(--text-3); font-style: italic; }
+.tok--tag { color: color-mix(in srgb, var(--m2) 80%, var(--text)); }
+.tok--attr { color: color-mix(in srgb, var(--m1) 75%, var(--text)); }
+.tok--str { color: color-mix(in srgb, var(--m3) 80%, var(--text)); }

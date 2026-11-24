@@ -1,7 +1,7 @@
 {
   "name": "talking-marble",
   "version": "0.0.0",
-  "description": "An audio-reactive animated orb for voice AI apps: a React component and a Web Component.",
+  "description": "An audio-reactive orb for voice AI apps: shows what your agent is doing and moves with its voice. A React component and a Web Component.",
   "license": "MIT",
   "author": "Justin Liao",
   "repository": {
@@ -9,16 +9,26 @@
     "url": "git+https://github.com/imjustinliao/Talking-Marble.git",
     "directory": "packages/react"
   },
+  "homepage": "https://talking-marble.vercel.app/",
+  "bugs": "https://github.com/imjustinliao/Talking-Marble/issues",
   "keywords": [
     "voice",
+    "voice-ai",
+    "voice-agent",
     "orb",
     "ai",
     "react",
+    "react-component",
     "webgl",
+    "web-audio",
     "audio",
+    "audio-reactive",
     "visualizer",
     "web-component",
-    "custom-element"
+    "custom-element",
+    "openai-realtime",
+    "elevenlabs",
+    "livekit"
   ],
   "type": "module",
   "sideEffects": [

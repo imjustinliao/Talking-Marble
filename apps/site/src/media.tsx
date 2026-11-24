@@ -95,9 +95,11 @@ style.textContent = `
   .card { position: relative; width: 1200px; height: 630px; background: #000; color: #f5f5f7; display: grid; grid-template-columns: 1fr 460px; align-items: center; padding: 0 70px 0 96px; box-sizing: border-box; overflow: hidden; }
   .card__grain { position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)'/%3E%3C/svg%3E"); background-size: 200px; opacity: 0.05; pointer-events: none; }
   .card__text { position: relative; display: grid; gap: 22px; justify-items: start; }
-  .card__title { font-weight: 600; font-size: 84px; letter-spacing: -0.035em; line-height: 1.02; }
+  .card__title { font-weight: 600; font-size: 84px; letter-spacing: -0.035em; line-height: 1.02; margin-left: -4px; /* the T's side bearing, so it lines up with the text below */ }
   .card__line { font-size: 28px; line-height: 1.3; color: rgba(245,245,247,.72); max-width: 22ch; }
-  .card__install { margin-top: 10px; font-size: 22px; color: #f5f5f7; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 12px 26px; }
+  /* One left edge for every line (F-98): the command is text on that edge, set off by a short rule above it, not an indented pill */
+  .card__install { margin: 6px 0 0; padding-top: 22px; font-size: 22px; color: #f5f5f7; border-top: 1px solid rgba(255,255,255,.22); min-width: 300px; }
+  .card__install::before { content: "$ "; color: rgba(245,245,247,.45); }
   .card__marble { position: relative; display: grid; place-items: center; height: 100%; padding-bottom: 40px; box-sizing: border-box; }
   .card__pool { position: absolute; left: 50%; top: calc(50% + 130px); width: 600px; height: 150px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--marble) 28%, transparent), color-mix(in srgb, var(--marble) 7%, transparent) 55%, transparent); }
   .card__orb { -webkit-box-reflect: below 4px radial-gradient(ellipse 46% 48% at 50% 100%, rgba(255,255,255,.3), transparent 100%); }

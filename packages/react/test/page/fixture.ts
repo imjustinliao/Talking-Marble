@@ -17,6 +17,7 @@ declare global {
     harness: {
       render(props: Record<string, unknown>): void;
       unmount(): void;
+      many(count: number): void;
       stream(gain?: number): Promise<MediaStream>;
       node(gain?: number): Promise<AudioNode>;
       element(gain?: number): Promise<HTMLAudioElement>;

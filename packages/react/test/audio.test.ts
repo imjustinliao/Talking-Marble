@@ -51,7 +51,7 @@ class FakeContext {
 class FakeStream {
   stop = vi.fn();
   listeners = new Set<() => void>();
-  constructor(public tracks: { stop(): void }[]) {}
+  constructor(public tracks: { id?: string; stop(): void }[]) {}
   getAudioTracks() { return this.tracks; }
   addEventListener(_: string, fn: () => void) { this.listeners.add(fn); }
   removeEventListener(_: string, fn: () => void) { this.listeners.delete(fn); }
@@ -123,6 +123,36 @@ describe('connectAudio', () => {
     expect(stream.listeners.size).toBe(0);
     tap.dispose();
     expect(tap.read()).toBe(0);
+  });
+
+  it('taps a track added by script without an addtrack event, and re-taps a replaced one', () => {
+    const stream = new FakeStream([]);
+    const tap = connectAudio(stream as unknown as MediaStream)!;
+    // Script's stream.addTrack fires no event: the tap notices within a few reads.
+    const first = { id: 'a', stop: vi.fn() };
+    stream.tracks.push(first);
+    for (let i = 0; i < 15; i++) tap.read();
+    const context = FakeContext.instances[0]!;
+    expect(context.analysers).toHaveLength(1);
+    context.analysers[0]!.value = 1;
+    expect(tap.read()).toBe(1);
+    // The track is replaced: the old analyser is unhooked and a new one taps the new track.
+    stream.tracks.splice(0, 1, { id: 'b', stop: vi.fn() });
+    for (let i = 0; i < 15; i++) tap.read();
+    expect(context.analysers).toHaveLength(2);
+    context.analysers[1]!.value = 0.1;
+    expect(tap.read()).toBeCloseTo(0.63, 5);
+    // Unchanged tracks are not tapped again.
+    for (let i = 0; i < 60; i++) tap.read();
+    expect(context.analysers).toHaveLength(2);
+    // The track removed: silent, and listening for the next one.
+    stream.tracks.length = 0;
+    for (let i = 0; i < 15; i++) tap.read();
+    expect(tap.read()).toBe(0);
+    expect(stream.listeners.size).toBe(1);
+    tap.dispose();
+    expect(stream.listeners.size).toBe(0);
+    expect(first.stop).not.toHaveBeenCalled();
   });
 
   it('leaves cross-origin media without CORS alone (wrapping would mute it)', () => {

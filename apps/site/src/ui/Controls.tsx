@@ -29,12 +29,23 @@ export function useGlide(value: unknown) {
   return { bar, glide: <span ref={key} className="seg__glide" aria-hidden="true" /> };
 }
 
-/** How many options a switch bar shows in focus (F-90): past this it becomes a loop. */
-export const IN_FOCUS = 5;
+/** How many options a switch bar shows in focus (F-90, F-94: three): past this it becomes a loop. */
+export const IN_FOCUS = 3;
+/** Options in focus on each side of the chosen one. */
+const REACH = Math.floor(IN_FOCUS / 2);
 
 type SwitchProps<T> = {
   scope?: string; label: string; options: readonly T[]; value: T; onChange: (v: T) => void; render?: (v: T) => ReactNode;
+  /** The label stays for screen readers but is not shown (a bar that explains itself, like Create's steps). */
+  hideLabel?: boolean;
+  /** Extra class names on the bar's row. */
+  className?: string;
 };
+
+/** The bar's name, shown above it or only to screen readers. */
+const Name = ({ id, label, hide }: { id: string; label: string; hide?: boolean }) => (
+  <p className={hide ? 'sr-only' : 'group-name'} id={id}>{label}</p>
+);
 
 /**
  * A switch bar (F-37): one glass track of rounded-square options; the chosen one is a lit key. Buttons with
@@ -44,11 +55,11 @@ export function Switch<T extends string | null>(props: SwitchProps<T>) {
   return props.options.length > IN_FOCUS ? <Loop {...props} /> : <Plain {...props} />;
 }
 
-function Plain<T extends string | null>({ label, options, value, onChange, render, scope = 'try' }: SwitchProps<T>) {
+function Plain<T extends string | null>({ label, options, value, onChange, render, scope = 'try', hideLabel, className = '' }: SwitchProps<T>) {
   const { bar, glide } = useGlide(value);
   return (
-    <div className="try__row">
-      <p className="group-name" id={`${scope}-${label}`}>{label}</p>
+    <div className={`try__row ${className}`}>
+      <Name id={`${scope}-${label}`} label={label} hide={hideLabel} />
       <div ref={bar} className="seg" role="group" aria-labelledby={`${scope}-${label}`}>
         {glide}
         {options.map(o => (
@@ -60,18 +71,18 @@ function Plain<T extends string | null>({ label, options, value, onChange, rende
 }
 
 /** The faded room at each end of a loop, where the next options show through (px). */
-const EDGE = 44;
+const EDGE = 56;
 const COPIES = 3;
 
 /**
- * A switch bar past five options (F-90): a loop, like a dial seen edge-on. The chosen option sits in the middle
- * under the lit key; the two on each side are in focus; beyond them the next ones show faintly at both ends, so
- * you see what comes next, and the list wraps round. Choosing glides the strip under the key (the key only eases
+ * A switch bar past three options (F-90, F-94): a loop, like a dial seen edge-on. The chosen option sits in the
+ * middle under the lit key with one in focus on each side; beyond them the next ones show faintly at both ends, so
+ * you see what comes next, and the list wraps round. Dots under it say where you are in the list (F-94). Choosing glides the strip under the key (the key only eases
  * its width); a faded option at an end is one click away, and a swipe, a sideways scroll or the arrow keys step.
  * The width never changes. The strip holds the list three times so it can wrap; after a glide into a copy it settles
  * back onto the middle one unseen. Only the middle copy is in the accessibility tree.
  */
-function Loop<T extends string | null>({ label, options, value, onChange, render, scope = 'try' }: SwitchProps<T>) {
+function Loop<T extends string | null>({ label, options, value, onChange, render, scope = 'try', hideLabel, className = '' }: SwitchProps<T>) {
   const n = options.length;
   const view = useRef<HTMLDivElement>(null);
   const strip = useRef<HTMLDivElement>(null);
@@ -106,7 +117,7 @@ function Loop<T extends string | null>({ label, options, value, onChange, render
       k.style.height = `${el.offsetHeight}px`;
       k.style.transform = `translateX(${mid - el.offsetWidth / 2}px)`;
       k.style.opacity = want >= 0 ? '1' : '0';
-      for (const [place, item] of items.current) item.toggleAttribute('data-far', Math.abs(place - at.current) > 2);
+      for (const [place, item] of items.current) item.toggleAttribute('data-far', Math.abs(place - at.current) > REACH);
     };
     // As wide as the widest five in focus can need, either side of the middle, plus the faded ends: fixed.
     const fit = () => {
@@ -116,7 +127,7 @@ function Loop<T extends string | null>({ label, options, value, onChange, render
       for (let i = 0; i < n; i++) {
         for (const dir of [-1, 1]) {
           let side = w[i]! / 2;
-          for (let k2 = 1; k2 <= 2; k2++) side += gap + w[(((i + dir * k2) % n) + n) % n]!;
+          for (let k2 = 1; k2 <= REACH; k2++) side += gap + w[(((i + dir * k2) % n) + n) % n]!;
           half = Math.max(half, side);
         }
       }
@@ -157,8 +168,9 @@ function Loop<T extends string | null>({ label, options, value, onChange, render
   };
 
   return (
-    <div className="try__row">
-      <p className="group-name" id={`${scope}-${label}`}>{label}</p>
+    <div className={`try__row ${className}`}>
+      <Name id={`${scope}-${label}`} label={label} hide={hideLabel} />
+      <div className="loop-wrap">
       <div className="seg seg--loop" role="group" aria-labelledby={`${scope}-${label}`}>
         <div
           ref={view} className="loop"
@@ -192,6 +204,15 @@ function Loop<T extends string | null>({ label, options, value, onChange, render
               );
             })}
           </div>
+        </div>
+      </div>
+        {/* Where you are in the list (F-94, F-97): a track with one dot per option and a lit thumb that slides to yours. A dot chooses its option. */}
+        <div className="loop__dots" aria-hidden="true" style={{ ['--at' as string]: Math.max(0, want) }}>
+          <span className="loop__thumb" />
+          {options.map((o, i) => (
+            <button key={i} type="button" tabIndex={-1} className="loop__dot" data-on={o === value ? '' : undefined}
+              onClick={() => { let d = i - (((at.current % n) + n) % n); if (d > n / 2) d -= n; if (d < -n / 2) d += n; step(d); }} />
+          ))}
         </div>
       </div>
     </div>

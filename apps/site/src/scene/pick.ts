@@ -1,27 +1,11 @@
-import { useSyncExternalStore } from 'react';
-import { colorsOf, type Edits, type PaletteId, type Selection } from '../palettes';
+import type { PaletteName } from 'talking-marble';
+import { createStore } from './store';
 
 /**
- * The visitor's palette: picked in the gallery, changeable in the playground, worn by the stage marble in every
- * shot and written into the generated code. One store, so all of them always agree.
+ * The palette the site wears outside the walk and Create (the logo, the intro, the docs' accent): pearl unless a
+ * palette is chosen on the docs page. One store, so every marble that wears it agrees.
  */
-let selection: Selection = { palette: 'pearl', edits: {} };
-const listeners = new Set<() => void>();
-const set = (next: Selection) => { selection = next; listeners.forEach(l => l()); };
-const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
+const pick = createStore<{ palette: PaletteName }>({ palette: 'pearl' });
 
-export const setPalette = (palette: PaletteId) => set({ ...selection, palette });
-export const setEdits = (fn: (e: Edits) => Edits) => set({ ...selection, edits: fn(selection.edits) });
-
-/** Sets one colour of a palette (the one shown, unless another is named). */
-export function setColor(id: PaletteId, i: number, hex: string) {
-  setEdits(e => { const next = [...colorsOf(id, e)] as [string, string, string, string]; next[i] = hex; return { ...e, [id]: next }; });
-}
-export const resetPalette = (id: PaletteId) => setEdits(e => { const next = { ...e }; delete next[id]; return next; });
-
-export function usePick(): Selection {
-  return useSyncExternalStore(subscribe, () => selection);
-}
-
-/** The current pick, outside React (the camera reads it each frame). */
-export const getPick = () => selection;
+export const setPalette = (palette: PaletteName) => pick.set({ palette });
+export const usePick = pick.use;

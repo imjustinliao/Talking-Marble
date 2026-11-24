@@ -32,6 +32,10 @@ const harness = {
     root.render(h(TalkingMarble, { size: 200, 'aria-label': 'orb', ...props }));
   },
   unmount() { root.render(null); },
+  /** `count` marbles at 64 px, as in the `many` view. */
+  many(count: number) {
+    root.render(h('div', { className: 'many' }, ...Array.from({ length: count }, (_, i) => h(TalkingMarble, { key: i, size: 64, label: `Orb ${i + 1}` }))));
+  },
   /** A MediaStream of a sine at `gain` (0.5 → level 1 after the spec's math). */
   async stream(gain = 0.5) {
     const { context, amp } = tone(gain);

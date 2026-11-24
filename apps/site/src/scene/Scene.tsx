@@ -30,10 +30,6 @@ const Fog = memo(function Fog() {
 });
 
 /**
- * The one marble on the stage, showing what the live shot asks for (its state, the playground's settings).
- * It is the page's one labelled marble; everything else in the scene is decoration.
- */
-/**
  * The word under the intro's marble (F-66, F-73): plain type, no box. A new word crossfades in over the old one
  * (each slightly blurred and spaced on its way), so the change is a dissolve, not a switch.
  */
@@ -48,6 +44,10 @@ function Caption({ word }: { word?: string }) {
   );
 }
 
+/**
+ * The one marble on the stage, showing what the live shot asks for. It is the page's one labelled marble;
+ * everything else in the scene is decoration.
+ */
 const StageMarble = memo(function StageMarble({ active, hidden }: { active: ShotId; hidden: boolean }) {
   const wish = useStage(active);
   const pick = usePick();
@@ -55,13 +55,13 @@ const StageMarble = memo(function StageMarble({ active, hidden }: { active: Shot
   const sim = useSimulatedLevel(voice.kind === 'sim' && !hidden);
   const size = wish.size === undefined || wish.size === 'full' ? MARBLE : wish.size;
   return (
-    <span className="stage-marble__orb" data-testid="main-marble" data-palette={pick.palette} data-colors={(wish.palette ?? colorsOf(pick.palette, pick.edits)).join(' ')} {...Object.fromEntries(Object.entries(wish.data ?? {}).map(([k, v]) => [`data-${k}`, v]))}>
+    <span className="stage-marble__orb" data-testid="main-marble" data-palette={pick.palette} data-colors={(wish.palette ?? colorsOf(pick.palette)).join(' ')} {...Object.fromEntries(Object.entries(wish.data ?? {}).map(([k, v]) => [`data-${k}`, v]))}>
       <TalkingMarble
         size={size}
         state={wish.state}
         emotion={wish.emotion ?? undefined}
         presets={wish.presets}
-        palette={wish.palette ?? colorsOf(pick.palette, pick.edits)}
+        palette={wish.palette ?? colorsOf(pick.palette)}
         halo={wish.halo ?? true}
         audio={voice.kind === 'mic' ? voice.stream : null}
         level={voice.kind === 'mic' ? undefined : voice.kind === 'level' ? voice.level : sim}
@@ -108,27 +108,44 @@ function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRe
         const talking = talk.phase !== 'off' && k === gallery.front;
         const state = talking ? talk.phase : trying.state;
         const mic = talking && talk.phase === 'listening' ? talk.stream : null;
+        const near = k === gallery.front && gallery.active;
+        const shown = seen.includes(String(k));
         return (
-          <Actor key={m.id} x={p.x} z={p.z} size={CURVE_SIZE} actorRef={el => { refs.current.actors[k] = el; }}>
-            {/* The fade goes on a flat inner element: opacity on a 3D wrapper would flatten the scene */}
-            <button type="button" className="gmarble" tabIndex={-1} aria-pressed={m.chosen} onClick={() => gallery.onPick(k)}>
-              <span ref={el => { refs.current.orbs[k] = el; }} className="gmarble__orb" style={{ opacity: 0 }} data-state={state}>
-                <TalkingMarble
-                  palette={m.colors as string[]} state={state} emotion={talking ? undefined : trying.emotion ?? undefined}
-                  audio={mic} level={mic ? undefined : state === 'thinking' ? 0 : sim}
-                  size={k === gallery.front && gallery.active ? CURVE_SIZE : FAR_SIZE} decorative paused={!seen.includes(String(k))} halo={trying.halo} className="reflect"
-                  style={k === gallery.front && gallery.active ? undefined : { transform: `scale(${CURVE_SIZE / FAR_SIZE})`, transformOrigin: '50% 100%' }}
-                />
-              </span>
-            </button>
-            {/* Its palette's name, shown with all six (F-60) */}
-            <span className="gmarble__name">{m.label}</span>
-          </Actor>
+          <GalleryOrb
+            key={m.id} k={k} refs={refs} x={p.x} z={p.z} marble={m} onPick={gallery.onPick}
+            state={state} emotion={talking ? null : trying.emotion} halo={trying.halo} audio={mic} near={near} shown={shown}
+            // Only marbles in view take the voice: the rest keep a constant level and so never re-render with it.
+            level={mic || !shown || state === 'thinking' ? 0 : sim}
+          />
         );
       })}
     </div>
   );
 }
+
+/** One gallery marble. Memoised: it re-renders only when what it shows changes (the voice, while in view). */
+const GalleryOrb = memo(function GalleryOrb({ k, refs, x, z, marble: m, onPick, state, emotion, halo, audio, level, near, shown }: {
+  k: number; refs: MutableRefObject<GalleryRefs>; x: number; z: number; marble: GalleryMarble; onPick: (k: number) => void;
+  state: string; emotion: string | null; halo: boolean; audio: MediaStream | null; level: number; near: boolean; shown: boolean;
+}) {
+  return (
+    <Actor x={x} z={z} size={CURVE_SIZE} actorRef={el => { refs.current.actors[k] = el; }}>
+      {/* The fade goes on a flat inner element: opacity on a 3D wrapper would flatten the scene */}
+      <button type="button" className="gmarble" tabIndex={-1} aria-pressed={m.chosen} onClick={() => onPick(k)}>
+        <span ref={el => { refs.current.orbs[k] = el; }} className="gmarble__orb" style={{ opacity: 0 }} data-state={state}>
+          <TalkingMarble
+            palette={m.colors as string[]} state={state} emotion={emotion ?? undefined}
+            audio={audio} level={audio ? undefined : level}
+            size={near ? CURVE_SIZE : FAR_SIZE} decorative paused={!shown} halo={halo} className="reflect"
+            style={near ? undefined : { transform: `scale(${CURVE_SIZE / FAR_SIZE})`, transformOrigin: '50% 100%' }}
+          />
+        </span>
+        {/* Its palette's name, shown with all six (F-60) */}
+      </button>
+      <span className="gmarble__name">{m.label}</span>
+    </Actor>
+  );
+});
 
 /** Something standing on the floor at (x, z), always facing the camera; padded so its glow stays inside its box. */
 function Actor({ x, z, size, className = '', children, actorRef }: { x?: number; z?: number; size: number; className?: string; children: ReactNode; actorRef?: (el: HTMLDivElement | null) => void }) {

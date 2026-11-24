@@ -113,13 +113,6 @@ html, body { background: var(--stage); }
 .prose tbody tr { transition: background-color 0.2s ease; }
 .prose tbody tr:hover { background: color-mix(in srgb, var(--text) 3%, transparent); }
 
-/* Code tinted with the marble's pigments (as the home page's Guide). */
-.tok--kw, .tok--punct { color: var(--text-3); }
-.tok--comment { color: var(--text-3); font-style: italic; }
-.tok--tag { color: color-mix(in srgb, var(--m2) 80%, var(--text)); }
-.tok--attr { color: color-mix(in srgb, var(--m1) 75%, var(--text)); }
-.tok--str { color: color-mix(in srgb, var(--m3) 80%, var(--text)); }
-
 /* ── Install: the platforms, then the command in a glass pill ── */
 .install { display: grid; gap: 18px; }
 .prose .platforms { display: flex; padding: 0; gap: 0 18px; }

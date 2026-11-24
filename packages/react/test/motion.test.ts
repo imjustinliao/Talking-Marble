@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fallbackBackground, fallbackShadow, haloShadow } from '../src/render/css';
-import { approach, easedFrom, easeToward, resolveState, SNAP } from '../src/state';
+import { approach, baseParams, easedFrom, easeToward, NUMERIC, paramRanges, resolveState, SNAP, type OrbParams } from '../src/state';
+import { backingSize } from '../src/render/shared';
 import { createMotion, haloOpacityOf, smallness, stepMotion, transformOf, uniformsOf } from '../src/render/motion';
 import { palettes, rgba } from '../src/colors';
 
@@ -102,5 +103,66 @@ describe('CSS layers', () => {
   it('writes rgba from hex', () => {
     expect(rgba('#ff6028', 0.5)).toBe('rgba(255,96,40,0.5)');
     expect(rgba('#abc', 1)).toBe('rgba(170,187,204,1)');
+  });
+});
+
+describe('motion edge cases', () => {
+  it('advances the scan by dt × (0.8 + 0.4 × speed), and freezes it in reduced motion', () => {
+    const target = resolveState('thinking');
+    const m = createMotion();
+    const eased = easedFrom(target);
+    stepMotion(m, eased, target, 0, 0.1, false);
+    expect(m.scanPhase).toBeCloseTo(0.1 * (0.8 + 0.4 * target.speed), 9);
+    const still = createMotion();
+    stepMotion(still, easedFrom(target), target, 0, 0.1, true);
+    expect(still.scanPhase).toBe(0);
+    const x = { ...eased.x, scan: 0.7 };
+    expect(uniformsOf(m, x, 0, false).uScan).toBe(0.7);
+  });
+  it('stays finite with every parameter at its min and at its max', () => {
+    for (const end of [0, 1] as const) {
+      for (const rippleDirection of ['in', 'out'] as const) {
+        const target = { ...baseParams, rippleDirection } as OrbParams;
+        for (const key of NUMERIC) target[key] = paramRanges[key][end];
+        const m = createMotion();
+        const eased = easedFrom(target);
+        for (let i = 0; i < 90; i++) stepMotion(m, eased, target, 1, 1 / 30, false);
+        for (const k of [0, 0.5, 1]) {
+          for (const still of [false, true]) {
+            for (const [name, value] of Object.entries(uniformsOf(m, eased.x, k, still))) {
+              expect(Number.isFinite(value), `${name} (${end ? 'max' : 'min'}, k ${k})`).toBe(true);
+            }
+            const transform = transformOf(m, eased.x, k, still);
+            expect(transform).not.toMatch(/NaN|Infinity/);
+          }
+        }
+        expect(Number.isFinite(haloOpacityOf(m, eased.x))).toBe(true);
+      }
+    }
+  });
+  it('reads a level of NaN, -1 and 5 as 0, 0 and 1', () => {
+    for (const [raw, expected] of [[Number.NaN, 0], [-1, 0], [5, 1], [Infinity, 1], [-Infinity, 0]] as const) {
+      const target = resolveState('speaking');
+      const m = createMotion();
+      const eased = easedFrom(target);
+      for (let i = 0; i < 60; i++) stepMotion(m, eased, target, raw, 1 / 30, false);
+      expect(m.level, String(raw)).toBe(expected);
+    }
+  });
+});
+
+describe('backing size (packages/core/spec.md › Rendering)', () => {
+  it('is the CSS size × device pixel ratio, at most 2× and 4096 px, and at least 1 px', () => {
+    expect(backingSize(200, 1)).toBe(200);
+    expect(backingSize(200, 2)).toBe(400);
+    expect(backingSize(200, 3)).toBe(400);
+    expect(backingSize(200, 1.5)).toBe(300);
+    expect(backingSize(4096, 1)).toBe(4096);
+    expect(backingSize(4096, 2)).toBe(4096);
+    expect(backingSize(200, 0)).toBe(200);
+    expect(backingSize(200, Number.NaN)).toBe(200);
+    expect(backingSize(200, 0.5)).toBe(200);
+    expect(backingSize(0.2, 1)).toBe(1);
+    expect(backingSize(0.2, Number.NaN)).toBeGreaterThanOrEqual(1);
   });
 });

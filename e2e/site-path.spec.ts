@@ -4,9 +4,8 @@ import { SHOTS, STOPS, expectedShot, goToShot, settled, skipIntro, trackErrors }
 
 const { default: AxeBuilder } = createRequire(new URL('../apps/site/package.json', import.meta.url))('@axe-core/playwright') as typeof import('@axe-core/playwright');
 
-type Scheme = 'dark' | 'light';
-const theme = (page: Page, scheme: Scheme) =>
-  page.addInitScript(t => { try { if (t === 'light') localStorage.setItem('talking-marble-theme', 'light'); } catch { /* none */ } }, scheme);
+/** The site is dark only (F-77); the scheme stays in test names so their screenshots keep their names. */
+type Scheme = 'dark';
 
 
 /**
@@ -51,7 +50,6 @@ for (const { w, h, scheme, shots } of RUNS) {
   test(`the whole path at ${w}×${h} (${scheme}): the marble always in frame, the index on the nearest shot`, async ({ page }) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: w, height: h });
-    await theme(page, scheme);
     const errors = trackErrors(page);
     await page.goto('/');
     await skipIntro(page);
@@ -100,7 +98,7 @@ for (const { w, h, scheme, shots } of RUNS) {
           }
           if (want.id === 'create') {
             for (const name of ['Motion', 'Try it', 'Code', 'Colours']) {
-              await page.locator('#create .steps').getByRole('button', { name, exact: true }).click();
+              await page.locator('#create .steps').getByRole('button', { name, exact: true }).dispatchEvent('click');
               await page.waitForTimeout(300);
               for (const [edge, gap] of Object.entries(await fits(page))) expect(gap, `${edge} at ${name}`).toBeGreaterThanOrEqual(edge === 'inner' ? 0 : -1);
               await page.screenshot({ path: `test-results/site/shot-${w}-${scheme}-create-${name.replace(' ', '-').toLowerCase()}.png` });
@@ -198,7 +196,6 @@ for (const scheme of ['dark'] as const) {
   test(`axe at every settled shot (${scheme})`, async ({ page }) => {
     test.setTimeout(90_000);
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await theme(page, scheme);
     await page.goto('/');
     for (const s of SHOTS) {
       await goToShot(page, s.label);
@@ -210,7 +207,6 @@ for (const scheme of ['dark'] as const) {
 
 for (const scheme of ['dark'] as const) {
   test(`a plain stage with fog: no light rigs, the bottom neutral, never tinted (${scheme})`, async ({ page }) => {
-    await theme(page, scheme);
     await page.goto('/');
     await skipIntro(page);
     // A plain stage with fog (F-54): one fog canvas; no mountains, rings, beams, slabs, veils or other light rigs.

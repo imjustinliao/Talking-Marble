@@ -6,8 +6,8 @@ The handoff note for the next session, agent or account. Keep it short; newest e
 ## Now
 
 - **Phase**: Building <!-- Setup · Building · Shipping · Live · Paused -->
-- **Milestone**: M13 Experience v2 in owner review; F-83 to F-89 built in 0.14.0 (searching state, eight emotions, Name step, docs spacing and glass bar); PLAT-01 step 1 (Web Component) built in 0.13.0
-- **Next action**: npm publish (PKG-01, owner's npm account) so the site's install command works; then PLAT-01 step 2 needs CORE-01's shared core. The site is live on Vercel at https://talking-marble.vercel.app/ (owner deployed 2026-11-24; every push to `main` redeploys)
+- **Milestone**: M13 Experience v2 in owner review. 0.17.0 (2026-11-24): the final pass the owner asked for: edge-case tests for every parameter, prop and device (iPhone, Pixel, iPad by touch), the package hardened (odd palettes, sizes, presets, late audio tracks) and its frame loop made allocation-free, every surface made consistent (code, site, docs, README, llms.txt, prompts, metadata), dead code removed, deployed
+- **Next action**: owner review of the live site; then npm publish (PKG-01, owner's npm account; remove the "npm release is coming soon" notes in the README, docs page and llms.txt, and add the npm link back to the JSON-LD); then PLAT-01 step 2. Live at https://talking-marble.vercel.app/; every push to `main` redeploys
 - **In flight**: nothing; preview: main site 5173. Kept after the tidy pass (their commits exist nowhere else): `milestone/site` (`ffcbb19`, the earlier experience), `milestone/site-sections`, and `milestone/orb-spec` and `milestone/camera` in the finished Site and Package sessions' worktrees
 
 ## Milestones
@@ -25,7 +25,7 @@ The handoff note for the next session, agent or account. Keep it short; newest e
 | M12 | Camera experience (runs before M10) | The scroll camera from `ffcbb19` restored over the current sections as shots (design.md › `/`): intro, scene, textures, keyframed B-roll moves, continuity (marble always in frame), index and keyboard, dark and light scenes, phones, reduced motion; every section stays fully interactive while settled; all existing section tests keep their assertions; a full-path e2e asserts the marble in frame and the right shot at every step, in both themes. Features: SITE-09 | done: merged 0.10.5 (83 e2e pass); owner sign-off pending |
 | M13 | Experience v2 (owner's flow, F-22 to F-32) | `/` rebuilt as five shots: Intro; Palettes walk (six built-ins, fixed colours) with state, emotion, halo and Talk (mic + simulated reply, shown in a call screen / chat bar / message); Pick (See all); Create your own in four steps; Guide in numbered steps; the ink floor replaces dust and grain (F-23). States, In context, Playground and Install shots removed. Nothing jumps (the e2e guard), desktop and phone, both themes, reduced motion, axe clean, full e2e green. Features: SITE-10 | built 0.11.0 (86 e2e, 60 unit green); owner review pending |
 | M10 | Install and docs | Install tabs (React working; React Native, SwiftUI, Android, Flutter "Coming soon"); install, minimal usage and LiveKit / ElevenLabs / OpenAI Realtime snippets checked against their current docs; `/docs/` with props, preset format, audio options, accessibility and performance; icons, link cards and video re-rendered from the new look; sitemap and `llms.txt` updated. Features: SITE-05, SITE-06, SITE-08 | done: merged 0.10.13 (its Install shot became M13's Guide) |
-| M11 | Ship | History cleaned as the owner decides (squash proposed), pushed; GitHub Pages on (owner) and deployed; npm trusted publishing set up (owner's npm account) and `talking-marble@0.1.0` published with approval; README with a short clip. Features: PKG-01, SITE-08 | approved |
+| M11 | Ship | History cleaned as the owner decides (squash proposed), pushed; hosted on Vercel and deployed (done 2026-11-24, F-81); npm trusted publishing set up (owner's npm account) and `talking-marble@0.1.0` published with approval; README with a short clip. Features: PKG-01, SITE-08 | approved |
 
 Parallel after M6 (approved): M7 (package) and M8 (site sections) touch different folders and can run at once, in the existing Package and Site sessions; M9 and M10 need M7's preset format and renderer. M11 last, in Main.
 
@@ -35,6 +35,12 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-98 | The link card is not quite left-aligned | built 0.17.0: title, line and command on one left edge (the command set off by a rule, not an indented pill); the card renders in the site's display face; the link video adds searching | |
+| F-97 | The dots: more like a slider, still showing how many there are | built 0.17.0: a faint track of equal dots with a lit thumb that slides to your place | |
+| F-96 | Dots inside the bar look cramped: put them apart, and add space between label, bar, dots and the next group | built 0.17.0 | |
+| F-95 | Create's Code must look like the Guide's code snippet; Create's text is too dim, and the Name hint has quotes and a colon | built 0.17.0: the shared code panel; full-strength, larger text; the hint is one plain sentence | |
+| F-94 | The loop needs a sign of where you are (dots), and three in focus instead of five, for every bar | built 0.17.0 | |
+| F-93 | Final pass while the owner sleeps: test every case, parameter, device and scenario; make every surface consistent; update metadata, link card and keywords; refactor and clean up; deploy | built 0.17.0 and deployed | |
 | F-92 | Paging glitches (the key jumps, the width snaps); instead a loop: five in focus, the next ones faint left and right, no obvious arrows | built 0.16.0: the loop; a frame-by-frame test checks fixed width, a still lit key and a one-way glide, wrapping included | |
 | F-91 | A README with the latest: demo images and video, plain language, what it is, how it works, how to use it | built 0.15.0: README with an animated demo, state, emotion, palette and site pictures, quick start, SDK mapping, props; media rendered from the real component | |
 | F-90 | Eight emotions wrap into an uneven second row with an awkward gap: keep five per bar, with a switch to the rest | built 0.14.1: five at a time on one row (most used first), an arrow at the end turns to the rest; fits a 375 px phone | |
@@ -151,7 +157,7 @@ Statuses: open · in progress · done · won't do (why). Remove done rows once t
 ## Session log
 
 <!-- - **YYYY-MM-DD** (agent, tool): one line. Keep the last ~10. -->
-- **2026-11-24** (Claude Opus 5.5, Claude Code desktop): Picked up from "Repository review - v0" after the owner's Vercel deploy; checked the live site. Built F-83 to F-89 (0.14.0).
+- **2026-11-24** (Claude Opus 5.5, Claude Code desktop): Picked up from "Repository review - v0" after the owner's Vercel deploy; checked the live site. Built F-83 to F-93 (0.14.0 to 0.17.0): searching, eight emotions, Name step, docs, README, the switch-bar loop, then a full test, consistency, refactor and deploy pass.
 - **2026-11-23** (owner): Second push: 0.11.0 to 0.13.1 published as one clean commit on top of 0.8.5, because one local commit mentioned another project; the local archive branches of the step-by-step history were deleted 2026-11-24 at the owner's request (never pushed, not needed). Hosting moved to Vercel (F-81).
 - **2026-11-23** (Claude Opus 5.5, Claude Code desktop): Took over after the other account stopped (Main `7c9abdb5` hit its limit; `17dfe1c4` merged M12 and launched M10, which never ran). Restarted M10 in a new Site session. Built M13 (new flow, Talk, Create your own, minimal Guide, ink floor, marble-themed chrome; F-22 to F-32) and F-18–F-21 on main (fixed layouts, pick prompt + See all, unpainted Yours, small marbles wear the pick); full e2e green after two fixes.
 - **2026-11-23** (Claude Sonnet 5.5, Claude Code desktop): Resumed after the usage-limit stop; Site session had finished M12. Verified (60 unit, typecheck, build, 83 e2e) and merged `milestone/camera` at 0.10.5. Not pushed.

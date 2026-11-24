@@ -12,14 +12,14 @@ const base = import.meta.env.BASE_URL;
  * shot index is the navigation, Docs and GitHub are buttons in the page (F-30, F-31).
  */
 export function TopBar({ page }: { page: 'home' | 'docs' }) {
-  const { palette, edits } = usePick();
+  const { palette } = usePick();
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
       <header className="topbar">
         <a className="brand" href={page === 'home' ? '#top' : base}>
           <span className="brand__logo" aria-hidden="true">
-            <TalkingMarble size={30} state="idle" palette={colorsOf(palette, edits)} halo={false} decorative />
+            <TalkingMarble size={30} state="idle" palette={colorsOf(palette)} halo={false} decorative />
           </span>
           Talking Marble
         </a>

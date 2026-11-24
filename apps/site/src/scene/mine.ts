@@ -1,6 +1,6 @@
-import { useSyncExternalStore } from 'react';
 import type { OrbPreset } from 'talking-marble';
-import { UNPAINTED, type Colors, type Selection } from '../palettes';
+import { UNPAINTED, type Colors } from '../palettes';
+import { createStore } from './store';
 import { diffFromBase, type Design } from '../create/model';
 
 /**
@@ -20,7 +20,10 @@ export interface Mine {
   halo: number;
 }
 
-let mine: Mine = { colors: null, design: null, title: '', name: 'mine', halo: 1 };
+const mine = createStore<Mine>({ colors: null, design: null, title: '', name: 'mine', halo: 1 });
+
+export const setMine = mine.set;
+export const useMine = mine.use;
 
 /** Built-in state and emotion names a preset of yours must not take (it would replace the built-in). */
 let reserved: readonly string[] = [];
@@ -37,15 +40,9 @@ export function keyOf(title: string): string {
 }
 /** Names the marble: its title, and the preset name made from it. */
 export const nameMine = (title: string) => setMine({ title: title.slice(0, 32), name: keyOf(title) });
-const listeners = new Set<() => void>();
-const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
 
-export const setMine = (patch: Partial<Mine>) => { mine = { ...mine, ...patch }; listeners.forEach(l => l()); };
-export const useMine = () => useSyncExternalStore(subscribe, () => mine);
-export const getMine = () => mine;
-
-/** The marble's colours: its own, or the plain globe's. (`_pick` is kept for callers; the pick no longer leads.) */
-export const mineColors = (m: Mine, _pick?: Selection): Colors => m.colors ?? UNPAINTED;
+/** The marble's colours: its own, or the plain globe's. */
+export const mineColors = (m: Mine): Colors => m.colors ?? UNPAINTED;
 /** Its own state as a preset (only what differs from the resting look), or null. */
 export const minePreset = (m: Mine): Record<string, OrbPreset> | null => (m.design ? { [m.name]: diffFromBase(m.design) } : null);
 
@@ -53,7 +50,7 @@ export const minePreset = (m: Mine): Record<string, OrbPreset> | null => (m.desi
  * The JSX for this marble: the agent's state and audio, and whatever was made here. `short` names the preset
  * instead of spelling it out (the Guide: the full one is what Export preset copies).
  */
-export function mineJsx(m: Mine, _pick?: Selection, short = false): string {
+export function mineJsx(m: Mine, short = false): string {
   const props = ['state={agentState}', 'audio={agentStream}'];
   if (m.title.trim()) props.push(`label="${m.title.trim().replace(/"/g, '')}"`);
   props.push(`palette={[${mineColors(m).map(c => `'${c}'`).join(', ')}]}`);

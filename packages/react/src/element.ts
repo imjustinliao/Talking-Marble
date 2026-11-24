@@ -1,10 +1,9 @@
 import { connectAudio, type AudioTap, type OrbAudioSource } from './audio/source';
 import { resolvePalette, type OrbPalette } from './colors';
-import { haloStrengthOf, warnUnknown } from './common';
+import { fallbackFor, haloStrengthOf, haloStyles, sizeOf, stableKey, warnUnknown } from './common';
 import { orbLabel } from './label';
-import { fallbackBackground } from './render/css';
 import { createOrb, type OrbController } from './render/orb';
-import { resolveState, type OrbPreset } from './state';
+import type { OrbPreset } from './state';
 
 export type { OrbAudioSource };
 
@@ -81,6 +80,8 @@ export class TalkingMarbleElement extends Base {
   #parts: { marble: HTMLElement; haloStrength: HTMLElement; halo: HTMLElement; fallback: HTMLElement; canvas: HTMLCanvasElement } | null = null;
   #shownKey = '';
   #colorKey = '';
+  /** The presets attribute's text and its parse, so the JSON is parsed once per change. */
+  #presetsAttr: { text: string | null; value: Record<string, OrbPreset> | undefined } = { text: null, value: undefined };
 
   constructor() {
     super();
@@ -102,7 +103,12 @@ export class TalkingMarbleElement extends Base {
   get palette(): OrbPalette | undefined { return this.#palette ?? paletteFromAttribute(this.getAttribute('palette')); }
   set palette(v: OrbPalette | undefined) { this.#palette = v; this.#sync(); }
   /** Your own states and emotions, merged over the built-ins by name. */
-  get presets(): Record<string, OrbPreset> | undefined { return this.#presets ?? presetsFromAttribute(this.getAttribute('presets')); }
+  get presets(): Record<string, OrbPreset> | undefined {
+    if (this.#presets) return this.#presets;
+    const text = this.getAttribute('presets');
+    if (text !== this.#presetsAttr.text) this.#presetsAttr = { text, value: presetsFromAttribute(text) };
+    return this.#presetsAttr.value;
+  }
   set presets(v: Record<string, OrbPreset> | undefined) { this.#presets = v; this.#sync(); }
   /** Audio to react to, in states that listen. The marble never stops your stream's tracks. */
   get audio(): OrbAudioSource | null { return this.#audio; }
@@ -115,8 +121,8 @@ export class TalkingMarbleElement extends Base {
   /** Audio level 0–1; overrides `audio` when set. */
   get level(): number | undefined { return this.#level ?? numberFromAttribute(this.getAttribute('level')); }
   set level(v: number | undefined) { this.#level = v; this.#orb?.setLevelSource(this.#levelSource); }
-  /** Width and height in CSS px; absent fills the container's width. */
-  get size(): number | undefined { return numberFromAttribute(this.getAttribute('size')); }
+  /** Width and height in CSS px; absent (or not a number above 0) fills the container's width. */
+  get size(): number | undefined { return sizeOf(numberFromAttribute(this.getAttribute('size'))); }
   set size(v: number | undefined) { if (v === undefined) this.removeAttribute('size'); else this.setAttribute('size', String(v)); }
   /** The halo: true, false, or a strength 0–1.5. */
   get halo(): boolean | number { return haloFromAttribute(this.getAttribute('halo')); }
@@ -153,7 +159,11 @@ export class TalkingMarbleElement extends Base {
     this.#tap = null;
   }
 
-  attributeChangedCallback() { this.#sync(); }
+  attributeChangedCallback(name: string) {
+    // The level is read every frame; only the loop needs waking.
+    if (name === 'level') { this.#orb?.setLevelSource(this.#levelSource); return; }
+    this.#sync();
+  }
 
   /** Brings the drawing, the halo, the fallback picture and the accessible name in line with the attributes. */
   #sync() {
@@ -161,7 +171,7 @@ export class TalkingMarbleElement extends Base {
     const { state, emotion, presets } = this;
     const colors = resolvePalette(this.palette);
     const p = this.#parts;
-    const shownKey = JSON.stringify([state, emotion, presets]);
+    const shownKey = JSON.stringify([state, emotion]) + stableKey(presets);
     if (shownKey !== this.#shownKey) {
       this.#shownKey = shownKey;
       warnUnknown(state, emotion, presets);
@@ -177,11 +187,11 @@ export class TalkingMarbleElement extends Base {
     const size = this.size;
     if (size === undefined) this.style.removeProperty('--talking-marble-size');
     else this.style.setProperty('--talking-marble-size', `${size}px`);
-    const strength = haloStrengthOf(this.halo);
-    p.haloStrength.style.opacity = String(Math.min(1, strength));
-    p.haloStrength.style.filter = strength > 1 ? `brightness(${strength})` : '';
-    p.halo.style.display = strength > 0 ? 'block' : 'none';
-    p.fallback.style.background = fallbackBackground(resolveState(state, presets, emotion).colors ?? colors);
+    const halo = haloStyles(haloStrengthOf(this.halo));
+    p.haloStrength.style.opacity = halo.opacity;
+    p.haloStrength.style.filter = halo.filter;
+    p.halo.style.display = halo.display;
+    p.fallback.style.background = fallbackFor(state, presets, emotion, colors);
 
     this.setAttribute('data-state', state);
     if (emotion) this.setAttribute('data-emotion', emotion); else this.removeAttribute('data-emotion');

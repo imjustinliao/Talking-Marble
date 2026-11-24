@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { createStore } from './store';
 
 /**
  * What you are trying on the palettes (F-22): one state, one emotion and the halo, shown by every gallery marble.
@@ -6,10 +6,7 @@ import { useSyncExternalStore } from 'react';
  */
 export interface Trying { state: string; emotion: string | null; halo: boolean }
 
-let trying: Trying = { state: 'speaking', emotion: null, halo: true };
-const listeners = new Set<() => void>();
-const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
+const trying = createStore<Trying>({ state: 'speaking', emotion: null, halo: true });
 
-export const setTrying = (patch: Partial<Trying>) => { trying = { ...trying, ...patch }; listeners.forEach(l => l()); };
-export const useTrying = () => useSyncExternalStore(subscribe, () => trying);
-export const getTrying = () => trying;
+export const setTrying = trying.set;
+export const useTrying = trying.use;

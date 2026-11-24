@@ -13,6 +13,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
+// The site's simulated voice, the same one the page uses (Node runs the TypeScript directly).
+import { voiceLevel } from '../src/simulated.ts';
 
 const site = fileURLToPath(new URL('..', import.meta.url));
 const repo = join(site, '..', '..');
@@ -28,12 +30,6 @@ const TIMELINE = [ // [start second, state, caption]
   [4.6, 'searching', 'searching'], [6.4, 'speaking', 'speaking'], [9.0, 'idle', 'idle'],
 ];
 
-/** The site's simulated voice (src/simulated.ts › voiceLevel), duplicated because this is plain JS. */
-function voiceLevel(t) {
-  const syllable = Math.max(0, Math.sin(t * 7.3) * 0.6 + Math.sin(t * 3.1) * 0.4);
-  const phrase = Math.sin(t * 0.9) > -0.3 ? 1 : 0;
-  return Math.min(1, syllable * phrase * (0.7 + 0.3 * Math.sin(t * 13.7)));
-}
 
 const run = (args) => execFileSync(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', ...args], { stdio: 'inherit' });
 
@@ -49,6 +45,7 @@ async function open(query, viewport) {
   const page = await browser.newPage({ viewport, deviceScaleFactor: 2 });
   await page.clock.install({ time: 0 });
   await page.goto(`http://127.0.0.1:${port}/media.html?${query}`);
+  await page.evaluate(() => document.fonts.ready);
   await page.waitForFunction(() => {
     const orbs = [...document.querySelectorAll('[data-talking-marble]')];
     return orbs.length > 0 && orbs.every(o => o.getAttribute('data-ready') === 'true');

@@ -5,7 +5,7 @@
 // - Fallback (no OffscreenCanvas WebGL2): a hidden <canvas>, copied with drawImage into the element's 2D canvas
 //   in the same task, while the drawing buffer is still valid.
 // Framework-free; nothing runs until the first marble asks for it.
-import { hexToLinear, type OrbColors } from '../colors';
+import { hexToLinear, type Linear, type OrbColors } from '../colors';
 import { createRenderer, type Renderer, type Uniforms } from './renderer';
 
 /** Per marble: at most 4096² device pixels (a full-screen hero on a 4K display), and the GPU's limits. */
@@ -19,7 +19,16 @@ let transfer = false;
 let renderer: Renderer | null = null;
 let unavailable = false;
 const listeners = new Set<Listener>();
+/** The colors the context holds now (their key), so a marble in the same colors re-sends nothing. */
 let colorsKey = '';
+
+/** Each palette's linear colors and key, worked out once per colors array (a marble keeps its array until they change). */
+const linearCache = new WeakMap<OrbColors, { key: string; linear: Linear[] }>();
+function linearOf(colors: OrbColors) {
+  let found = linearCache.get(colors);
+  if (!found) linearCache.set(colors, (found = { key: colors.join(), linear: colors.map(hexToLinear) }));
+  return found;
+}
 
 function notify() { for (const fn of listeners) fn(renderer !== null); }
 
@@ -67,12 +76,6 @@ export function rendererReady(): boolean {
   return renderer !== null;
 }
 
-/** The context type a marble's own canvas must use: `bitmaprenderer` when frames are transferred, else `2d`. */
-export function targetContextType(): 'bitmaprenderer' | '2d' {
-  create();
-  return transfer ? 'bitmaprenderer' : '2d';
-}
-
 /** The backing size in device pixels for a marble `cssSize` CSS pixels wide (spec › Rendering). */
 export function backingSize(cssSize: number, devicePixelRatio: number): number {
   // Past 2x the eye gains nothing a marble's soft pigment can show, and the GPU pays for every pixel (F-54).
@@ -82,14 +85,14 @@ export function backingSize(cssSize: number, devicePixelRatio: number): number {
 }
 
 /**
- * Draws one frame into `target` (the marble's own canvas, already sized `side` × `side`, whose context is
- * of `targetContextType()`). False when no context can draw.
+ * Draws one frame into `target` (the marble's own canvas, already sized `side` × `side`; its context is
+ * `bitmaprenderer` when frames are transferred, else `2d`). False when no context can draw.
  */
 export function renderInto(target: HTMLCanvasElement, side: number, colors: OrbColors, uniforms: Uniforms): boolean {
   create();
   if (!renderer || !surface || renderer.lost()) return false;
-  const key = colors.join();
-  if (key !== colorsKey) { renderer.setColors(colors.map(hexToLinear)); colorsKey = key; }
+  const { key, linear } = linearOf(colors);
+  if (key !== colorsKey) { renderer.setColors(linear); colorsKey = key; }
   if (transfer) {
     const ctx = target.getContext('bitmaprenderer');
     if (!ctx) return false;

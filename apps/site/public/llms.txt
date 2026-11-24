@@ -1,15 +1,15 @@
 # Talking Marble
 
-> Talking Marble (`talking-marble` on npm, MIT) is an audio-reactive animated orb for voice AI apps: a React component and a Web Component (`<talking-marble>`) for any web framework or plain HTML. Pass your agent's state and its audio; the orb eases between six states and swells with the voice. It is a UI component only: developers bring their own voice AI (LiveKit, ElevenLabs, OpenAI Realtime…).
+> Talking Marble (`talking-marble`, MIT; publishing to npm soon) is an audio-reactive animated orb for voice AI apps: a React component and a Web Component (`<talking-marble>`) for any web framework or plain HTML. Pass your agent's state and its audio; the orb eases between seven states, takes on any of eight emotions, and swells with the voice. It is a UI component only: developers bring their own voice AI (LiveKit, ElevenLabs, OpenAI Realtime…).
 
 Key facts:
 
-- Install: `npm i talking-marble`. React 18 or newer for the React component (an optional peer); the Web Component needs nothing else. No other runtime dependencies (one WebGL2 canvas, Web Audio).
+- Install: `npm i talking-marble` (the npm release is coming soon; until then, build from the GitHub repository). React 18 or newer for the React component (an optional peer); the Web Component needs nothing else. No other runtime dependencies (one WebGL2 canvas, Web Audio).
 - Usage (React): `<TalkingMarble state={agentState} audio={agentStream} palette="pearl" />`.
 - Usage (Web Component): `import 'talking-marble/element'`, then `<talking-marble state="idle" palette="pearl"></talking-marble>`; set `el.state` and `el.audio` from script. Attributes: `state`, `emotion`, `palette` (a name or comma-separated hex), `size`, `halo`, `level`, `presets` (JSON), `label`, `decorative`, `paused`.
 - Platforms: the web today, through React or the Web Component: every modern browser on phones, tablets, laptops and desktops, and desktop apps built on web tech (Electron, Tauri). Native ports (React Native, SwiftUI, Android, Flutter) are planned; none exists yet.
 - States: `idle`, `connecting`, `listening`, `thinking`, `speaking`, `error`, named after the common voice-agent lifecycle so an SDK's state can be passed straight in, plus `searching` (a lens magnifies the centre and the pattern streams out of it) for tool calls and lookups. One material in every state: states change only energy, motion and brightness, never colour.
-- Emotions layer on a state with `emotion`: `happy`, `excited`, `calm`, `curious`, `surprised`, `concerned`, `sad`, `muted`, or your own preset. Each number an emotion sets moves the state's value 65% of the way toward its own.
+- Emotions layer on a state with `emotion`: `happy`, `calm`, `excited`, `curious`, `surprised`, `concerned`, `sad`, `muted`, or your own preset. Each number an emotion sets moves the state's value 65% of the way toward its own.
 - Props (all optional): `state` (default `idle`), `emotion`, `audio` (MediaStream | HTMLMediaElement | AudioNode), `level` (0–1, overrides audio), `palette` (pearl, ember, lagoon, ink, rose, aurora, or four hex colors, ground first; default pearl), `size` (CSS px; default fills its container, square), `presets` (your own states and emotions by name), `label` (default "Assistant": it reads "Assistant, speaking"), `decorative` (aria-hidden), `halo` (default true, or a strength 0–1.5), `paused`, `aria-label` (replaces the whole name), `className`, `style`.
 - Preset format (any subset; out-of-range values are clamped): `speed` 0–4 (default 1), `turbulence` 0–1 (0.5), `veins` 0–1 (0.5), `softness` 0–1 (0.5), `detail` 0–1 (0.5), `spin` −2–2 (0), `waves` 0–1 (0), `ripples` 0–1 (0), `rippleDirection` "out" or "in" ("out"), `whirl` 0–3 (0), `chop` 0–1 (0), `scan` 0–1 (0; searching's lens and outward stream), `glow` 0–1 (0), `brightness` 0.5–1.5 (1), `halo` 0–1 (0.5), `breath` 0–1 (0), `beat` 0–1.5 (0), `bounce` 0–1 (0), `sway` 0–1 (0), `wobble` 0–1 (0), `shake` 0–1 (0), `size` 0.5–1.2 (1), `reactivity` 0–1 (0; 0 ignores audio), plus optional `colors` (four hex colors) and `label`.
 - Audio: only states that listen react (`listening` gently, `speaking` fully, or any preset with `reactivity` above 0). The level is smoothed. One shared AudioContext, resumed on the next click, tap or key if the browser blocked it. Audio is analyzed in the browser and never sent anywhere.
@@ -34,7 +34,7 @@ Key facts:
 
 - [Palettes](https://talking-marble.vercel.app/#palettes): the six built-in palettes one by one; try every state, emotion and the halo, and talk to each
 - [All palettes](https://talking-marble.vercel.app/#all): all six together
-- [Create your own](https://talking-marble.vercel.app/#create): your colours, your own state, try it, copy the code or export the preset
+- [Create your own](https://talking-marble.vercel.app/#create): name your marble, pick its colours, shape its motion, try it, then copy the code or export the preset
 - [Guide](https://talking-marble.vercel.app/#guide): install and usage with your marble, for React or the Web Component, and a prompt for your AI coding agent
 
 ## Source
@@ -44,4 +44,3 @@ Key facts:
 
 ## Optional
 
-- [npm package](https://www.npmjs.com/package/talking-marble): versions and install stats

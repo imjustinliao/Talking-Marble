@@ -8,19 +8,18 @@ import { useShotLive } from '../scene/shot';
 import { useStageWish } from '../scene/stage';
 import { endTalk, startTalk, useTalk } from '../scene/talk';
 import { ColorPicker } from '../ui/ColorPicker';
-import { Switch, useGlide } from '../ui/Controls';
+import { CodeBlock } from '../ui/CodeBlock';
+import { Switch } from '../ui/Controls';
 import { MicIcon, ResetIcon } from '../ui/icons';
 
 const STEPS = ['Name', 'Colours', 'Motion', 'Try it', 'Code'] as const;
 type Step = (typeof STEPS)[number];
-const STATE_NAMES = STATE_PICKS;
-const EMOTIONS = EMOTION_PICKS;
 reserveNames(STATES.map(s => s.name));
 const PHASE: Record<string, string> = { listening: 'Listening. Speak, then pause.', thinking: 'Thinking…', speaking: 'Speaking. A simulated reply for now.' };
 
 /**
  * Create your own (F-22): the stage marble, large, starts as a plain globe (F-61) and becomes yours. Two levels
- * (F-63): the steps, a switch bar (F-62) with one always chosen, Name first (F-86; Colours before it, F-70); only the chosen step shows
+ * (F-63): the steps, a switch bar (F-62) with one always chosen, Name first (F-86); only the chosen step shows
  * below it, so nothing is shown all at once. Name (its `label` and preset name); Colours; Motion (its own state, a few plain dials); Try it (every
  * state and emotion, yours included, the halo's strength, and Talk, as on the walk); Code.
  */
@@ -29,7 +28,6 @@ export function Create() {
   const talk = useTalk();
   const live = useShotLive();
   const [step, setStep] = useState<Step>('Name');
-  const { bar, glide } = useGlide(step);
   const [state, setState] = useState<string>('speaking');
   const [emotion, setEmotion] = useState<string | null>(null);
   const colors = mineColors(mine);
@@ -59,12 +57,7 @@ export function Create() {
   return (
     <div className="create">
       <h2 id="create-title" className="shot__title create__title">Create your own</h2>
-      <div ref={bar} className="seg steps" role="group" aria-label="Steps">
-        {glide}
-        {STEPS.map(s => (
-          <button key={s} type="button" className="seg__opt" aria-pressed={s === step} aria-controls="create-step" onClick={() => choose(s)}>{s}</button>
-        ))}
-      </div>
+      <Switch scope="create" label="Steps" hideLabel className="steps" options={STEPS} value={step} onChange={choose} />
 
       <div id="create-step" className="create__step" aria-live="polite">
         {step === 'Name' && (
@@ -73,7 +66,7 @@ export function Create() {
               <input value={mine.title} onChange={e => nameMine(e.target.value)} placeholder="Nova" maxLength={32} spellCheck={false} autoComplete="off" />
             </label>
             <p className="shot__line">
-              {mine.title.trim() ? `Screen readers will call it “${mine.title.trim()}, speaking”.` : 'Give it a name: screen readers say it with its state, like “Nova, speaking”.'}
+              {mine.title.trim() ? `Screen readers will call it ${mine.title.trim()} and say what it is doing.` : 'Give it a name. Screen readers say it along with what the marble is doing.'}
             </p>
           </div>
         )}
@@ -102,8 +95,8 @@ export function Create() {
               <p className="shot__line">{talk.stream ? PHASE[talk.phase] : `${PHASE[talk.phase]} (no microphone, simulated)`}</p>
             ) : (
               <>
-                <Switch scope="create" label="State" options={[...STATE_NAMES, ...(mine.design ? [mine.name] : [])]} value={state} onChange={setState} />
-                <Switch scope="create" label="Emotion" options={EMOTIONS} value={emotion} onChange={setEmotion} render={v => v ?? 'none'} />
+                <Switch scope="create" label="State" options={[...STATE_PICKS, ...(mine.design ? [mine.name] : [])]} value={state} onChange={setState} />
+                <Switch scope="create" label="Emotion" options={EMOTION_PICKS} value={emotion} onChange={setEmotion} render={v => v ?? 'none'} />
               </>
             )}
             <label className="dial">
@@ -117,12 +110,13 @@ export function Create() {
           </div>
         )}
         {step === 'Code' && (
-          <div className="create__name">
-            <pre className="create__code mono" aria-label="Your marble’s code">{mineJsx(mine)}</pre>
-            <div className="create__actions">
-              <CopyButton className="btn btn--small" text={mineJsx(mine)} what="code" label="Copy code" />
-              {mine.design && <CopyButton className="btn btn--small" text={exportJson(mine.name, design)} what="preset" label="Export preset" />}
-            </div>
+          <div className="panel create__code">
+            <CodeBlock label="Your marble" code={mineJsx(mine)} what="your marble's code" />
+            {mine.design && (
+              <div className="create__actions">
+                <CopyButton className="btn btn--small" text={exportJson(mine.name, design)} what="preset" label="Export preset" />
+              </div>
+            )}
           </div>
         )}
       </div>

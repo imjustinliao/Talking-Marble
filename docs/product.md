@@ -27,7 +27,7 @@ Developers building voice AI apps (OpenAI Realtime, ElevenLabs, LiveKit and so o
 Stable IDs by area. The boxes are acceptance items: tick one only after it was checked. Never reword or drop a requirement without the owner. ✓ = built and checked on `main` before the re-scope.
 
 ### CORE-01: Platform-neutral core
-- [ ] The shader and the presets live in a platform-neutral `packages/core`, so each port only needs a small renderer (today: `core/` at the repo root, not a package)
+- [x] The shader and the presets live in a platform-neutral `packages/core`, so each port only needs a small renderer ✓
 - [x] Developers can add their own states through presets ✓
 
 ### ORB-03: Seven built-in states
@@ -52,14 +52,14 @@ Stable IDs by area. The boxes are acceptance items: tick one only after it was c
 - [x] A raw level from 0 to 1 ✓
 
 ### ORB-06: Sharp at every size
-- [ ] Sharp at every size and screen density, from a 20px inline icon to a full-screen hero (today the canvas is capped at 512 device pixels, so a large hero is soft)
+- [ ] Sharp at every size and screen density, from a 20px inline icon to a full-screen hero (M7: the backing size follows CSS size × device pixel ratio, up to 2×)
 - [ ] Small sizes get their own tuning, not just scaling down
 
 ### ORB-07: Polish
 - [x] A still frame for reduced motion ✓
 - [x] Pausing when off screen or when the tab is hidden ✓
 - [ ] SSR-safe (renders the fallback on the server today; needs a test that keeps it so)
-- [ ] A correct `aria-label` for each state (today one fixed label)
+- [x] A correct accessible name for each state ("Assistant, speaking"; `label` names who it is) ✓
 
 ### ORB-01 / ORB-05: The React component, colors and size
 - [x] A reusable React component, `<TalkingMarble />`, with colors and size ✓
@@ -75,7 +75,7 @@ Stable IDs by area. The boxes are acceptance items: tick one only after it was c
 - [ ] The marble inside realistic UIs: a chat input bar (like ChatGPT voice mode), a full-screen call view, and an inline chat message
 
 ### SITE-04: Playground
-- [ ] The controls from the localhost:4173 prototype, moved into the site: state, emotion, palette plus a custom color picker, size, the audio source (simulated voice, your mic, level slider) and a light/dark background
+- [ ] The controls from the localhost:4173 prototype, moved into the site: state, emotion, palette plus a custom color picker, size, the audio source (simulated voice, your mic, level slider) (superseded by Create your own, F-22)
 - [ ] Shows the exact code for the current settings live and can export a preset
 - [ ] Developers can design their own state here and copy it out
 
@@ -87,16 +87,16 @@ Stable IDs by area. The boxes are acceptance items: tick one only after it was c
 - [ ] A props table, the preset format, the audio options, accessibility and performance notes
 
 ### SITE-07: Footer
-- [ ] GitHub, npm, MIT © Justin Liao
+- [ ] GitHub, MIT © Justin Liao (npm once published)
 
 ### SITE-09: The camera experience (owner, 2026-11-23, F-11)
-- [ ] The scroll camera, intro, scene and textures come back, carrying the sections (hero, states, in context, playground, install, footer) as shots, in dark and light, on phones, with reduced motion handled
+- [ ] The scroll camera, intro, scene and textures come back, carrying the sections (hero, states, in context, playground, install, footer) as shots, dark only (F-77), on phones, with reduced motion handled
 
 ### SITE-10: The experience, v2 (owner, 2026-11-23, F-22)
 - [ ] Intro complete on its own; the scroll below is an optional experience
 - [ ] Walk the six built-in palettes (colours fixed): try every state, emotion and halo on each, and **Talk** to it (mic drives listening, then a simulated reply), seen in a call screen, chat bar or message (folds in SITE-02 and SITE-03)
 - [ ] Pull back over all six and pick one to start from
-- [ ] **Create your own** in steps: colours, motion, states, name it with code and Export preset (replaces SITE-04's playground)
+- [ ] **Create your own** in steps: Name, Colours, Motion, Try it, Code, with Export preset (replaces SITE-04's playground; F-86)
 - [ ] **Guide**: numbered steps for install, usage with your marble, voice SDK snippets and the docs (replaces SITE-05's tabs)
 - [ ] The ink floor as the scene's texture (F-23)
 
@@ -128,13 +128,13 @@ Voice interfaces live everywhere, so the marble should too. Each step is a small
 
 ## Superseded by the 2026-11-23 spec
 
-Built or specified earlier, replaced by the owner's overall spec (the spec's structure is libraries.dev-like sections, clean, with a light mode and plain copy):
+Built or specified earlier, replaced by the owner's overall spec (the spec's structure is libraries.dev-like sections, clean, with plain copy; its light mode was later removed, F-77):
 
 - ~~The scroll-camera "experience" (F-5)~~ **brought back by the owner 2026-11-23 (F-11, "Bring camera back")**: the camera now carries the spec's sections as shots (SITE-09).
 - The curved gallery hallway (old SITE-04) → the state showcase grid (SITE-02).
 - The guided talk-to-it demo with speech synthesis and the word drum (old SITE-05) → the marble in realistic UIs (SITE-03) and the playground's audio sources (SITE-04).
 - The palettes-first flow (old SITE-07, F-6) → palette and custom colors live in the playground (SITE-04).
-- Dark only and "the marble is the only colour" (F-4) → dark by default plus a light mode.
+- Dark only and "the marble is the only colour" (F-4) → dark by default plus a light mode → dark only again (F-77).
 - The cursive display face and "customization as a game" (F-7) → open question Q-2.
 
 ## Open questions

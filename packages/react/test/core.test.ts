@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { hexToLinear, palettes, resolvePalette } from '../src/colors';
-import { calm, easedFrom, easeToward, emotions, happy, isKnownState, muted, NUMERIC, paramRanges, resolveState, settled, spring, states } from '../src/state';
+import { calm, easedFrom, easeToward, emotions, happy, isKnownState, muted, NUMERIC, paramRanges, resolveState, sanitize, settled, spring, states } from '../src/state';
 import { createMotion, uniformsOf } from '../src/render/motion';
 import { emotionData, fragmentSource, stateData } from '../src/generated/core';
 
@@ -130,5 +130,35 @@ describe('states and emotions', () => {
     expect(x).toBeLessThan(0.2);
     const [x2] = spring(x, v, 0, 1 / 30);
     expect(Math.abs(x2 - x)).toBeLessThan(0.1);
+  });
+});
+
+describe('edge cases', () => {
+  it('passes every numeric parameter through at its ends, clamps past them, and ignores what is not a finite number', () => {
+    expect(NUMERIC).toContain('scan');
+    for (const key of NUMERIC) {
+      const [min, max] = paramRanges[key];
+      expect(sanitize({ [key]: min })[key], `${key} min`).toBe(min);
+      expect(sanitize({ [key]: max })[key], `${key} max`).toBe(max);
+      expect(sanitize({ [key]: min - 1 })[key], `${key} min - 1`).toBe(min);
+      expect(sanitize({ [key]: max + 1 })[key], `${key} max + 1`).toBe(max);
+      for (const bad of [Infinity, -Infinity, Number.NaN, '2']) {
+        expect(sanitize({ [key]: bad }), `${key} ${String(bad)}`).not.toHaveProperty(key);
+        expect(resolveState('x', { x: { [key]: bad } })[key], `${key} ${String(bad)} resolves to base`).toBe(resolveState('idle')[key]);
+      }
+    }
+  });
+  it('never throws on odd palettes, and falls back to Pearl', () => {
+    for (const odd of [null, 'toString', 'constructor', '__proto__', 'hasOwnProperty', 'ff0000', [], ['ff0000'], ['#ff0000ff'], [1, 2], [null], 42, {}]) {
+      const colors = resolvePalette(odd as never);
+      expect(colors, JSON.stringify(odd)).toEqual(palettes.pearl);
+    }
+    expect(resolvePalette(['#ABC'])).toEqual(['#ABC', '#ABC', '#ABC', '#ABC']);
+    expect(resolvePalette(['  #ff0000 ', 7 as never, ' #00ff00'])).toEqual(['#ff0000', '#ff0000', '#00ff00', '#ff0000']);
+  });
+  it('cuts a label past 80 characters and ignores one that is not a string', () => {
+    expect(sanitize({ label: 'x'.repeat(100) }).label).toBe('x'.repeat(80));
+    expect(sanitize({ label: 42 })).not.toHaveProperty('label');
+    expect(sanitize({ label: null })).not.toHaveProperty('label');
   });
 });

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../core');
 const read = file => readFileSync(join(root, file), 'utf8');
-/** GLSL without comments, indentation or blank lines: the package ships the code, core/ keeps the commentary. */
+/** GLSL without comments, indentation or blank lines: the package ships the code, packages/core/ keeps the commentary. */
 const glsl = file => read(file)
   .split('\n')
   .map(line => line.replace(/\/\/.*$/, '').trim())

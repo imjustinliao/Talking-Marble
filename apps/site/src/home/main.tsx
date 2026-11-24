@@ -28,15 +28,14 @@ const N = BUILT_INS.length;
 function Home() {
   const cam = useCamera();
   const { active, walkStep, goTo } = cam;
-  const pickSel = usePick();
-  const { palette } = pickSel;
+  const { palette } = usePick();
   const mine = useMine();
   const register = useCallback((id: ShotId, el: HTMLElement | null) => { cam.shots.current[id] = el; }, [cam.shots]);
   const live = (id: ShotId) => cam.onScreen.split(' ').includes(id);
 
   // The gallery: walk it (Palettes); all six gather for the overview (All palettes).
   const marbles = useMemo<GalleryMarble[]>(() => BUILT_INS.map(id => ({
-    id, colors: colorsOf(id, {}), chosen: id === palette, label: paletteLabel(id),
+    id, colors: colorsOf(id), chosen: id === palette, label: paletteLabel(id),
   })), [palette]);
   // Where a step is walking to, so quick presses add up before the camera arrives.
   const target = useRef<number | null>(null);
@@ -46,17 +45,16 @@ function Home() {
   // A click on a gallery marble walks to it.
   const gallery = {
     marbles, front: walkStep, drawing: cam.drawing, active: active === 'palettes',
-    onPick: (k: number) => stepTo(k),
+    onPick: stepTo,
   };
 
-
   // The marble in focus lends the UI its colours (F-28): the walk's front marble, the intro's, or your own.
-  const focus = active === 'palettes' ? colorsOf(BUILT_INS[walkStep]!, {})
-    : active === 'top' || active === 'all' ? colorsOf(palette, pickSel.edits) : mineColors(mine, pickSel);
+  const focus = active === 'palettes' ? colorsOf(BUILT_INS[walkStep]!)
+    : active === 'top' || active === 'all' ? colorsOf(palette) : mineColors(mine);
   const tint = { '--m0': focus[0], '--m1': focus[1], '--m2': focus[2], '--m3': focus[3] } as CSSProperties;
 
   return (
-    <div className="experience" style={tint} data-shot={active} data-intro={cam.introMode} data-narrow={cam.narrow || undefined}>
+    <div className="experience" style={tint} data-shot={active} data-intro={cam.introMode} data-intro-done={cam.intro === 'done' || undefined} data-narrow={cam.narrow || undefined}>
       <TopBar page="home" />
       <main id="main" tabIndex={-1}>
         <Scene ref={cam.world} active={active} refs={cam.gallery} gallery={gallery} narrow={cam.narrow} />

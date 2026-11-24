@@ -79,14 +79,9 @@ test('the props table lists every prop of TalkingMarbleProps, with a description
   expect(row('audio')[1]).toBe('MediaStream | HTMLMediaElement | AudioNode');
 });
 
-async function scheme(page: Page, s: 'dark' | 'light') {
-  await page.addInitScript(t => { try { if (t === 'light') localStorage.setItem('talking-marble-theme', 'light'); } catch { /* none */ } }, s);
-}
-
 for (const s of ['dark'] as const) {
   test(`docs: axe clean, one column with the index on the side (top on phones), screenshots (${s})`, async ({ page }) => {
     test.setTimeout(60_000);
-    await scheme(page, s);
     for (const [w, h] of [[1280, 800], [375, 812]] as const) {
       await page.setViewportSize({ width: w, height: h });
       // As the page's other axe test: no transitions (the body's 0.25 s theme fade), so colours are final.

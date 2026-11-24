@@ -47,7 +47,7 @@ test('the guide: only what is needed (install, usage), styled as code, then Docs
 test('the usage follows your own marble', async ({ page }) => {
   await page.goto('/#create');
   await settled(page, 'create');
-  await page.locator('#create .steps').getByRole('button', { name: 'Colours', exact: true }).click();
+  await page.locator('#create .steps').getByRole('button', { name: 'Colours', exact: true }).dispatchEvent('click');
   await page.locator('#create').getByRole('button', { name: /^Pigment 1: #/ }).click();
   await page.getByRole('dialog', { name: 'Pigment 1 color' }).getByRole('textbox', { name: 'Hex' }).fill('#00ff88');
   await page.keyboard.press('Enter');

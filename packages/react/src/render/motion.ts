@@ -1,6 +1,6 @@
 // The orb's motion model (packages/core/spec.md › Motion, Uniforms, Small sizes). Pure and framework-free:
 // it turns springing parameters, a voice level and time into shader uniforms and a whole-marble transform.
-import { approach, easeToward, NUMERIC, type Eased, type NumericKey, type OrbParams } from '../state';
+import { approach, easeToward, type Eased, type NumericKey, type OrbParams } from '../state';
 import type { UniformValue } from './renderer';
 
 const TAU = Math.PI * 2;
@@ -104,5 +104,3 @@ export function transformOf(m: Motion, x: Record<NumericKey, number>, k: number,
 export function haloOpacityOf(m: Motion, x: Record<NumericKey, number>): number {
   return Math.min(1, x.halo * (1 + 0.5 * m.pulse) + 0.4 * m.level);
 }
-
-export { NUMERIC };

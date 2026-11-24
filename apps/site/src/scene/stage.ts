@@ -4,8 +4,8 @@ import type { ShotId } from './camera';
 
 /**
  * What the one marble on the stage shows. Each shot says what it wants (Create your own its colours, its state);
- * the marble shows the live shot's wishes. Its palette is the visitor's pick
- * (`pick.ts`), the same in every shot, so every move starts on the marble in its current colours (F-8).
+ * the marble shows the live shot's wishes. Without colours of its own it wears the site's palette
+ * (`pick.ts`), so every move starts on the marble in its current colours (F-8).
  */
 export interface StageWish {
   state: string;
@@ -43,9 +43,6 @@ export function useStageWish(id: ShotId, wish: StageWish) {
   }, [id, key, stream]); // the wish by value: a new object each render is the same wish
   useEffect(() => () => { const { [id]: _, ...rest } = wishes; wishes = rest; emit(); }, [id]);
 }
-
-/** What the marble shows for a shot, outside React (the ink floor reads it each frame). */
-export const getStage = (id: ShotId): StageWish => ({ ...DEFAULT, ...wishes[id] });
 
 /** What the marble shows for the live shot. */
 export function useStage(active: ShotId): StageWish {

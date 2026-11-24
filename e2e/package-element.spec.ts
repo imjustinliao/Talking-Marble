@@ -69,3 +69,55 @@ test('the Web Component hears audio through its property', async ({ page, testPa
   }
   expect(peak).toBeGreaterThan(0.05);
 });
+
+test('invalid size, level and presets attributes give no console errors', async ({ page, testPage }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(`${testPage}element.html`);
+  const a = page.locator('#a');
+  await expect(a).toHaveAttribute('data-ready', 'true');
+  for (const [name, values] of [
+    ['size', ['-5', '0', 'NaN', 'Infinity', 'big', '']],
+    ['level', ['NaN', '-1', '5', 'Infinity', 'loud', '']],
+    ['presets', ['{oops', '[1]', 'null', '"x"', '{"speaking":{"speed":"fast","colors":[1]}}', '']],
+  ] as const) {
+    for (const value of values) await a.evaluate((el, [n, v]) => el.setAttribute(n!, v!), [name, value]);
+  }
+  // A cyclic presets object as a property must not throw either.
+  await a.evaluate(el => { const p: Record<string, unknown> = { speaking: { speed: 2 } }; p.self = p; (el as HTMLElement & { presets: unknown }).presets = p; });
+  // An invalid size fills the container like no size: here the flex row gives it a width, never 0.
+  await a.evaluate(el => el.setAttribute('size', '-5'));
+  expect(await a.evaluate(el => el.style.getPropertyValue('--talking-marble-size'))).toBe('');
+  await page.waitForTimeout(300);
+  await expect(a).toHaveAttribute('data-ready', 'true');
+  expect(errors).toEqual([]);
+});
+
+test('toggling decorative updates the accessible name', async ({ page, testPage }) => {
+  await page.goto(`${testPage}element.html`);
+  await expect.poll(() => images(page)).toEqual(['Nova, speaking', 'Assistant, mine']);
+  await page.locator('#a').evaluate(el => el.setAttribute('decorative', ''));
+  await expect.poll(() => images(page)).toEqual(['Assistant, mine']);
+  await page.locator('#a').evaluate(el => el.removeAttribute('decorative'));
+  await page.locator('#b').evaluate(el => el.removeAttribute('decorative'));
+  await expect.poll(() => images(page)).toEqual(['Nova, speaking', 'Assistant, idle', 'Assistant, mine']);
+});
+
+test('removed and re-inserted with audio set, it reconnects without errors', async ({ page, testPage }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(`${testPage}element.html`);
+  const a = page.locator('#a');
+  await a.evaluate(el => {
+    el.setAttribute('state', 'probe');
+    (el as HTMLElement & { presets: object }).presets = { probe: { halo: 0, reactivity: 1 } };
+    (el as HTMLElement & { audio: MediaStream }).audio = (window as unknown as { tone(): MediaStream }).tone();
+  });
+  await a.evaluate(el => { const parent = el.parentElement!; el.remove(); parent.append(el); });
+  await expect(a).toHaveAttribute('data-ready', 'true');
+  const opacity = () => page.evaluate(() => +getComputedStyle(document.getElementById('a')!.shadowRoot!.querySelector('.halo')!).opacity);
+  await expect.poll(opacity, { timeout: 4000 }).toBeGreaterThan(0.05);
+  expect(errors).toEqual([]);
+});

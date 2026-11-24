@@ -25,9 +25,6 @@ body { overscroll-behavior-y: none; }
 /* The fog (F-54): a small fluid simulation behind the scene, drawn at half size and scaled up (it is soft) */
 .fog { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
 
-/* The floor (F-43): a plane reaching out from under the marble into the fog, a faint sheen near it, its ink rings */
-/* The rings are gone (F-53): the ground and its fog are the atmosphere's, drawn behind everything (F-51) */
-
 /* ── The intro: a point of light ignites, swells and becomes the marble; the name follows ── */
 /* A soft glow with no edge (F-48): it swells to the marble's size while the marble resolves inside it */
 .spark { position: absolute; left: 50%; top: 50%; width: 80px; height: 80px; margin: -40px; border-radius: 50%; background: radial-gradient(circle, #fff 0, rgba(255, 255, 255, 0.85) 12%, color-mix(in srgb, var(--marble) 45%, transparent) 34%, transparent 70%); opacity: 0; pointer-events: none; }
@@ -64,13 +61,11 @@ body { overscroll-behavior-y: none; }
 
 /* Words you pick: the chosen one bright and underlined, the rest dim */
 .words { list-style: none; display: grid; justify-items: start; }
-.words--small { display: flex; flex-wrap: wrap; gap: 0 20px; }
 .word { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: 22px; letter-spacing: -0.01em; color: var(--text-3); transition: color 0.2s ease; }
 /* The chosen word's underline is a short ink stroke in the marble's pigments (F-28), brushed in from the left */
 .word::after { content: ""; position: absolute; left: -3px; right: -3px; bottom: 5px; height: 5px; background: var(--marbled); background-size: 300% 300%; animation: marbled 14s ease-in-out infinite alternate; -webkit-mask: var(--stroke) center / 100% 100% no-repeat; mask: var(--stroke) center / 100% 100% no-repeat; transform: scaleX(0); transform-origin: left; transition: transform 0.35s var(--ease); pointer-events: none; }
 .word[aria-pressed="true"]::after, .word[aria-current="step"]::after { transform: scaleX(1); }
 :root { --stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 6' preserveAspectRatio='none'%3E%3Cpath d='M1 3.6C12 2.2 22 2.9 34 2.4s25-.9 37-.4 19 .8 28 .3c.6.9.4 1.6-.3 2.1-10 .2-19-.4-29 0s-24 .8-36 .7S11 4.6 1.5 5.1C.4 4.8.3 4 1 3.6z'/%3E%3C/svg%3E"); }
-.words--small .word { font-size: 17px; }
 .word:hover { color: var(--text-2); }
 .word[aria-pressed="true"], .word[aria-current="step"] { color: var(--text); }
 .swatch { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.35); }
@@ -115,8 +110,8 @@ body { overscroll-behavior-y: none; }
 .walk__name { font-family: var(--display); font-weight: 600; font-size: clamp(2.4rem, 1.6rem + 2.4vw, 3.6rem); letter-spacing: -0.03em; line-height: 1.05; }
 .stepper__count { min-width: 4.5ch; text-align: center; font-size: 14px; font-variant-numeric: tabular-nums; color: var(--text-3); }
 /* What you try: one row per group, the group's name in a fixed column so the rows line up */
-.try { display: grid; justify-items: start; gap: 12px; width: 100%; margin-top: 10px; }
-.try__row { display: grid; justify-items: start; gap: 7px; }
+.try { display: grid; justify-items: start; gap: 22px; width: 100%; margin-top: 14px; }
+.try__row { display: grid; justify-items: start; gap: 10px; }
 .try__row .group-name { font-size: 10.5px; }
 
 /* Switch bars and toggles (F-37): glass, black and white, lit from the control itself. Tokens per stage. */
@@ -133,8 +128,7 @@ body { overscroll-behavior-y: none; }
 @media (prefers-reduced-motion: reduce) { .seg[data-glide] .seg__glide { transition: opacity 0.2s ease; } }
 /* A loop past five options (F-90): five in focus, the next ones faint at both ends, wrapping round. The view is a
    fixed width; the strip glides under a lit key that stays in the middle and only eases its width. */
-.seg--loop { padding: 4px; }
-.loop { position: relative; max-width: calc(100vw - 2 * var(--gutter) - 8px); overflow: clip; touch-action: pan-y; -webkit-mask-image: linear-gradient(90deg, transparent, #000 44px, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(90deg, transparent, #000 44px, #000 calc(100% - 44px), transparent); }
+.loop { position: relative; max-width: calc(100vw - 2 * var(--gutter) - 8px); overflow: clip; touch-action: pan-y; -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent); }
 .loop__strip { display: flex; gap: 3px; width: max-content; }
 .loop[data-ease] .loop__strip { transition: transform 0.52s var(--ease); }
 .loop__key { opacity: 0; }
@@ -144,6 +138,15 @@ body { overscroll-behavior-y: none; }
 .loop .seg__opt:hover { background: none; color: var(--text); }
 .loop .seg__opt[aria-pressed="true"]:hover, .loop .seg__opt[data-on]:hover { color: var(--key-text); }
 .loop .seg__opt[aria-pressed="true"], .loop .seg__opt[data-on] { color: var(--key-text); }
+.seg--loop { padding: 4px; }
+/* The dots sit under the bar, apart from it (F-96), centred on it */
+.loop-wrap { display: grid; justify-items: center; gap: 10px; }
+.loop__dots { position: relative; display: flex; gap: 7px; padding: 4px 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px var(--glass-edge); }
+.loop__dot { position: relative; width: 5px; height: 5px; padding: 0; border-radius: 999px; background: color-mix(in srgb, var(--text) 30%, transparent); transition: background-color 0.3s ease; }
+.loop__dot:hover { background: color-mix(in srgb, var(--text) 60%, transparent); }
+/* The thumb: a lit pill over the chosen dot, sliding along the track (one step = a dot and a gap, 12 px) */
+.loop__thumb { position: absolute; left: 2px; top: 3px; width: 13px; height: 7px; border-radius: 999px; background: var(--text); box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); transform: translateX(calc(var(--at, 0) * 12px)); transition: transform 0.52s var(--ease); pointer-events: none; z-index: 1; }
+@media (prefers-reduced-motion: reduce) { .loop__thumb { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .loop[data-ease] .loop__strip, .loop[data-ease] .loop__key { transition: none; } }
 /* Narrow phones: the five in focus still fit */
 @media (max-width: 440px) {
@@ -204,7 +207,7 @@ body { overscroll-behavior-y: none; }
 .dial input { width: 100%; min-height: 30px; accent-color: var(--text); }
 .dial output { text-align: right; font-size: 12.5px; color: var(--text-3); }
 .create__name { display: grid; gap: 14px; justify-items: start; width: 100%; }
-.create__code, .snippet__code { margin: 0; font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
+.create__code { margin: 0; font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
 .create__actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .pg-input { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-2); }
 .pg-input input { font: 14px var(--mono); color: var(--text); background: color-mix(in srgb, var(--raised) 80%, transparent); border: 1px solid var(--hair-strong); border-radius: 10px; padding: 9px 12px; min-height: 40px; }
@@ -223,11 +226,6 @@ body { overscroll-behavior-y: none; }
 .block__code { display: flex; align-items: flex-start; gap: 8px; padding: 12px 8px 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--bg) 70%, transparent); box-shadow: inset 0 0 0 1px var(--hair); min-width: 0; }
 .block__code pre { flex: 1; min-width: 0; margin: 0; font-size: 13px; line-height: 1.65; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
 .block__code .icon-btn { flex: none; width: 32px; height: 32px; margin: -6px 0; }
-/* The code, tinted with the marble's pigments (F-28) */
-.tok--kw, .tok--punct { color: var(--text-3); }
-.tok--tag { color: color-mix(in srgb, var(--m2) 80%, var(--text)); }
-.tok--attr { color: color-mix(in srgb, var(--m1) 75%, var(--text)); }
-.tok--str { color: color-mix(in srgb, var(--m3) 80%, var(--text)); }
 .guide__note { font-size: 13px; color: var(--text-3); }
 .guide .links { margin-top: 4px; }
 .shot--guide .footer { position: fixed; left: 0; right: 0; bottom: 0; padding: 14px 7vw 18px; border-top: 0; }
@@ -263,20 +261,18 @@ body { overscroll-behavior-y: none; }
   .walk__name { font-size: 2.4rem; }
   .steps { justify-content: center; }
   .dock { left: 50%; bottom: 18px; gap: 14px; }
-  .try { gap: 10px; }
-  .try__row { justify-items: center; gap: 6px; }
+  .try { gap: 18px; }
+  .try__row { justify-items: center; gap: 8px; }
   .seg { justify-content: center; }
   .seg__opt { min-height: 30px; padding: 0 10px; font-size: 12.5px; }
   .words { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 16px; }
   .word { font-size: 18px; }
-  .words--small .word { font-size: 16px; }
   .pg-colors, .create__actions { justify-content: center; }
   .create__name { justify-items: center; }
   .create__code { font-size: 12px; text-align: left; }
   .mock--call { justify-self: center; width: 200px; height: 190px; padding: 14px 12px; }
   .mock--call [data-talking-marble] { width: 96px !important; }
   .mock--input, .mock--chat { width: 100%; }
-  .snippet__code { font-size: 11.5px; line-height: 1.45; }
   .shot__line { max-width: 34ch; }
   .hero__line { max-width: 34ch; }
   .index { display: none; }
@@ -290,7 +286,7 @@ body { overscroll-behavior-y: none; }
   .shot__title { font-size: 1.6rem; }
   .walk__name { font-size: 2rem; }
   .hero__title { font-size: 2.4rem; }
-  .word, .words--small .word { font-size: 15px; min-height: 30px; }
+  .word { font-size: 15px; min-height: 30px; }
   /* Seven states and eight emotions (F-83, F-87) still fit one short screen */
   .try { gap: 6px; margin-top: 4px; }
   .seg { gap: 2px; padding: 3px; }
@@ -298,7 +294,7 @@ body { overscroll-behavior-y: none; }
   .group-name { font-size: 12px; }
   .shot__line { font-size: 14px; }
   .mock--call { zoom: 0.6; }
-  .snippet__code, .create__code { font-size: 12px; line-height: 1.45; }
+  .create__code { font-size: 12px; line-height: 1.45; }
   /* The Guide in one short screen: the title, Copy prompt and the links in one row; no block labels */
   .shot--guide { --w: min(560px, 52vw); }
   .guide { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 14px; align-items: center; }
@@ -342,3 +338,12 @@ body { overscroll-behavior-y: none; }
 .cpick__hex:focus-within { box-shadow: inset 0 0 0 1px var(--focus); }
 .cpick__dot { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--hair-strong); flex: none; }
 .cpick__hex input { flex: 1; min-width: 0; background: none; border: 0; color: var(--text); font: 14px var(--mono); outline: none; }
+
+/* Create your own reads clearly (F-95): its words at full strength, a size up, not dimmed like captions. */
+.create .shot__line { color: var(--text); font-size: 15.5px; line-height: 1.55; }
+.create .pg-input, .create .dial { color: var(--text); font-size: 15px; font-weight: 500; }
+.create .dial output { color: var(--text-2); font-size: 13px; }
+.create .cpick__label { color: var(--text); font-size: 13px; font-weight: 500; }
+.create .group-name { color: var(--text-2); }
+.create .pg-input input { font: 15px var(--ui); padding: 10px 14px; }
+.create .panel { max-width: 520px; }

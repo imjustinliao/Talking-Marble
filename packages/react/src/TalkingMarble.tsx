@@ -1,18 +1,17 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { connectAudio, type AudioTap, type OrbAudioSource } from './audio/source';
 import { resolvePalette, type OrbPalette } from './colors';
-import { fallbackBackground } from './render/css';
 import { orbLabel } from './label';
 import { createOrb, type OrbController } from './render/orb';
-import { resolveState, type OrbEmotion, type OrbPreset, type OrbState } from './state';
-import { haloStrengthOf, warnUnknown } from './common';
+import type { OrbEmotion, OrbPreset, OrbState } from './state';
+import { fallbackFor, haloStrengthOf, haloStyles, sizeOf, stableKey, warnUnknown } from './common';
 
 export type { OrbAudioSource };
 
 export interface TalkingMarbleProps {
   /** A built-in state or one of your presets. Default `idle`. Unknown names show `idle`. */
   state?: OrbState;
-  /** An emotion layered on the state: `happy`, `excited`, `calm`, `curious`, `surprised`, `concerned`, `sad`, `muted` or one of your presets. Optional. */
+  /** An emotion layered on the state: `happy`, `calm`, `excited`, `curious`, `surprised`, `concerned`, `sad`, `muted` or one of your presets. Optional. */
   emotion?: OrbEmotion | null;
   /**
    * Audio to react to, in states that listen (`listening`, `speaking`, or any preset with `reactivity`).
@@ -24,7 +23,7 @@ export interface TalkingMarbleProps {
   level?: number;
   /** A palette name, or four colors (ground, then three pigments). Default `pearl`. */
   palette?: OrbPalette;
-  /** Width and height in CSS pixels. Default: fills its container's width (square). */
+  /** Width and height in CSS pixels. Default (or not a number above 0): fills its container's width (square). */
   size?: number;
   /** Your own states and emotions, merged over the built-ins by name. */
   presets?: Record<string, OrbPreset>;
@@ -55,7 +54,7 @@ export function TalkingMarble({
   const innerRef = useRef<HTMLSpanElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const haloRef = useRef<HTMLSpanElement>(null);
-  const haloStrength = haloStrengthOf(halo);
+  const haloStyle = haloStyles(haloStrengthOf(halo));
   const fallbackRef = useRef<HTMLSpanElement>(null);
   const orbRef = useRef<OrbController | null>(null);
   const tapRef = useRef<AudioTap | null>(null);
@@ -65,8 +64,8 @@ export function TalkingMarble({
 
   const colors = resolvePalette(palette);
   const colorKey = colors.join();
-  // A preset's own colors win over the palette (the only way a preset changes color).
-  const shown = resolveState(state, presets, emotion).colors ?? colors;
+  // Presets written inline are a new object every render: keyed by content, they re-resolve only on a change.
+  const presetsKey = stableKey(presets);
 
   useEffect(() => {
     const orb = createOrb(
@@ -85,7 +84,8 @@ export function TalkingMarble({
   useEffect(() => {
     warnUnknown(state, emotion, presets);
     orbRef.current?.setState(state, presets, emotion);
-  }, [state, presets, emotion]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, presetsKey, emotion]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { orbRef.current?.setColors(colors); }, [colorKey]);
@@ -101,7 +101,7 @@ export function TalkingMarble({
   // Width sets the size; aspect-ratio keeps it square even when max-width shrinks it.
   const box: CSSProperties = {
     position: 'relative', display: 'inline-block', verticalAlign: 'middle', aspectRatio: '1',
-    width: size ?? '100%', maxWidth: '100%',
+    width: sizeOf(size) ?? '100%', maxWidth: '100%',
     ...style, height: 'auto',
   };
   const a11y = decorative
@@ -120,11 +120,11 @@ export function TalkingMarble({
       {/* The whole-marble movement (bounce, sway, jelly, shake, size) goes on this inner layer, so the outer
           element's layout and the user's style never move. */}
       <span ref={innerRef} style={{ position: 'absolute', inset: 0, display: 'block' }}>
-        <span data-halo-strength="" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: Math.min(1, haloStrength), filter: haloStrength > 1 ? `brightness(${haloStrength})` : undefined }}>
+        <span data-halo-strength="" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: haloStyle.opacity, filter: haloStyle.filter || undefined }}>
         <span
           ref={haloRef}
           data-halo=""
-          style={{ position: 'absolute', inset: '1%', borderRadius: '50%', pointerEvents: 'none', display: haloStrength > 0 ? 'block' : 'none' }}
+          style={{ position: 'absolute', inset: '1%', borderRadius: '50%', pointerEvents: 'none', display: haloStyle.display }}
         />
         </span>
         <span
@@ -132,7 +132,7 @@ export function TalkingMarble({
           data-fallback=""
           style={{
             position: 'absolute', inset: '0.75%', borderRadius: '50%', display: 'block',
-            background: fallbackBackground(shown), visibility: ready ? 'hidden' : 'visible',
+            background: fallbackFor(state, presets, emotion, colors), visibility: ready ? 'hidden' : 'visible',
           }}
         />
         <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', opacity: ready ? 1 : 0 }} />

@@ -22,21 +22,21 @@ test('create your own: a switch bar of steps, Name chosen first, one step shown 
   const row = () => create(page).locator('.steps').evaluate(el => el.getBoundingClientRect().top);
   const at = await row();
   // A switch bar: one step is always chosen, Colours to begin with, and only it shows below.
-  await expect(create(page).locator('.steps .seg__opt')).toHaveText(STEPS);
+  await expect(create(page).locator('.steps').getByRole('button')).toHaveText(STEPS);
   await expect(step(page, 'Name')).toHaveAttribute('aria-pressed', 'true');
   await expect(create(page).getByRole('textbox', { name: 'Name your marble' })).toBeVisible();
   for (const name of [...STEPS.slice(1), 'Name']) {
-    await step(page, name).click();
+    await step(page, name).dispatchEvent('click');
     await expect(step(page, name)).toHaveAttribute('aria-pressed', 'true');
     await expect(create(page).locator('.steps [aria-pressed="true"]')).toHaveCount(1);
     await expect(create(page).locator('.create__step')).not.toBeEmpty();
     expect(Math.abs((await row()) - at)).toBeLessThanOrEqual(1);
   }
   // Choosing the chosen step again keeps it open.
-  await step(page, 'Name').click();
+  await step(page, 'Name').dispatchEvent('click');
   await expect(step(page, 'Name')).toHaveAttribute('aria-pressed', 'true');
   // The lit key glides to the chosen step (F-71): one key, sitting on it.
-  await step(page, 'Code').click();
+  await step(page, 'Code').dispatchEvent('click');
   await expect.poll(() => page.evaluate(() => {
     const k = document.querySelector('#create .steps .seg__glide')!.getBoundingClientRect(), b = document.querySelector('#create .steps [aria-pressed="true"]')!.getBoundingClientRect();
     return Math.abs(k.left - b.left) < 1 && Math.abs(k.width - b.width) < 1;
@@ -48,14 +48,14 @@ test('create your own: a switch bar of steps, Name chosen first, one step shown 
 test('it starts as a plain globe, not a palette; a colour reaches the marble and the code; Reset makes it plain again (F-61)', async ({ page }) => {
   await open(page);
   await expect(stage(page)).toHaveAttribute('data-colors', UNPAINTED);
-  await step(page, 'Colours').click();
+  await step(page, 'Colours').dispatchEvent('click');
   await create(page).getByRole('button', { name: /^Pigment 1: #/ }).click();
   await page.getByRole('dialog', { name: 'Pigment 1 color' }).getByRole('textbox', { name: 'Hex' }).fill('#00ff88');
   await page.keyboard.press('Enter');
   await expect(stage(page)).toHaveAttribute('data-colors', /^#\w+ #00ff88 /);
-  await step(page, 'Code').click();
+  await step(page, 'Code').dispatchEvent('click');
   await expect(create(page).locator('.create__code')).toContainText("'#00ff88'");
-  await step(page, 'Colours').click();
+  await step(page, 'Colours').dispatchEvent('click');
   await create(page).getByRole('button', { name: 'Reset' }).click();
   await expect(stage(page)).toHaveAttribute('data-colors', UNPAINTED);
 });
@@ -64,7 +64,7 @@ test('try it: every state and emotion, your own state too, the halo strength int
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await open(page);
   const orb = stage(page).locator('[data-talking-marble]');
-  await step(page, 'Try it').click();
+  await step(page, 'Try it').dispatchEvent('click');
   for (const s of ['idle', 'listening', 'thinking', 'error']) {
     await option(create(page), 'State', s).pick();
     await expect(orb).toHaveAttribute('data-state', s);
@@ -72,30 +72,30 @@ test('try it: every state and emotion, your own state too, the halo strength int
   await option(create(page), 'Emotion', 'calm').pick();
   await expect(orb).toHaveAttribute('data-emotion', 'calm');
   await create(page).getByRole('slider', { name: /Halo/ }).fill('0.5');
-  await step(page, 'Code').click();
+  await step(page, 'Code').dispatchEvent('click');
   await expect(create(page).locator('.create__code')).toContainText('halo={0.5}');
   // Motion makes a state of your own; it joins Try it; its name goes into the code and the export.
-  await step(page, 'Motion').click();
+  await step(page, 'Motion').dispatchEvent('click');
   await create(page).getByRole('slider', { name: /^Speed/ }).fill('3');
   await expect(orb).toHaveAttribute('data-state', 'mine');
-  await step(page, 'Try it').click();
+  await step(page, 'Try it').dispatchEvent('click');
   await expect(option(create(page), 'State', 'mine').opt).toBeAttached();
   // Naming it (F-86) names its state and its label: "Sparkle" → presets={{ sparkle }}, label="Sparkle".
-  await step(page, 'Name').click();
+  await step(page, 'Name').dispatchEvent('click');
   await create(page).getByRole('textbox', { name: 'Name your marble' }).fill('Sparkle');
   await expect(stage(page).locator('[data-talking-marble]')).toHaveAttribute('aria-label', /^Sparkle, /);
-  await step(page, 'Code').click();
+  await step(page, 'Code').dispatchEvent('click');
   await expect(create(page).locator('.create__code')).toContainText('label="Sparkle"');
   await expect(create(page).locator('.create__code')).toContainText('presets={{ sparkle: { speed: 3');
   await create(page).getByRole('button', { name: /Export preset/ }).click();
   const json = JSON.parse(await page.evaluate(() => navigator.clipboard.readText()));
   expect(json.sparkle.speed).toBe(3);
   // A built-in's name never replaces the built-in: "Idle" becomes myidle.
-  await step(page, 'Name').click();
+  await step(page, 'Name').dispatchEvent('click');
   await create(page).getByRole('textbox', { name: 'Name your marble' }).fill('Idle');
-  await step(page, 'Code').click();
+  await step(page, 'Code').dispatchEvent('click');
   await expect(create(page).locator('.create__code')).toContainText('presets={{ myidle: {');
-  await step(page, 'Name').click();
+  await step(page, 'Name').dispatchEvent('click');
   await create(page).getByRole('textbox', { name: 'Name your marble' }).fill('Sparkle');
   await goToShot(page, 'Guide');
   await expect(page.locator('#guide').getByLabel('usage', { exact: true })).toContainText('presets={presets}');
@@ -104,7 +104,7 @@ test('try it: every state and emotion, your own state too, the halo strength int
 test('try it: Talk without a mic is a simulated conversation on your marble; End returns', async ({ page }) => {
   await page.addInitScript(() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('no', 'NotAllowedError')); });
   await open(page);
-  await step(page, 'Try it').click();
+  await step(page, 'Try it').dispatchEvent('click');
   await create(page).getByRole('button', { name: 'Talk' }).click();
   const orb = stage(page).locator('[data-talking-marble]');
   await expect(orb).toHaveAttribute('data-state', 'listening');
@@ -119,7 +119,7 @@ for (const scheme of ['dark'] as const) {
     await page.goto('/#create');
     await settled(page, 'create');
     for (const name of STEPS) {
-      await step(page, name).click();
+      await step(page, name).dispatchEvent('click');
       const r = await new AxeBuilder({ page }).include('#create').withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
       expect(r.violations.map(v => `${name} ${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([]);
     }

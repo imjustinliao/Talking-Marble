@@ -37,10 +37,10 @@ export function rgba(hex: string, alpha: number): string {
   return `rgba(${hexToRgb(hex).join(',')},${alpha})`;
 }
 
-/** Resolves a palette prop to exactly four colors (packages/core/spec.md › Colors). Unknown names are Pearl. */
-export function resolvePalette(palette: OrbPalette | undefined): OrbColors {
-  if (palette === undefined) return palettes.pearl;
-  if (typeof palette === 'string') return palettes[palette as PaletteName] ?? palettes.pearl;
+/** Resolves a palette prop to exactly four colors (packages/core/spec.md › Colors). Unknown names and anything else are Pearl. */
+export function resolvePalette(palette: OrbPalette | null | undefined): OrbColors {
+  if (typeof palette === 'string') return Object.hasOwn(palettes, palette) ? palettes[palette as PaletteName] : palettes.pearl;
+  if (!Array.isArray(palette)) return palettes.pearl;
   // Keep each color in its slot; an invalid or missing one takes the ground.
   const slots = palette.slice(0, 4).map(c => (typeof c === 'string' && CSS_HEX.test(c.trim()) ? c.trim() : undefined));
   const ground = slots[0];

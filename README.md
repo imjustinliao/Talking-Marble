@@ -115,7 +115,7 @@ An emotion adds a tone on top of any state, so `speaking` can be happy, calm or 
 <TalkingMarble state="speaking" emotion="happy" audio={stream} />
 ```
 
-`happy` · `excited` · `calm` · `curious` · `surprised` · `concerned` · `sad` · `muted`
+`happy` · `calm` · `excited` · `curious` · `surprised` · `concerned` · `sad` · `muted`
 
 ### Palettes
 

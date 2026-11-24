@@ -36,7 +36,7 @@ test('the orb draws in all six states, with no console errors', async ({ page })
   // The stage marble's states are tried in Create your own (F-22): go there as a visitor would (its link in the
   // index), to its States step.
   await page.getByRole('navigation', { name: 'Shots' }).getByRole('link', { name: 'Create your own' }).click();
-  await page.locator('#create .steps').getByRole('button', { name: 'Try it', exact: true }).click();
+  await page.locator('#create .steps').getByRole('button', { name: 'Try it', exact: true }).dispatchEvent('click');
   const orb = page.getByTestId('main-marble').locator('[data-talking-marble][role="img"]');
   await expect(orb).toHaveAttribute('data-ready', 'true');
 

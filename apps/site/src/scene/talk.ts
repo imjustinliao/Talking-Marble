@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { createStore } from './store';
 
 /**
  * Talking to the marble (F-22). Until a real voice model is connected (a backend milestone of its own), the reply is
@@ -22,18 +22,16 @@ const THINK_MS = 1100;
 const REPLY_MS = 3600;
 const SIM_TURN_MS = 3000; // without a mic: how long "you" speak
 
-let talk: Talk = { phase: 'off', stream: null, note: '' };
-const listeners = new Set<() => void>();
-const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
-const set = (patch: Partial<Talk>) => { talk = { ...talk, ...patch }; listeners.forEach(l => l()); };
+const store = createStore<Talk>({ phase: 'off', stream: null, note: '' });
+const set = store.set;
+/** Each Talk is a new session; ending (or starting again) makes an older one's pending mic request stale. */
+let session = 0;
+let starting = false;
 
 let ctx: AudioContext | null = null;
 let timer = 0;
 let poll = 0;
 let rms = 0;
-
-/** Your voice's current loudness (0…1) from the mic, for the ink floor; 0 without one. */
-export const micLevel = () => (talk.phase === 'listening' && talk.stream ? Math.min(1, rms * 6) : 0);
 
 function after(ms: number, fn: () => void) { clearTimeout(timer); timer = window.setTimeout(fn, ms); }
 
@@ -49,7 +47,7 @@ function reply() {
 /** Your turn: with a mic, until you speak and then pause; without one, a simulated turn. */
 function listen() {
   set({ phase: 'listening' });
-  if (!talk.stream) after(SIM_TURN_MS, reply);
+  if (!store.get().stream) after(SIM_TURN_MS, reply);
 }
 
 /** Watches the mic for the end of your turn (speech, then a pause). */
@@ -67,7 +65,7 @@ function watch(stream: MediaStream) {
     let sum = 0;
     for (const v of buf) sum += v * v;
     rms = Math.sqrt(sum / buf.length);
-    if (talk.phase !== 'listening') { spoke = false; return; }
+    if (store.get().phase !== 'listening') { spoke = false; return; }
     const now = performance.now();
     if (rms > SPEECH) { spoke = true; quietSince = now; }
     else if (spoke && now - quietSince > PAUSE_MS) { spoke = false; reply(); }
@@ -76,9 +74,14 @@ function watch(stream: MediaStream) {
 
 /** Talk: asks for the mic (on click only), then starts with your turn. */
 export async function startTalk() {
-  if (talk.phase !== 'off') return;
+  if (store.get().phase !== 'off' || starting) return;
+  const id = ++session;
+  starting = true;
   let stream: MediaStream | null = null;
   try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch { stream = null; }
+  starting = false;
+  // Ended (or left) while the browser asked for the mic: release it and stay off.
+  if (id !== session) { stream?.getTracks().forEach(t => t.stop()); return; }
   set({ stream, note: stream ? '' : 'No microphone, so this is a simulated conversation.' });
   if (stream) watch(stream);
   listen();
@@ -86,14 +89,15 @@ export async function startTalk() {
 
 /** End: stops the conversation and releases the mic. */
 export function endTalk() {
+  session++;
+  starting = false;
   clearTimeout(timer);
   clearInterval(poll);
-  talk.stream?.getTracks().forEach(t => t.stop());
+  store.get().stream?.getTracks().forEach(t => t.stop());
   void ctx?.close();
   ctx = null;
   rms = 0;
   set({ phase: 'off', stream: null, note: '' });
 }
 
-export const useTalk = () => useSyncExternalStore(subscribe, () => talk);
-export const getTalk = () => talk;
+export const useTalk = store.use;

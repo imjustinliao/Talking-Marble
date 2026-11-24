@@ -209,7 +209,7 @@ export function Recipes() {
   return (
     <>
       <p>
-        Each recipe maps the SDK&apos;s agent state to the orb&apos;s six states and hands it the agent&apos;s audio.
+        Each recipe maps the SDK&apos;s agent state to the orb&apos;s states and hands it the agent&apos;s audio.
         APIs move quickly: check your SDK version&apos;s docs if a name differs.
       </p>
       {RECIPES.map(r => (

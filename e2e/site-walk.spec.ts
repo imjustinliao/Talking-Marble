@@ -148,7 +148,7 @@ for (const scheme of ['dark'] as const) {
   });
 }
 
-test('the switch bar loop (F-90): five in focus, the next faint at both ends, a fixed width, the key still while the strip glides, wrapping round', async ({ page }) => {
+test('the switch bar loop (F-90, F-94): three in focus, the next faint at both ends, a fixed width, the key still while the strip glides, wrapping round', async ({ page }) => {
   await open(page);
   const bar = walkShot(page).getByRole('group', { name: 'Emotion', exact: true });
   const view = bar.locator('.loop');
@@ -188,8 +188,16 @@ test('the switch bar loop (F-90): five in focus, the next faint at both ends, a 
   const faint = () => view.locator('.seg__opt').evaluateAll(els => els.filter(e => e.getBoundingClientRect().width && +getComputedStyle(e).opacity < 0.5).length);
   expect(await faint()).toBeGreaterThan(0);
   // Clicking a faint option at the right end brings it to the middle.
+  const target = await view.evaluate(el => { const v = el.getBoundingClientRect(); return document.elementFromPoint(v.right - 30, v.top + v.height / 2)!.textContent; });
   check(await watch("const v = el.getBoundingClientRect(); document.elementFromPoint(v.right - 30, v.top + v.height / 2).click();"), 'right end');
-  await expect(bar.locator('[aria-pressed="true"]')).toHaveText('curious');
+  await expect(bar.locator('[aria-pressed="true"]')).toHaveText(target!);
+  // The dots under the bar: one per option, the chosen one lit; a dot chooses its option.
+  const dots = bar.locator('xpath=..').locator('.loop__dot');
+  await expect(dots).toHaveCount(9);
+  const order = ['none', 'happy', 'calm', 'excited', 'curious', 'surprised', 'concerned', 'sad', 'muted'];
+  await expect(dots.nth(order.indexOf(target!.trim()))).toHaveAttribute('data-on', '');
+  await dots.nth(1).click();
+  await expect(bar.locator('[aria-pressed="true"]')).toHaveText('happy');
   // Wrapping: from the first option, one step left is the last, one step away (not a sweep across the list).
   await option(walkShot(page), 'Emotion', 'none').pick();
   await page.waitForTimeout(900);

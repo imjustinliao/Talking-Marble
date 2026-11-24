@@ -7,6 +7,7 @@ import { STATES } from '../presets';
 import { setPalette, usePick } from '../scene/pick';
 import { useSimulatedLevel } from '../simulated';
 import { Code } from './Code';
+import { GITHUB } from '../ui/Chrome';
 import { CopyButton } from './CopyButton';
 import { Recipes } from './Recipes';
 
@@ -32,7 +33,7 @@ const ELEMENT = `<script type="module">
 /** The Web Component's attributes and properties (packages/react/src/element.ts). */
 const ELEMENT_ATTRS: [string, string, string][] = [
   ['state', 'state', 'A built-in state or one of your presets. Default `idle`.'],
-  ['emotion', 'emotion', 'An emotion layered on the state: `happy`, `excited`, `calm`, `curious`, `surprised`, `concerned`, `sad`, `muted` or one of your presets.'],
+  ['emotion', 'emotion', 'An emotion layered on the state: `happy`, `calm`, `excited`, `curious`, `surprised`, `concerned`, `sad`, `muted` or one of your presets.'],
   ['palette', 'palette', 'A palette name, or four hex colours separated by commas (the property also takes an array).'],
   ['size', 'size', 'Width and height in CSS px. Absent: it fills its container\'s width, square.'],
   ['halo', 'halo', '`true` (default), `false`, or a strength from 0 to 1.5.'],
@@ -74,7 +75,7 @@ const celebrating: OrbPreset = {
 
 <TalkingMarble state="celebrating" presets={{ celebrating }} />
 
-// An emotion layers on any state: a built-in one (happy, excited, calm, curious, surprised, concerned, sad, muted)
+// An emotion layers on any state: a built-in one (happy, calm, excited, curious, surprised, concerned, sad, muted)
 // or your own preset.
 <TalkingMarble state={agentState} emotion="happy" />`;
 
@@ -146,6 +147,13 @@ function useActiveSection(): string {
   return active;
 }
 
+/** The header's marble, speaking with a simulated voice. Its own component, so only it re-renders with the voice. */
+function HeaderMarble({ colors }: { colors: readonly string[] }) {
+  const [small] = useState(() => matchMedia('(max-width: 520px)').matches);
+  const level = useSimulatedLevel(!matchMedia('(prefers-reduced-motion: reduce)').matches);
+  return <TalkingMarble size={small ? 84 : 124} state="speaking" level={level} palette={colors} decorative />;
+}
+
 /** The six built-in palettes as small live marbles: choosing one re-tints the page and the header's marble. */
 function PaletteChooser() {
   const { palette } = usePick();
@@ -154,7 +162,7 @@ function PaletteChooser() {
       {BUILT_INS.map(id => (
         <li key={id}>
           <button type="button" className="swatch" aria-pressed={palette === id} onClick={() => setPalette(id)}>
-            <TalkingMarble size={52} state="idle" palette={colorsOf(id, {})} halo={false} decorative />
+            <TalkingMarble size={52} state="idle" palette={colorsOf(id)} halo={false} decorative />
             <span className="swatch__name">{paletteLabel(id)}</span>
             <code className="swatch__code">&apos;{id}&apos;</code>
           </button>
@@ -172,9 +180,7 @@ export function Docs() {
   }, []);
   const active = useActiveSection();
   const pick = usePick();
-  const colors = colorsOf(pick.palette, pick.edits);
-  const [small] = useState(() => matchMedia('(max-width: 520px)').matches);
-  const level = useSimulatedLevel(!matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const colors = colorsOf(pick.palette);
   // The marble lends the page its colours (F-28): the sky's light, the index mark, code tints, the panels' edges.
   useEffect(() => {
     const root = document.documentElement.style;
@@ -191,7 +197,7 @@ export function Docs() {
       <article className="docs__body">
         <header className="docs__header">
           <div className="docs__marble" aria-hidden="true">
-            <TalkingMarble size={small ? 84 : 124} state="speaking" level={level} palette={colors} decorative />
+            <HeaderMarble colors={colors} />
           </div>
           <div className="docs__heading">
             <h1 className="display docs__title">Docs</h1>
@@ -205,6 +211,7 @@ export function Docs() {
             Component for any web framework or plain HTML (<a href="#web-component">below</a>). No other dependencies: the marble is one
             WebGL2 canvas and Web Audio. It runs wherever a modern browser does: {DEVICES.join(', ').toLowerCase()}.
           </p>
+          <p className="callout">The npm release is coming soon. Until then, build the package from the <a href={GITHUB}>GitHub repository</a>.</p>
           <div className="install">
             <ul className="platforms" aria-label="Works with">
               {FRAMEWORKS.map(f => <li key={f} className="is-ready">{f}</li>)}
@@ -256,8 +263,7 @@ export function Docs() {
             rows={props.map(p => [<code key="n">{p.name}</code>, <code key="t">{p.type}</code>, defaultCell(p.default), inline(p.description)])}
           />
           <p>
-            Also exported: <code>palettes</code>, <code>states</code>, <code>emotions</code> (and each built-in emotion,{' '}
-            <code>happy</code> to <code>muted</code>, one by one), <code>resolveState</code>, <code>resolvePalette</code>, and the types <code>OrbState</code>,{' '}
+            Also exported: <code>palettes</code>, <code>states</code>, <code>emotions</code> (and each built-in emotion by its name), <code>resolveState</code>, <code>resolvePalette</code>, and the types <code>OrbState</code>,{' '}
             <code>BuiltInState</code>, <code>OrbEmotion</code>, <code>BuiltInEmotion</code>, <code>OrbPreset</code>, <code>OrbParams</code>,{' '}
             <code>ResolvedPreset</code>, <code>OrbPalette</code>, <code>OrbColors</code>, <code>PaletteName</code>, <code>OrbAudioSource</code>{' '}
             and <code>TalkingMarbleProps</code>.

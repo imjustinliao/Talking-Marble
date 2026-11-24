@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Renders the site's icons, link-preview image and link-preview video from the real <TalkingMarble>
-// component, into site/public/. Re-run after the orb's look changes:  pnpm --filter site media
+// component, into apps/site/public/. Re-run after the orb's look changes:  pnpm --filter site media
 //
 // Needs: the workspace installed (Vite, Playwright's Chromium) and ffmpeg on PATH (or FFMPEG=/path/to/ffmpeg).
-// How: starts Vite on site/media.html (a dev-only page that lays the orb out), drives it with Playwright
+// How: starts Vite on apps/site/media.html (a dev-only page that lays the orb out), drives it with Playwright
 // (a fake clock, so video frames are exact), and encodes with ffmpeg.
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, statSync, writeFileSync, readFileSync } from 'node:fs';
@@ -12,6 +12,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
+// The site's simulated voice, the same one the page uses (Node runs the TypeScript directly).
+import { voiceLevel } from '../src/simulated.ts';
 
 const site = fileURLToPath(new URL('..', import.meta.url));
 const repo = join(site, '..', '..');
@@ -20,21 +22,15 @@ const port = Number(process.env.MEDIA_PORT ?? 5176);
 const ffmpeg = process.env.FFMPEG ?? 'ffmpeg';
 const { chromium } = createRequire(join(repo, 'package.json'))('@playwright/test');
 
-/** The site's stage colour (site/src/styles/base.css). */
+/** The site's stage colour (apps/site/src/styles/base.css). */
 const DARK = '#000000';
 
 // Video: a seamless loop through the agent lifecycle (docs/architecture.md › Link previews).
 const VIDEO = { width: 1200, height: 630, fps: 30, seconds: 6, fade: 0.5 };
 const TIMELINE = [ // [start second, state]; the clip is recorded for seconds + fade
-  [0, 'idle'], [1.0, 'listening'], [2.2, 'thinking'], [3.2, 'speaking'], [5.2, 'idle'],
+  [0, 'idle'], [0.9, 'listening'], [2.0, 'thinking'], [2.9, 'searching'], [4.0, 'speaking'], [5.4, 'idle'],
 ];
 
-/** The site's simulated voice (site/src/simulated.ts › voiceLevel), duplicated because this is plain JS. */
-function voiceLevel(t) {
-  const syllable = Math.max(0, Math.sin(t * 7.3) * 0.6 + Math.sin(t * 3.1) * 0.4);
-  const phrase = Math.sin(t * 0.9) > -0.3 ? 1 : 0;
-  return Math.min(1, syllable * phrase * (0.7 + 0.3 * Math.sin(t * 13.7)));
-}
 
 const run = (args) => execFileSync(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', ...args], { stdio: 'inherit' });
 
@@ -70,6 +66,7 @@ async function open(query, viewport, { clock = false } = {}) {
   const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
   if (clock) await page.clock.install({ time: 0 });
   await page.goto(`http://127.0.0.1:${port}/media.html?${query}`);
+  await page.evaluate(() => document.fonts.ready);
   await page.locator('[data-talking-marble][data-ready="true"]').waitFor();
   if (clock) await page.clock.runFor(1500); else await page.waitForTimeout(1500);
   return page;

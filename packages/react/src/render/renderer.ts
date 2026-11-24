@@ -4,7 +4,7 @@ import type { Linear } from '../colors';
 /** A uniform value: a number is a `float`, three numbers a `vec3`. */
 export type UniformValue = number | readonly [number, number, number];
 /**
- * One frame's uniforms by GLSL name (packages/core/spec.md › Motion › Draw), e.g. `{ uTime: 1.2, uTint: [1, 1, 1] }`.
+ * One frame's uniforms by GLSL name (packages/core/spec.md › Uniforms), e.g. `{ uTime: 1.2, uTint: [1, 1, 1] }`.
  * Adding a uniform to the shader needs no change here: pass it in the map.
  */
 export type Uniforms = Readonly<Record<string, UniformValue>>;
@@ -20,7 +20,6 @@ export interface Renderer {
   setColors(colors: readonly Linear[]): void;
   /** Draws one frame into the bottom-left `width` × `height` pixels (default: the whole buffer). */
   draw(uniforms: Uniforms, width?: number, height?: number): void;
-  dispose(): void;
 }
 
 /** A WebGL2 renderer for one canvas, or null when WebGL2 or the shader is unavailable. Framework-free. */
@@ -68,9 +67,15 @@ export function createRenderer(canvas: HTMLCanvasElement | OffscreenCanvas): Ren
     if (found === undefined) locations.set(name, (found = gl.getUniformLocation(program, name)));
     return found;
   };
+  // The program keeps its uniforms between draws, so a float equal to the last one sent is not sent again
+  // (the constants, and everything while a marble rests).
+  const sent = new Map<string, number>();
   const set = (name: string, value: UniformValue) => {
-    if (typeof value === 'number') gl.uniform1f(location(name), value);
-    else gl.uniform3f(location(name), value[0], value[1], value[2]);
+    if (typeof value === 'number') {
+      if (sent.get(name) === value) return;
+      sent.set(name, value);
+      gl.uniform1f(location(name), value);
+    } else gl.uniform3f(location(name), value[0], value[1], value[2]);
   };
 
   const dims = gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array | null;
@@ -98,13 +103,6 @@ export function createRenderer(canvas: HTMLCanvasElement | OffscreenCanvas): Ren
       gl.clear(gl.COLOR_BUFFER_BIT);
       for (const name in uniforms) set(name, uniforms[name]!);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    },
-    dispose() {
-      gl.deleteBuffer(buffer);
-      gl.deleteProgram(program);
-      // Release the context only on a real unmount (the canvas has left the document). React's
-      // development remount reuses a connected canvas, and getContext would return the lost context.
-      if (!('isConnected' in canvas) || !canvas.isConnected) gl.getExtension('WEBGL_lose_context')?.loseContext();
     },
   };
 }

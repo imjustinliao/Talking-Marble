@@ -11,7 +11,7 @@ packages/core/             platform-neutral: the contract every port reuses (pri
   shader/orb.frag.glsl     the orb fragment shader (GLSL ES 3.0), the single source of the look
   presets/palettes.json    the six palettes (ground + three pigments, sRGB hex)
   presets/states.json      the seven built-in states, as parameter values
-  presets/emotions.json    the eight built-in emotions (happy, excited, calm, curious, surprised, concerned, sad, muted)
+  presets/emotions.json    the eight built-in emotions (muted, happy, calm, excited, curious, surprised, concerned, sad)
   spec.md                  how parameters map to uniforms, the easing rates, the audio-level math
 packages/react/            the npm package `talking-marble` (TypeScript, React)
   src/render/              WebGL2 renderer, framework-free (built from packages/core)
@@ -20,7 +20,7 @@ packages/react/            the npm package `talking-marble` (TypeScript, React)
 apps/site/                 the site: showcase, playground, install, docs (Vite + React), deployed on Vercel
 ```
 
-The renderer and audio code know nothing about React, so a later vanilla or Vue entry is a thin wrapper. Each later port (SwiftUI, React Native, Compose, Flutter) is a small renderer: it translates `orb.frag.glsl` to its shader language and reads the same JSON; `packages/core/spec.md` keeps the behavior identical.
+The renderer and audio code know nothing about React, so other entries are thin wrappers: the Web Component (`talking-marble/element`) already is one. Each later port (SwiftUI, React Native, Compose, Flutter) is a small renderer: it translates `orb.frag.glsl` to its shader language and reads the same JSON; `packages/core/spec.md` keeps the behavior identical.
 
 `packages/core/spec.md` is the one extra Markdown file allowed outside `docs/`: it ships with the core as its contract.
 
@@ -113,7 +113,7 @@ In the workspace, the site imports the package's TypeScript source through the `
 
 ## Run, test, deploy
 
-- Commands (set in M1): `pnpm dev` (site), `pnpm build`, `pnpm test`, `pnpm test:e2e`, `pnpm check` (lint, types, publint, attw).
+- Commands: `pnpm dev` (site on 5173), `pnpm build` (package, then site), `pnpm test` (unit), `pnpm typecheck`, `pnpm test:e2e` (Playwright on 5174). Media: `pnpm --filter site media` (icons, link card and video), `pnpm --filter site readme-media` (the README's pictures). Package checks before a release: publint and arethetypeswrong (run with npx).
 - CI on every push: build, tests, package checks.
 - Site: Vercel builds `main` on every push (`vercel.json`: Corepack for the repo's pnpm, `pnpm build`, output `apps/site/dist`) and serves it from the root at `https://talking-marble.vercel.app/`; pull requests get preview links. GitHub Actions (`.github/workflows/ci.yml`) runs typecheck, unit tests and the build on Node 24, Vercel's newest build image. Changing the address (another project name or a custom domain) means replacing it in the two HTML heads, `public/` (sitemap, robots, llms.txt), the Guide's docs link and the meta tests.
 - Release: before publishing, the site is built against the packed tarball (`pnpm pack`), proving the playground runs on the real package (PKG-01). Then a Changesets release Action publishes to npm.
@@ -126,10 +126,10 @@ In the workspace, the site imports the package's TypeScript source through the `
 
 ### Link previews, SEO and AI-SEO (SITE-08)
 
-- All tags are static in `apps/site/index.html` (unfurlers don't run JS), absolute from `https://talking-marble.vercel.app/`: Open Graph with `og-image.jpg` (1200×630) and `og-video.mp4` (1200×630, H.264, faststart, no audio, a 6 s seamless loop idle → listening → thinking → speaking), X `summary_large_image`, a canonical, JSON-LD `WebSite` + `SoftwareSourceCode`, `sitemap.xml`, and `llms.txt` (llmstxt.org) linked as `rel="alternate"`. `apps/site/scripts/render-media.mjs` renders the icons, card and video from the live orb.
+- All tags are static in `apps/site/index.html` (unfurlers don't run JS), absolute from `https://talking-marble.vercel.app/`: Open Graph with `og-image.jpg` (1200×630) and `og-video.mp4` (1200×630, H.264, faststart, no audio, a 6 s seamless loop idle → listening → thinking → searching → speaking), X `summary_large_image`, a canonical, JSON-LD `WebSite` + `SoftwareSourceCode`, `sitemap.xml`, and `llms.txt` (llmstxt.org) linked as `rel="alternate"`. `apps/site/scripts/render-media.mjs` renders the icons, card and video from the live orb.
 - The README's pictures live in `docs/media/` (an animated WebP that plays on GitHub, the same clip as MP4, stills of the states, emotions and palettes, and a shot of the site), rendered from the live orb by `apps/site/scripts/render-readme.mjs` (`pnpm --filter site readme-media`); re-run it when the look, states or emotions change.
 - File names are stable; platforms cache by URL, so a re-render that must show in cached previews needs new names or each platform's re-scrape tool.
-- `robots.txt` only counts at a host's root, so at `/Talking-Marble/` it is documentation; after the first deploy, submit the sitemap in Google Search Console. The npm links 404 until `talking-marble` is published.
+- `robots.txt` and `sitemap.xml` sit at the Vercel host's root; submit the sitemap in Google Search Console once. No page links to npm until `talking-marble` is published (PKG-01).
 
 ### Voice SDK recipes (docs › Recipes)
 
@@ -139,8 +139,8 @@ Checked on 2026-11-23 against each SDK's latest package types and official docs,
 
 | Risk | Plan |
 |------|------|
-| WebGL2 missing or context lost (old devices, too many canvases) | The CSS fallback picture; recreate the context on restore. Each orb has its own context; pages with more than ~8 orbs are out of scope for v1 |
+| WebGL2 missing or context lost (old devices, too many canvases) | The CSS fallback picture; recreate the context on restore. Every orb on a page draws through one shared context (tested with 30), so the browser's context limit is never reached |
 | Autoplay policy blocks the `AudioContext` | Resume on the next user gesture; the `level` prop always works |
 | Battery on phones | 30 fps cap, pause off screen and in hidden tabs, `paused` prop, `powerPreference: 'low-power'` |
 | Port drift between platforms | `packages/core/` holds the one shader and the preset values; ports are checked against screenshots of the web orb |
-| Bundle size | Budget: under 15 kB gzipped for the package, checked in CI |
+| Bundle size | Budget: about 15 kB gzipped for the React entry (measured 14.4 kB at 0.15.0; not yet enforced in CI) |

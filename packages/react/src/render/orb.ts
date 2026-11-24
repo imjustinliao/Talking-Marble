@@ -45,16 +45,21 @@ const FRAME = 1000 / 30;
 interface Live { frame(now: number): boolean; running(): boolean; side(): number }
 const live = new Set<Live>();
 let loopId = 0, lastFrame = 0, ascending = true;
+// Reused every frame, so the loop allocates nothing.
+const due: Live[] = [];
+const bySideUp = (a: Live, b: Live) => a.side() - b.side();
+const bySideDown = (a: Live, b: Live) => b.side() - a.side();
 function loop(now: number) {
   // Scheduled first, so an exception in one orb never stops the others.
   loopId = requestAnimationFrame(loop);
-  const due = [...live].filter(orb => orb.running());
-  if (due.length && now - lastFrame < FRAME - 2) return;
+  due.length = 0;
+  for (const orb of live) if (orb.running()) due.push(orb);
+  if (due.length && now - lastFrame < FRAME - 2) { due.length = 0; return; }
   lastFrame = now;
   // Grouped by size, in alternating order, so consecutive draws (and frames) share the shared surface's
   // size and it is resized once per distinct size at most.
   ascending = !ascending;
-  due.sort((a, b) => (ascending ? a.side() - b.side() : b.side() - a.side()));
+  due.sort(ascending ? bySideUp : bySideDown);
   let active = false;
   for (const orb of due) {
     try {
@@ -64,6 +69,7 @@ function loop(now: number) {
       console.error('[talking-marble]', error);
     }
   }
+  due.length = 0;
   if (!active) { cancelAnimationFrame(loopId); loopId = 0; }
 }
 function wakeLoop() { if (!loopId && typeof requestAnimationFrame === 'function') loopId = requestAnimationFrame(loop); }
@@ -78,6 +84,8 @@ export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial
   let levelSource: (() => number) | null = null;
   let css = 0, side = 0, last = 0, dirty = true;
   let paused = false, onScreen = true, disposed = false, wasSettled = false;
+  // The last style strings written, so an unchanged frame writes no style.
+  let shownTransform = '', shownOpacity = '', shownVisibility = '', shownFilter = '';
 
   const media = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   const reduced = () => media?.matches ?? false;
@@ -97,14 +105,17 @@ export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial
     const still = reduced();
     const k = smallness(css);
     const x = eased.x;
-    host.style.transform = transformOf(motion, x, k, still);
+    const transform = transformOf(motion, x, k, still);
+    if (transform !== shownTransform) host.style.transform = shownTransform = transform;
     if (halo) {
-      halo.style.opacity = haloOpacityOf(motion, x).toFixed(3);
-      halo.style.visibility = k >= 1 ? 'hidden' : '';
+      const opacity = haloOpacityOf(motion, x).toFixed(3);
+      const visibility = k >= 1 ? 'hidden' : '';
+      if (opacity !== shownOpacity) halo.style.opacity = shownOpacity = opacity;
+      if (visibility !== shownVisibility) halo.style.visibility = shownVisibility = visibility;
     }
     const drew = side > 0 && renderInto(canvas, side, drawColors(), uniformsOf(motion, x, k, still, uniforms));
-    if (!drew && fallback) fallback.style.filter = `brightness(${x.brightness.toFixed(3)})`;
-    else if (fallback) fallback.style.filter = '';
+    const filter = drew ? '' : `brightness(${x.brightness.toFixed(3)})`;
+    if (fallback && filter !== shownFilter) fallback.style.filter = shownFilter = filter;
     setReady(drew);
     dirty = false;
   }
@@ -141,9 +152,11 @@ export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial
     dirty = true;
   }
 
-  function resize() {
-    css = Math.min(host.offsetWidth, host.offsetHeight);
-    if (css <= 0) return;
+  /** Sizes the canvas to the host's CSS size (from the resize observer; by default the last one, for a new pixel ratio). */
+  function resize(width = css, height = css) {
+    css = Math.min(width, height);
+    // Hidden (0 × 0): nothing to draw until it is shown again, when the observer brings its size.
+    if (!(css > 0)) { css = side = 0; return; }
     side = backingSize(css, window.devicePixelRatio);
     if (canvas.width !== side || canvas.height !== side) { canvas.width = side; canvas.height = side; }
     if (fallback) fallback.style.boxShadow = fallbackShadow(css);
@@ -155,7 +168,12 @@ export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial
     if (isReady) { dirty = true; draw(); wake(); } else { setReady(false); draw(); }
   });
 
-  const resizeObserver = new ResizeObserver(resize);
+  // The observer reports the size it measured, so no frame forces a layout to read it (and its first report,
+  // before the first paint, sizes the canvas).
+  const resizeObserver = new ResizeObserver(entries => {
+    const box = entries[entries.length - 1]?.contentRect;
+    if (box) resize(box.width, box.height);
+  });
   resizeObserver.observe(host);
   const intersection = new IntersectionObserver(entries => {
     onScreen = entries[entries.length - 1]?.isIntersecting ?? true;
@@ -200,7 +218,6 @@ export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial
     },
   };
   void rendererReady();
-  resize();
   wake();
   return controller;
 }

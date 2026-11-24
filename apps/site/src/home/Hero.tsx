@@ -6,10 +6,10 @@ import { useShotLive } from '../scene/shot';
 import { useStageWish } from '../scene/stage';
 
 const INSTALL = 'npm i talking-marble';
-/** The opening loop: a voice agent's happy path. `error` is shown where states are chosen, not here. */
-export const HERO_CYCLE = ['idle', 'connecting', 'listening', 'thinking', 'speaking'] as const;
+/** The opening loop: a voice agent's happy path, a lookup included. `error` is shown where states are chosen, not here. */
+export const HERO_CYCLE = ['idle', 'connecting', 'listening', 'thinking', 'searching', 'speaking'] as const;
 const STEP_MS = 4200;
-const CAPTION: Record<(typeof HERO_CYCLE)[number], string> = { idle: 'Idle', connecting: 'Connecting', listening: 'Listening', thinking: 'Thinking', speaking: 'Speaking' };
+const CAPTION: Record<(typeof HERO_CYCLE)[number], string> = { idle: 'Idle', connecting: 'Connecting', listening: 'Listening', thinking: 'Thinking', searching: 'Searching', speaking: 'Speaking' };
 
 /**
  * The intro, complete on its own (F-22): the name, one plain line, the install command, and Docs and GitHub as

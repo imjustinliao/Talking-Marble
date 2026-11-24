@@ -14,8 +14,8 @@ export const useShotLive = () => useContext(ShotLive);
  */
 export function Marble(props: TalkingMarbleProps) {
   const live = useShotLive();
-  const { palette, edits } = usePick();
-  return <TalkingMarble palette={colorsOf(palette, edits)} {...props} paused={props.paused || !live} />;
+  const { palette } = usePick();
+  return <TalkingMarble palette={colorsOf(palette)} {...props} paused={props.paused || !live} />;
 }
 
 /**

@@ -52,7 +52,10 @@ export function expectedShot(u: number) {
 /** Goes to a shot as a visitor would (its link in the index), and waits for the camera to settle there. */
 export async function goToShot(page: Page, label: (typeof SHOTS)[number]['label']) {
   const { id } = SHOTS.find(s => s.label === label)!;
-  await page.getByRole('navigation', { name: 'Shots' }).getByRole('link', { name: label, exact: true }).click();
+  const link = page.getByRole('navigation', { name: 'Shots' }).getByRole('link', { name: label, exact: true });
+  // Phones and tablets have no shot index: they scroll there, as a visitor does.
+  if (await link.isVisible()) await link.click();
+  else await page.evaluate(stop => scrollTo(0, stop * innerHeight), STOPS[id]!);
   await settled(page, id);
 }
 
@@ -69,9 +72,11 @@ export async function settled(page: Page, id: string) {
 export async function skipIntro(page: Page) {
   await page.locator('.experience[data-intro="play"]').waitFor();
   await page.waitForFunction(() => document.readyState === 'complete');
-  for (let i = 0; i < 20; i++) {
+  // Up to 5 s: on a slow device (a phone at 3×) the page takes longer to start listening.
+  for (let i = 0; i < 100; i++) {
     await page.keyboard.press('Shift');
-    if (await page.locator('.experience[data-intro="skip"]').count()) return;
+    // Skipped, or (on a slow run) already over on its own: either way the page is ready.
+    if (await page.locator('.experience[data-intro="skip"], .experience[data-intro-done]').count()) return;
     await page.waitForTimeout(50);
   }
   throw new Error('the intro did not skip');
