@@ -7,7 +7,6 @@ import { STATES } from '../presets';
 import { setPalette, usePick } from '../scene/pick';
 import { useSimulatedLevel } from '../simulated';
 import { Code } from './Code';
-import { GITHUB } from '../ui/Chrome';
 import { CopyButton } from './CopyButton';
 import { Recipes } from './Recipes';
 
@@ -211,7 +210,6 @@ export function Docs() {
             Component for any web framework or plain HTML (<a href="#web-component">below</a>). No other dependencies: the marble is one
             WebGL2 canvas and Web Audio. It runs wherever a modern browser does: {DEVICES.join(', ').toLowerCase()}.
           </p>
-          <p className="callout">The npm release is coming soon. Until then, build the package from the <a href={GITHUB}>GitHub repository</a>.</p>
           <div className="install">
             <ul className="platforms" aria-label="Works with">
               {FRAMEWORKS.map(f => <li key={f} className="is-ready">{f}</li>)}

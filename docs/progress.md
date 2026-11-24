@@ -7,7 +7,7 @@ The handoff note for the next session, agent or account. Keep it short; newest e
 
 - **Phase**: Building <!-- Setup · Building · Shipping · Live · Paused -->
 - **Milestone**: M13 Experience v2 in owner review. 0.17.0 (2026-11-24): the final pass the owner asked for: edge-case tests for every parameter, prop and device (iPhone, Pixel, iPad by touch), the package hardened (odd palettes, sizes, presets, late audio tracks) and its frame loop made allocation-free, every surface made consistent (code, site, docs, README, llms.txt, prompts, metadata), dead code removed, deployed
-- **Next action**: owner review of the live site; then npm publish (PKG-01, owner's npm account; remove the "npm release is coming soon" notes in the README, docs page and llms.txt, and add the npm link back to the JSON-LD); then PLAT-01 step 2. Live at https://talking-marble.vercel.app/; every push to `main` redeploys
+- **Next action**: owner review of the live site. `talking-marble@0.1.0` is on npm (published by the owner 2026-11-24, PKG-01); later releases: bump the version in packages/react/package.json, then `pnpm publish --access public` from packages/react (needs npm 2FA). Then PLAT-01 step 2
 - **In flight**: nothing; preview: main site 5173. Kept after the tidy pass (their commits exist nowhere else): `milestone/site` (`ffcbb19`, the earlier experience), `milestone/site-sections`, and `milestone/orb-spec` and `milestone/camera` in the finished Site and Package sessions' worktrees
 
 ## Milestones
@@ -35,6 +35,8 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-110 | Make `npm i talking-marble` work | done: 0.1.0 published by the owner (npm 2FA); the README is copied into the package with absolute links at pack time; checked by installing from npm and server-rendering; coming-soon notes removed, npm badge and links added | |
+| F-109 | Scrolling between the six palettes still stutters; Aurora glitches arriving at all six | built 0.18.5: Marble shows the scene's own marble again (no swapping as the front changes); in Chatbox and Call the whole gallery steps aside and pauses; every gallery marble draws at one size (no canvas resizes) | |
 | F-108 | Laggy on every device, even a MacBook Pro; scrolling stutters | built 0.18.3: marbles hold their frame while the page scrolls (resume 220 ms after); the marble renderer lowers its resolution under sustained load and restores it with headroom. Production build, headless: scroll median 33 → 16.7 ms a frame | |
 | F-107 | The marble glitches when switching between thinking and searching | fixed 0.18.2: the searching clock runs only while searching (it had run since page load, so easing `scan` swept the pattern); a unit test fails on the old code | |
 | F-106 | The site is a bit laggy: make it efficient | built 0.18.2: a hidden marble behind the demo no longer draws; large marbles at 1.5× density (never under 320 px); the stage marble drawn at its on-screen size; the demo measures the page only when needed and only its marble re-renders with the voice. Shading time per 4 s: walk 2.7 s → 0.85 s, intro 1.6 s → 0.84 s (headless, software GL) | |

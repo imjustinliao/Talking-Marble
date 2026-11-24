@@ -1,10 +1,10 @@
 # Talking Marble
 
-> Talking Marble (`talking-marble`, MIT; publishing to npm soon) is an audio-reactive animated orb for voice AI apps: a React component and a Web Component (`<talking-marble>`) for any web framework or plain HTML. Pass your agent's state and its audio; the orb eases between seven states, takes on any of eight emotions, and swells with the voice. It is a UI component only: developers bring their own voice AI (LiveKit, ElevenLabs, OpenAI Realtime…).
+> Talking Marble (`talking-marble` on npm, MIT) is an audio-reactive animated orb for voice AI apps: a React component and a Web Component (`<talking-marble>`) for any web framework or plain HTML. Pass your agent's state and its audio; the orb eases between seven states, takes on any of eight emotions, and swells with the voice. It is a UI component only: developers bring their own voice AI (LiveKit, ElevenLabs, OpenAI Realtime…).
 
 Key facts:
 
-- Install: `npm i talking-marble` (the npm release is coming soon; until then, build from the GitHub repository). React 18 or newer for the React component (an optional peer); the Web Component needs nothing else. No other runtime dependencies (one WebGL2 canvas, Web Audio).
+- Install: `npm i talking-marble` ([on npm](https://www.npmjs.com/package/talking-marble)). React 18 or newer for the React component (an optional peer); the Web Component needs nothing else. No other runtime dependencies (one WebGL2 canvas, Web Audio).
 - Usage (React): `<TalkingMarble state={agentState} audio={agentStream} palette="pearl" />`.
 - Usage (Web Component): `import 'talking-marble/element'`, then `<talking-marble state="idle" palette="pearl"></talking-marble>`; set `el.state` and `el.audio` from script. Attributes: `state`, `emotion`, `palette` (a name or comma-separated hex), `size`, `halo`, `level`, `presets` (JSON), `label`, `decorative`, `paused`.
 - Platforms: the web today, through React or the Web Component: every modern browser on phones, tablets, laptops and desktops, and desktop apps built on web tech (Electron, Tauri). Native ports (React Native, SwiftUI, Android, Flutter) are planned; none exists yet.
@@ -43,4 +43,6 @@ Key facts:
 - [Core spec](https://github.com/imjustinliao/Talking-Marble/blob/main/packages/core/spec.md): how parameters map to the shader, easing and the audio-level math
 
 ## Optional
+
+- [npm package](https://www.npmjs.com/package/talking-marble): versions and install stats
 

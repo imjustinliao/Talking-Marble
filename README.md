@@ -17,6 +17,7 @@
 </p>
 
 <p align="center">
+  <a href="https://www.npmjs.com/package/talking-marble"><img alt="npm version" src="https://img.shields.io/npm/v/talking-marble?color=black" /></a>
   <img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-black" />
   <img alt="React 18 or newer" src="https://img.shields.io/badge/React-18%2B-black" />
   <img alt="Web Component" src="https://img.shields.io/badge/Web_Component-any_framework-black" />
@@ -43,7 +44,6 @@ It is only the visual. You bring your own voice AI (OpenAI Realtime, ElevenLabs,
 npm install talking-marble
 ```
 
-> **Note:** the package is about to be published to npm. Until it is, you can build it from this repository (see [Development](#development)).
 
 ## Quick start
 

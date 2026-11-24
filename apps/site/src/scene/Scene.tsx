@@ -94,8 +94,13 @@ export interface GalleryProps {
   onPick: (k: number) => void;
 }
 
-/** A marble out of focus is small on screen, so it renders at fewer pixels and is scaled up in the scene (F-54). */
-const FAR_SIZE = 140;
+/**
+ * Every gallery marble draws at one size and is scaled up in the scene (F-54, F-109): the front one is never resized
+ * when you walk on (a resize clears its canvas, which flashed, e.g. Aurora arriving at all six), and none is drawn
+ * larger than it shows. The walk's marbles also show a little smaller (F-102).
+ */
+const GALLERY_DRAW = 220;
+const GALLERY_SHOW = 0.84;
 
 /**
  * The gallery's marbles, all showing what you are trying (F-22): the same state, emotion and halo, a simulated voice
@@ -112,13 +117,12 @@ function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRe
       {gallery.marbles.map((m, k) => {
         const p = curvePoint(k);
         const state = trying.state;
-        const near = k === gallery.front && gallery.active;
-        // Hidden behind the demo's stand-in (F-106): not drawn either.
-        const shown = seen.includes(String(k)) && !(standIn.walk && k === gallery.front);
+        // While the demo's chatbox or call is up the gallery steps aside: none of it draws (F-106, F-109).
+        const shown = seen.includes(String(k)) && !standIn.walk;
         return (
           <GalleryOrb
             key={m.id} k={k} refs={refs} x={p.x} z={p.z} marble={m} onPick={gallery.onPick}
-            state={state} emotion={trying.emotion} halo={trying.halo} near={near} front={k === gallery.front} shown={shown} hold={scrolling}
+            state={state} emotion={trying.emotion} halo={trying.halo} front={k === gallery.front} shown={shown} hold={scrolling}
             // Only marbles in view take the voice: the rest keep a constant level and so never re-render with it.
             level={!shown || state === 'thinking' ? 0 : sim}
           />
@@ -129,9 +133,9 @@ function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRe
 }
 
 /** One gallery marble. Memoised: it re-renders only when what it shows changes (the voice, while in view). */
-const GalleryOrb = memo(function GalleryOrb({ k, refs, x, z, marble: m, onPick, state, emotion, halo, level, near, front, shown, hold }: {
+const GalleryOrb = memo(function GalleryOrb({ k, refs, x, z, marble: m, onPick, state, emotion, halo, level, front, shown, hold }: {
   k: number; refs: MutableRefObject<GalleryRefs>; x: number; z: number; marble: GalleryMarble; onPick: (k: number) => void;
-  state: string; emotion: string | null; halo: boolean; level: number; near: boolean; front: boolean; shown: boolean; hold: boolean;
+  state: string; emotion: string | null; halo: boolean; level: number; front: boolean; shown: boolean; hold: boolean;
 }) {
   return (
     <Actor x={x} z={z} size={CURVE_SIZE} actorRef={el => { refs.current.actors[k] = el; }}>
@@ -141,8 +145,8 @@ const GalleryOrb = memo(function GalleryOrb({ k, refs, x, z, marble: m, onPick, 
           <TalkingMarble
             palette={m.colors as string[]} state={state} emotion={emotion ?? undefined}
             level={level}
-            size={near ? CURVE_SIZE : FAR_SIZE} decorative paused={!shown || hold} halo={halo} className="reflect"
-            style={near ? undefined : { transform: `scale(${CURVE_SIZE / FAR_SIZE})`, transformOrigin: '50% 100%' }}
+            size={GALLERY_DRAW} decorative paused={!shown || hold} halo={halo} className="reflect"
+            style={{ transform: `scale(${(CURVE_SIZE * GALLERY_SHOW) / GALLERY_DRAW})`, transformOrigin: '50% 100%' }}
           />
         </span>
         {/* Its palette's name, shown with all six (F-60) */}

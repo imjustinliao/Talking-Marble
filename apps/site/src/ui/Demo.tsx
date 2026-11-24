@@ -45,10 +45,9 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
   // In the chatbox the marble starts in the middle above it (like an open voice chat); its button closes it into the bar.
   const [open, setOpen] = useState(true);
   useEffect(() => { if (seen === 'bar') setOpen(true); }, [seen]);
-  // On the walk the demo's marble stands in for Marble too (a little smaller than the scene's, F-102), so every view
-  // is drawn by it and held still; in Create, Marble is the stage marble itself.
-  const standIn = anchor.marble === 'walk';
-  const shown = live && (seen !== 'none' || standIn);
+  // Marble is the scene's own marble (its caption held still under it). A stand-in there swapped marbles every time
+  // the walk's front marble changed while scrolling, which stuttered (F-109).
+  const shown = live && seen !== 'none';
   // Not shown (another step, the shot left): home to the scene's spot, then hand back.
   const home = !shown ? 'scene' : seen === 'call' ? 'call' : seen === 'bar' ? (open ? 'above' : 'slot') : 'marble';
   // The demo's marble stays drawn until it has flown back to the scene's spot, then hands back to the scene.
