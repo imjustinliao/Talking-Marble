@@ -42,24 +42,23 @@ code, pre, .mono { font-family: var(--mono); }
 .btn { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--hair-strong); font-size: 15px; font-weight: 500; text-decoration: none; white-space: nowrap; }
 .btn:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
 /* Themed around the marble (F-28): its colours, set on the page (--m0 ground, --m1…--m3 pigments). Most buttons
-   simply flip to the text colour on hover (F-35); only the marble's own actions (the install command, Talk) answer
+   simply flip to the text colour on hover (F-35); only the marble's own action (the install command) answers
    with a thin ring of its pigments: the marble's light on the control, not a light of its own. */
 @property --m0 { syntax: '<color>'; inherits: true; initial-value: #f6f5ee; }
 @property --m1 { syntax: '<color>'; inherits: true; initial-value: #ef9fc5; }
 @property --m2 { syntax: '<color>'; inherits: true; initial-value: #61d9d0; }
 @property --m3 { syntax: '<color>'; inherits: true; initial-value: #f3c76f; }
-.talk, .install-pill { position: relative; isolation: isolate; }
+.install-pill { position: relative; isolation: isolate; }
 /* The marble's texture for small accents (F-44): its pigments as soft, overlapping pools that flow slowly, as the
    marble's do. The hero word wears the live marble itself (MarbleText). */
 :root { --marbled: radial-gradient(38% 55% at 22% 34%, var(--m1), transparent 70%), radial-gradient(42% 60% at 68% 62%, var(--m2), transparent 70%), radial-gradient(30% 45% at 48% 18%, var(--m3), transparent 70%), radial-gradient(26% 40% at 86% 26%, var(--m1), transparent 70%), radial-gradient(34% 50% at 12% 82%, var(--m3), transparent 70%), var(--m2); }
 @keyframes marbled { 0% { background-position: 0% 30%; } 50% { background-position: 60% 85%; } 100% { background-position: 100% 15%; } }
-@media (prefers-reduced-motion: reduce) { .talk::before, .install-pill::before, .word::after, .marble-text__words, .index a::after, .panel::before { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .install-pill::before, .word::after, .marble-text__words, .index a::after, .panel::before { animation: none !important; } }
 /* Low-power devices keep the pigments still: a flowing background repaints every frame (F-54) */
-html[data-tier="low"] :is(.talk::before, .install-pill::before, .word::after, .marble-text__words, .index a::after, .panel::before) { animation: none !important; }
-.talk::before, .install-pill::before { content: ""; position: absolute; inset: -1px; z-index: -1; border-radius: inherit; padding: 1.5px; background: var(--marbled); background-size: 300% 300%; animation: marbled 14s ease-in-out infinite alternate; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity 0.3s ease; }
-.talk:hover::before, .talk:focus-visible::before, .install-pill:hover::before, .install-pill:focus-visible::before { opacity: 1; }
-.btn.talk:hover { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--text); border-color: transparent; }
-.talk:hover, .install-pill:hover { box-shadow: 0 0 22px -6px color-mix(in srgb, var(--m1) 55%, transparent); }
+html[data-tier="low"] :is(.install-pill::before, .word::after, .marble-text__words, .index a::after, .panel::before) { animation: none !important; }
+.install-pill::before { content: ""; position: absolute; inset: -1px; z-index: -1; border-radius: inherit; padding: 1.5px; background: var(--marbled); background-size: 300% 300%; animation: marbled 14s ease-in-out infinite alternate; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity 0.3s ease; }
+.install-pill:hover::before, .install-pill:focus-visible::before { opacity: 1; }
+.install-pill:hover { box-shadow: 0 0 22px -6px color-mix(in srgb, var(--m1) 55%, transparent); }
 .btn:active { transform: scale(0.98); }
 .btn svg { margin-right: -2px; }
 .icon-btn { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--text-2); transition: background-color 0.2s ease, color 0.2s ease; }

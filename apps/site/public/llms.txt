@@ -32,7 +32,7 @@ Key facts:
 
 ## Site
 
-- [Palettes](https://talking-marble.vercel.app/#palettes): the six built-in palettes one by one; try every state, emotion and the halo, and talk to each
+- [Palettes](https://talking-marble.vercel.app/#palettes): the six built-in palettes one by one; try every state, emotion and the halo, and see the marble on its own, in a chat bar or in a call
 - [All palettes](https://talking-marble.vercel.app/#all): all six together
 - [Create your own](https://talking-marble.vercel.app/#create): name your marble, pick its colours, shape its motion, try it, then copy the code or export the preset
 - [Guide](https://talking-marble.vercel.app/#guide): install and usage with your marble, for React or the Web Component, and a prompt for your AI coding agent

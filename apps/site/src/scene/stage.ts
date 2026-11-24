@@ -18,8 +18,8 @@ export interface StageWish {
   halo?: boolean | number;
   /** Its colours, when the shot shows a marble of its own (Create your own); otherwise the pick's. */
   palette?: string[];
-  /** Where its level comes from: a simulated voice, a fixed level, or a microphone stream. */
-  voice?: { kind: 'sim' } | { kind: 'level'; level: number } | { kind: 'mic'; stream: MediaStream | null };
+  /** Where its level comes from: a simulated voice, or a fixed level. */
+  voice?: { kind: 'sim' } | { kind: 'level'; level: number };
   /** A short word shown under the marble (the intro's demo: the state it is in now, F-66). */
   caption?: string;
   /** Extra attributes on the marble's wrapper (the playground's readable settings). */
@@ -35,12 +35,11 @@ const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.
 
 /** A shot's wish for the marble while it is live (cleared when the shot unmounts). */
 export function useStageWish(id: ShotId, wish: StageWish) {
-  const key = JSON.stringify({ ...wish, voice: wish.voice?.kind === 'mic' ? 'mic' : wish.voice });
-  const stream = wish.voice?.kind === 'mic' ? wish.voice.stream : null;
+  const key = JSON.stringify(wish);
   useEffect(() => {
     wishes = { ...wishes, [id]: wish };
     emit();
-  }, [id, key, stream]); // the wish by value: a new object each render is the same wish
+  }, [id, key]); // the wish by value: a new object each render is the same wish
   useEffect(() => () => { const { [id]: _, ...rest } = wishes; wishes = rest; emit(); }, [id]);
 }
 

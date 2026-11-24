@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { expect, test, type Page } from '@playwright/test';
-import { SHOTS, STOPS, expectedShot, goToShot, settled, skipIntro, trackErrors } from './site-helpers';
+import { SHOTS, STOPS, expectedShot, goToShot, option, settled, skipIntro, trackErrors } from './site-helpers';
 
 const { default: AxeBuilder } = createRequire(new URL('../apps/site/package.json', import.meta.url))('@axe-core/playwright') as typeof import('@axe-core/playwright');
 
@@ -83,18 +83,18 @@ for (const { w, h, scheme, shots } of RUNS) {
             expect(Math.max(...rows.slice(0, 3)), 'the first three above').toBeLessThan(Math.min(...rows.slice(3)));
             await page.screenshot({ path: `test-results/site/shot-${w}-${scheme}-all.png` });
           }
-          // Nothing jumps (F-18): trying, talking and changing steps leave the shot's first line where it was.
+          // Nothing jumps (F-18): trying, the demo and changing steps leave the shot's first line where it was.
           const first = page.locator(`#${want.id} .shot__panel > * > :first-child`).first();
           const before = want.id === 'all' ? 0 : (await first.boundingBox())!.y;
           if (want.id === 'palettes') {
-            await page.locator('#palettes').getByRole('button', { name: 'thinking', exact: true }).click();
-            await page.locator('#palettes').getByRole('button', { name: 'Talk' }).click();
-            await expect(page.locator('#palettes .mock')).toBeVisible();
-            await page.waitForTimeout(600);
-            for (const [edge, gap] of Object.entries(await fits(page))) expect(gap, `${edge} while talking`).toBeGreaterThanOrEqual(edge === 'inner' ? 0 : -1);
-            await page.screenshot({ path: `test-results/site/shot-${w}-${scheme}-palettes-talk.png` });
+            await option(page.locator('#palettes'), 'State', 'thinking').pick();
+            await option(page.locator('#palettes'), 'Seen in', 'Call').pick();
+            await expect(page.locator('.demo__call')).toBeVisible();
+            await page.waitForTimeout(900);
+            for (const [edge, gap] of Object.entries(await fits(page))) expect(gap, `${edge} in a call`).toBeGreaterThanOrEqual(edge === 'inner' ? 0 : -1);
+            await page.screenshot({ path: `test-results/site/shot-${w}-${scheme}-palettes-call.png` });
             expect(Math.abs((await first.boundingBox())!.y - before), 'the walk moved').toBeLessThanOrEqual(1);
-            await page.locator('#palettes').getByRole('button', { name: 'End' }).click();
+            await option(page.locator('#palettes'), 'Seen in', 'On its own').pick();
           }
           if (want.id === 'create') {
             for (const name of ['Motion', 'Try it', 'Code', 'Colours']) {
@@ -320,7 +320,7 @@ test('the path is magnetic near a place, gliding there; far from every place it 
 test('the intro names the state its marble is in, as the demo changes (F-66)', async ({ page }) => {
   await page.goto('/');
   await skipIntro(page);
-  const caption = page.locator('.stage-caption');
+  const caption = page.getByTestId('main-marble').locator('.stage-caption');
   await expect(caption).toHaveAttribute('aria-hidden', 'true');
   const word = () => caption.locator('.stage-caption__word:not(.stage-caption__word--out)').textContent();
   const state = () => page.getByTestId('main-marble').locator('[data-talking-marble]').getAttribute('data-state');

@@ -1,0 +1,177 @@
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
+import { TalkingMarble, type OrbPreset } from 'talking-marble';
+import { useSimulatedLevel } from '../simulated';
+import { Caption } from './Caption';
+import { CloseIcon, MicOffIcon, PhoneOffIcon, PlusIcon, SpeakerIcon } from './icons';
+
+/** Where the marble is seen (F-99): on its own, above a chat bar, or in a call. */
+export type SeenIn = 'none' | 'bar' | 'call';
+export const SEEN_IN: { id: SeenIn; label: string }[] = [
+  { id: 'none', label: 'On its own' },
+  { id: 'bar', label: 'Chat bar' },
+  { id: 'call', label: 'Call' },
+];
+
+/** The marble the demo stands in for, and the panel it must keep clear of. */
+export interface DemoAnchor { marble: string; panel: string }
+
+const FLIGHT_MS = 760;
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+type Box = { x: number; y: number; s: number };
+
+/**
+ * The marble seen in an everyday voice interface (F-99). A picture of a UI, laid over the stage: the big marble in
+ * the scene steps aside and one marble of the demo's own takes its place, flying between spots (the scene's spot, a
+ * chat bar's voice button, the middle above the bar, a call screen) along a short arc. Each spot is an empty element
+ * marked `data-home`; the marble re-measures its spot every frame, so it follows it as the layout moves, and a new
+ * spot starts a fresh flight from wherever it is drawn now (so it can turn back mid-flight). Nothing else moves the
+ * page: the controls stay where they are. The talk-to-it conversation needs a voice model and is a later plan.
+ */
+export function Demo({ seen, anchor, live, state, emotion, halo, palette, presets, name }: {
+  seen: SeenIn; anchor: DemoAnchor; live: boolean; state: string; emotion?: string | null; halo: boolean | number;
+  palette: readonly string[]; presets?: Record<string, OrbPreset>; name: string;
+}) {
+  // In the chat bar the marble starts in the middle above it (like an open voice chat); its button closes it into the bar.
+  const [open, setOpen] = useState(true);
+  useEffect(() => { if (seen === 'bar') setOpen(true); }, [seen]);
+  const shown = live && seen !== 'none';
+  // Not shown (another step, the shot left, or on its own): home to the scene's spot.
+  const home = !shown ? 'scene' : seen === 'call' ? 'call' : seen === 'bar' ? (open ? 'above' : 'slot') : 'scene';
+  // The demo's marble stays drawn until it has flown back to the scene's spot, then hands back to the scene.
+  const [present, setPresent] = useState(false);
+  useEffect(() => { if (shown) setPresent(true); }, [shown]);
+
+  const layer = useRef<HTMLDivElement>(null);
+  const orb = useRef<HTMLDivElement>(null);
+  const flight = useRef<{ from: Box; start: number } | null>(null);
+  const drawn = useRef<Box | null>(null);
+  const homeRef = useRef(home);
+  const [base, setBase] = useState(240);
+  const level = useSimulatedLevel(present && (state === 'listening' || state === 'speaking' || state === 'searching'));
+
+  // A new spot: fly from where the marble is drawn now.
+  useEffect(() => {
+    if (homeRef.current !== home && drawn.current) flight.current = reducedMotion() ? null : { from: drawn.current, start: performance.now() };
+    homeRef.current = home;
+  }, [home]);
+
+  // The scene's own marble steps aside while the demo's is out.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (present) root.setAttribute('data-demo', anchor.marble === 'stage' ? 'stage' : 'walk');
+    return () => root.removeAttribute('data-demo');
+  }, [present, anchor.marble]);
+
+  const on = live || present;
+  useLayoutEffect(() => {
+    if (!on) return;
+    const el = layer.current!, node = orb.current;
+    let frame = 0;
+    const scene = () => document.querySelector<HTMLElement>(anchor.marble === 'stage'
+      ? '[data-testid="main-marble"] [data-talking-marble]'
+      : '.gmarble[data-front] [data-talking-marble]');
+    const tick = (now: number) => {
+      frame = requestAnimationFrame(tick);
+      // Lay the chrome out around the scene's spot, inside the room the panel leaves.
+      const spot = scene()?.getBoundingClientRect();
+      const panel = document.querySelector(anchor.panel)?.getBoundingClientRect();
+      if (spot && panel) {
+        const narrow = innerWidth < 720;
+        // The room beside the panel on the marble's side (the walk's marble is right of its panel, Create's left), or above
+        // the panel on a phone.
+        const right = spot.left + spot.width / 2 > panel.left + panel.width / 2;
+        const room = narrow
+          ? { l: 12, r: innerWidth - 12, t: 64, b: Math.max(200, panel.top - 8) }
+          : right
+            ? { l: panel.right + 40, r: innerWidth - 84, t: 76, b: innerHeight - 120 }
+            : { l: 40, r: panel.left - 48, t: 76, b: innerHeight - 40 };
+        const v = (k: string, n: number) => el.style.setProperty(k, `${Math.round(n)}px`);
+        v('--cx', spot.left + spot.width / 2); v('--cy', spot.top + spot.height / 2); v('--size', spot.width);
+        v('--room-l', room.l); v('--room-r', room.r); v('--room-t', room.t); v('--room-b', room.b);
+        el.style.setProperty('--fit', String(Math.min(1, (room.b - room.t) / 600, (room.r - room.l) / 320)));
+        const want = Math.round(spot.width);
+        if (Math.abs(want - base) / base > 0.15) setBase(want);
+      }
+      if (!node) return;
+      const target = homeRef.current === 'scene' ? scene() : el.querySelector<HTMLElement>(`[data-home="${homeRef.current}"]`);
+      const box = target?.getBoundingClientRect();
+      if (!box || !box.width) return;
+      const s0 = Math.min(box.width, box.height);
+      let x = box.left + box.width / 2 - s0 / 2, y = box.top + box.height / 2 - s0 / 2, s = s0;
+      const f = flight.current;
+      if (f) {
+        const raw = Math.min(1, (now - f.start) / FLIGHT_MS), t = ease(raw), u = 1 - t;
+        const dx = x - f.from.x, dy = y - f.from.y;
+        const cx = f.from.x + dx * 0.95;
+        const cy = f.from.y + Math.min(0, dy) - Math.min(90, Math.abs(dy) * 0.3 + 30);
+        x = u * u * f.from.x + 2 * u * t * cx + t * t * x;
+        y = u * u * f.from.y + 2 * u * t * cy + t * t * y;
+        s = f.from.s + (s - f.from.s) * t;
+        if (raw >= 1) flight.current = null;
+      }
+      drawn.current = { x, y, s };
+      node.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${s / base})`;
+      // Back on the scene's spot with nowhere else to go: hand back to the scene's marble.
+      if (!shown && !flight.current && homeRef.current === 'scene') setPresent(false);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [on, present, shown, base, anchor.marble, anchor.panel]);
+
+  // The call's clock, from when it starts.
+  const [secs, setSecs] = useState(0);
+  useEffect(() => {
+    if (seen !== 'call' || !live) return;
+    setSecs(0);
+    const t = setInterval(() => setSecs(n => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [seen, live]);
+  const clock = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
+
+  if (!on || typeof document === 'undefined') return null;
+  const tint = { '--d1': palette[1], '--d2': palette[2], '--d3': palette[3] } as CSSProperties;
+  return createPortal(
+    <div ref={layer} className="demo" data-seen={shown ? seen : 'none'} data-live={live || undefined} data-open={open || undefined} style={tint}>
+      {/* The call (F-99): a phone's voice-call screen, its glass buttons pictures only. */}
+      <div className="demo__call" aria-hidden="true">
+        <div className="demo__call-top">
+          <span className="demo__call-name">{name}</span>
+          <span className="demo__call-clock">{clock}</span>
+        </div>
+        <span className="demo__home demo__home--call" data-home="call" />
+        <Caption word={state} className="demo__caption demo__caption--call" />
+        <div className="demo__call-keys">
+          <span className="demo__key"><span className="demo__glass"><SpeakerIcon /></span>speaker</span>
+          <span className="demo__key"><span className="demo__glass"><MicOffIcon /></span>mute</span>
+          <span className="demo__key"><span className="demo__glass demo__glass--end"><PhoneOffIcon /></span>end</span>
+        </div>
+      </div>
+      {/* The chat bar (F-99): the marble opens from the bar's voice button to the middle above it, and closes back. */}
+      <div className="demo__chat">
+        <span className="demo__home demo__home--above" data-home="above" />
+        <Caption word={state} className="demo__caption demo__caption--above" />
+        <div className="demo__bar">
+          <span className="demo__bar-plus" aria-hidden="true"><PlusIcon /></span>
+          <span className="demo__bar-text" aria-hidden="true">Ask anything</span>
+          <span className="demo__glass demo__glass--small" aria-hidden="true"><MicOffIcon /></span>
+          {open ? (
+            <button type="button" className="demo__glass demo__glass--accent" aria-label="Close the voice chat" onClick={() => setOpen(false)}><CloseIcon /></button>
+          ) : (
+            <button type="button" className="demo__slot" aria-label="Open the voice chat" onClick={() => setOpen(true)}>
+              <span className="demo__home" data-home="slot" />
+            </button>
+          )}
+        </div>
+      </div>
+      <Caption word={state} className="demo__caption demo__caption--scene" />
+      {present && (
+        <div ref={orb} className="demo__orb" aria-hidden="true">
+          <TalkingMarble size={base} state={state} emotion={emotion ?? undefined} presets={presets} level={level} palette={palette as string[]} halo={halo} decorative />
+        </div>
+      )}
+    </div>,
+    document.body,
+  );
+}

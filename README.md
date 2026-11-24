@@ -200,7 +200,7 @@ Complete, tested recipes for ElevenLabs and LiveKit are in the [docs](https://ta
 
 <p align="center"><img src="docs/media/site.png" alt="The Talking Marble website: a marble on a dark stage, with switch bars to try its states and emotions" /></p>
 
-The [website](https://talking-marble.vercel.app/) lets you try every state, emotion and palette, talk to the marble with your microphone, and design your own: name it, pick its colours, shape how it moves, then copy the code.
+The [website](https://talking-marble.vercel.app/) lets you try every state, emotion and palette, see it in a chat bar or a call, and design your own: name it, pick its colours, shape how it moves, then copy the code.
 
 In code, a state or emotion of your own is plain data. Give any subset of the settings; the rest stay at their resting values:
 

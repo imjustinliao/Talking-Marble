@@ -101,16 +101,24 @@ test('try it: every state and emotion, your own state too, the halo strength int
   await expect(page.locator('#guide').getByLabel('usage', { exact: true })).toContainText('presets={presets}');
 });
 
-test('try it: Talk without a mic is a simulated conversation on your marble; End returns', async ({ page }) => {
-  await page.addInitScript(() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('no', 'NotAllowedError')); });
+test('try it: seen in a call and a chat bar (F-99), standing in for your marble, with its name', async ({ page }) => {
   await open(page);
+  await step(page, 'Name').dispatchEvent('click');
+  await create(page).getByRole('textbox', { name: 'Name your marble' }).fill('Nova');
   await step(page, 'Try it').dispatchEvent('click');
-  await create(page).getByRole('button', { name: 'Talk' }).click();
-  const orb = stage(page).locator('[data-talking-marble]');
-  await expect(orb).toHaveAttribute('data-state', 'listening');
-  await expect(orb).toHaveAttribute('data-state', 'thinking', { timeout: 6000 });
-  await create(page).getByRole('button', { name: 'End' }).click();
-  await expect(create(page).getByRole('button', { name: 'Talk' })).toBeVisible();
+  await option(create(page), 'Seen in', 'Call').pick();
+  await expect(page.locator('.demo__call')).toBeVisible();
+  await expect(page.locator('.demo__call-name')).toHaveText('Nova');
+  await expect.poll(() => stage(page).evaluate(el => getComputedStyle(el).filter)).toBe('opacity(0)');
+  // The call sits on the marble's side of the page, clear of the panel.
+  const c = (await page.locator('.demo__call').boundingBox())!, panel = (await page.locator('#create .shot__panel').boundingBox())!;
+  expect(c.x + c.width).toBeLessThan(panel.x);
+  await option(create(page), 'Seen in', 'Chat bar').pick();
+  await expect(page.locator('.demo')).toHaveAttribute('data-seen', 'bar');
+  // Leaving Try it puts your marble back.
+  await step(page, 'Code').dispatchEvent('click');
+  await expect(page.locator('.demo__orb')).toHaveCount(0, { timeout: 3000 });
+  await expect.poll(() => stage(page).evaluate(el => getComputedStyle(el).filter)).not.toBe('opacity(0)');
 });
 
 for (const scheme of ['dark'] as const) {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CopyButton } from '../components/CopyButton';
-import { DEVICES, FRAMEWORKS, type Framework } from '../platforms';
+import { FRAMEWORKS, type Framework } from '../platforms';
 import { mineColors, mineHtml, mineJsx, minePreset, useMine, type Mine } from '../scene/mine';
 import { useStageWish } from '../scene/stage';
 import { LinkButtons } from '../ui/Chrome';
@@ -64,7 +64,6 @@ export function Guide() {
         <CodeBlock label="Usage" code={usage} what="usage" />
         {mine.design && <p className="guide__note"><code>presets</code> is the preset you exported.</p>}
       </div>
-      <ul className="platforms" aria-label="Runs on">{DEVICES.map(d => <li key={d}>{d}</li>)}</ul>
       <LinkButtons />
     </div>
   );

@@ -59,8 +59,8 @@ function Plain<T extends string | null>({ label, options, value, onChange, rende
   const { bar, glide } = useGlide(value);
   return (
     <div className={`try__row ${className}`}>
-      <Name id={`${scope}-${label}`} label={label} hide={hideLabel} />
-      <div ref={bar} className="seg" role="group" aria-labelledby={`${scope}-${label}`}>
+      <Name id={`${scope}-${label.replace(/\s+/g, '-')}`} label={label} hide={hideLabel} />
+      <div ref={bar} className="seg" role="group" aria-labelledby={`${scope}-${label.replace(/\s+/g, '-')}`}>
         {glide}
         {options.map(o => (
           <button key={String(o)} type="button" className="seg__opt" aria-pressed={o === value} onClick={() => onChange(o)}>{render ? render(o) : String(o)}</button>
@@ -169,9 +169,9 @@ function Loop<T extends string | null>({ label, options, value, onChange, render
 
   return (
     <div className={`try__row ${className}`}>
-      <Name id={`${scope}-${label}`} label={label} hide={hideLabel} />
+      <Name id={`${scope}-${label.replace(/\s+/g, '-')}`} label={label} hide={hideLabel} />
       <div className="loop-wrap">
-      <div className="seg seg--loop" role="group" aria-labelledby={`${scope}-${label}`}>
+      <div className="seg seg--loop" role="group" aria-labelledby={`${scope}-${label.replace(/\s+/g, '-')}`}>
         <div
           ref={view} className="loop"
           onPointerDown={e => { press.current = { x: e.clientX, id: e.pointerId }; }}

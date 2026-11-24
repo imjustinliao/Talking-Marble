@@ -45,7 +45,7 @@ The renderer and audio code know nothing about React, so other entries are thin 
 
 ## Data
 
-None. No server, no storage, no analytics. Microphone audio is analyzed in the browser and never leaves it; the site says so next to the mic button.
+None. No server, no storage, no analytics. The site asks for no microphone (Talk was removed, F-99); the package analyzes any audio it is given in the browser, and it never leaves it.
 
 ## Interfaces
 

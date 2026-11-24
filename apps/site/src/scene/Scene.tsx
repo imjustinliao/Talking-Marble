@@ -8,8 +8,8 @@ import { usePick } from './pick';
 import { colorsOf } from '../palettes';
 import { createFog } from './fog';
 import { isLowPower } from '../perf';
-import { useTalk } from './talk';
 import { useTrying } from './walk';
+import { Caption } from '../ui/Caption';
 
 /**
  * The fog (F-54): a plain black stage with mist that moves like real air when the pointer passes through it
@@ -30,21 +30,6 @@ const Fog = memo(function Fog() {
 });
 
 /**
- * The word under the intro's marble (F-66, F-73): plain type, no box. A new word crossfades in over the old one
- * (each slightly blurred and spaced on its way), so the change is a dissolve, not a switch.
- */
-function Caption({ word }: { word?: string }) {
-  const [words, setWords] = useState<{ cur?: string; prev?: string; n: number }>({ cur: word, n: 0 });
-  useEffect(() => { setWords(w => (w.cur === word ? w : { cur: word, prev: w.cur, n: w.n + 1 })); }, [word]);
-  return (
-    <span className="stage-caption" aria-hidden="true" data-on={word ? '' : undefined}>
-      {words.prev && <span key={`p${words.n}`} className="stage-caption__word stage-caption__word--out">{words.prev}</span>}
-      <span key={`c${words.n}`} className="stage-caption__word" data-in={words.n ? '' : undefined}>{words.cur ?? ''}</span>
-    </span>
-  );
-}
-
-/**
  * The one marble on the stage, showing what the live shot asks for. It is the page's one labelled marble;
  * everything else in the scene is decoration.
  */
@@ -63,8 +48,7 @@ const StageMarble = memo(function StageMarble({ active, hidden }: { active: Shot
         presets={wish.presets}
         palette={wish.palette ?? colorsOf(pick.palette)}
         halo={wish.halo ?? true}
-        audio={voice.kind === 'mic' ? voice.stream : null}
-        level={voice.kind === 'mic' ? undefined : voice.kind === 'level' ? voice.level : sim}
+        level={voice.kind === 'level' ? voice.level : sim}
         label={wish.label || 'Talking Marble'}
         paused={hidden}
         className="reflect"
@@ -79,7 +63,7 @@ const StageMarble = memo(function StageMarble({ active, hidden }: { active: Shot
 export interface GalleryMarble { id: string; label: string; colors: readonly string[]; chosen: boolean }
 export interface GalleryProps {
   marbles: GalleryMarble[];
-  /** The marble in front on the walk: the one you talk to. */
+  /** The marble in front on the walk: the one the demo stands in for. */
   front: number;
   /** Which marbles can be seen ('m' and gallery indices): the rest pause. */
   drawing: string;
@@ -93,29 +77,25 @@ const FAR_SIZE = 140;
 
 /**
  * The gallery's marbles, all showing what you are trying (F-22): the same state, emotion and halo, a simulated voice
- * where the state listens or speaks. While you talk, the marble in front takes the conversation's state, your mic
- * while it listens.
+ * where the state listens or speaks. The one in front is marked, so the demo (F-99) can stand in for it.
  */
 function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRefObject<GalleryRefs> }) {
   const trying = useTrying();
-  const talk = useTalk();
   const seen = gallery.drawing.split(' ');
   const sim = useSimulatedLevel(seen.some(k => k !== 'm'));
   return (
     <div ref={el => { refs.current.galleryEl = el; }} className="gallery" aria-hidden="true" inert={!gallery.active || undefined}>
       {gallery.marbles.map((m, k) => {
         const p = curvePoint(k);
-        const talking = talk.phase !== 'off' && k === gallery.front;
-        const state = talking ? talk.phase : trying.state;
-        const mic = talking && talk.phase === 'listening' ? talk.stream : null;
+        const state = trying.state;
         const near = k === gallery.front && gallery.active;
         const shown = seen.includes(String(k));
         return (
           <GalleryOrb
             key={m.id} k={k} refs={refs} x={p.x} z={p.z} marble={m} onPick={gallery.onPick}
-            state={state} emotion={talking ? null : trying.emotion} halo={trying.halo} audio={mic} near={near} shown={shown}
+            state={state} emotion={trying.emotion} halo={trying.halo} near={near} front={k === gallery.front} shown={shown}
             // Only marbles in view take the voice: the rest keep a constant level and so never re-render with it.
-            level={mic || !shown || state === 'thinking' ? 0 : sim}
+            level={!shown || state === 'thinking' ? 0 : sim}
           />
         );
       })}
@@ -124,18 +104,18 @@ function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRe
 }
 
 /** One gallery marble. Memoised: it re-renders only when what it shows changes (the voice, while in view). */
-const GalleryOrb = memo(function GalleryOrb({ k, refs, x, z, marble: m, onPick, state, emotion, halo, audio, level, near, shown }: {
+const GalleryOrb = memo(function GalleryOrb({ k, refs, x, z, marble: m, onPick, state, emotion, halo, level, near, front, shown }: {
   k: number; refs: MutableRefObject<GalleryRefs>; x: number; z: number; marble: GalleryMarble; onPick: (k: number) => void;
-  state: string; emotion: string | null; halo: boolean; audio: MediaStream | null; level: number; near: boolean; shown: boolean;
+  state: string; emotion: string | null; halo: boolean; level: number; near: boolean; front: boolean; shown: boolean;
 }) {
   return (
     <Actor x={x} z={z} size={CURVE_SIZE} actorRef={el => { refs.current.actors[k] = el; }}>
       {/* The fade goes on a flat inner element: opacity on a 3D wrapper would flatten the scene */}
-      <button type="button" className="gmarble" tabIndex={-1} aria-pressed={m.chosen} onClick={() => onPick(k)}>
+      <button type="button" className="gmarble" tabIndex={-1} aria-pressed={m.chosen} data-front={front || undefined} onClick={() => onPick(k)}>
         <span ref={el => { refs.current.orbs[k] = el; }} className="gmarble__orb" style={{ opacity: 0 }} data-state={state}>
           <TalkingMarble
             palette={m.colors as string[]} state={state} emotion={emotion ?? undefined}
-            audio={audio} level={audio ? undefined : level}
+            level={level}
             size={near ? CURVE_SIZE : FAR_SIZE} decorative paused={!shown} halo={halo} className="reflect"
             style={near ? undefined : { transform: `scale(${CURVE_SIZE / FAR_SIZE})`, transformOrigin: '50% 100%' }}
           />

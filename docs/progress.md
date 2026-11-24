@@ -35,6 +35,8 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-100 | Remove the device list under the Guide | built 0.18.0 | |
+| F-99 | Remove Talk (needs an API; a future plan); keep a demo on the walk and in Create: no UI, a chat bar (the marble flies from the bar's button to the middle and back), a call like a phone's; the state word under the marble as on the intro; nothing below moves; spacing; glass | built 0.18.0: Seen in (On its own, Chat bar, Call), one flying marble re-measuring its spot each frame; Talk recorded under product.md › Later | |
 | F-98 | The link card is not quite left-aligned | built 0.17.0: title, line and command on one left edge (the command set off by a rule, not an indented pill); the card renders in the site's display face; the link video adds searching | |
 | F-97 | The dots: more like a slider, still showing how many there are | built 0.17.0: a faint track of equal dots with a lit thumb that slides to your place | |
 | F-96 | Dots inside the bar look cramped: put them apart, and add space between label, bar, dots and the next group | built 0.17.0 | |

@@ -70,81 +70,67 @@ test('trying: switch bars for state and emotion, a toggle for halo, reach every 
   expect(Math.abs((await top()) - before)).toBeLessThanOrEqual(1);
 });
 
-test('talk without a mic: a simulated conversation, seen in a call, a chat bar and a message; End returns', async ({ page }) => {
-  await page.addInitScript(() => {
-    navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
-  });
-  await open(page);
-  const top = await walkShot(page).locator('.walk__name').evaluate(el => el.getBoundingClientRect().top);
-  await walkShot(page).getByRole('button', { name: 'Talk' }).click();
-  const line = walkShot(page).locator('.shot__line');
-  await expect(line).toHaveText('Listening to a simulated you (no microphone).');
-  const front = orbs(page).first();
-  await expect(front).toHaveAttribute('data-state', 'listening');
-  // The turn passes to the marble: it thinks, then speaks, then listens again.
-  await expect(line).toHaveText('Thinking…', { timeout: 6000 });
-  await expect(front).toHaveAttribute('data-state', 'thinking');
-  await expect(line).toHaveText('Speaking. A simulated reply for now.', { timeout: 4000 });
-  await expect(front).toHaveAttribute('data-state', 'speaking');
-  // Seen in an everyday UI, its small marble wearing this palette and doing the same.
-  const ui = walkShot(page).locator('.mock');
-  await expect(ui).toHaveClass(/mock--call/);
-  await expect(ui.locator('[data-talking-marble]')).toHaveAttribute('data-state', 'speaking');
-  await word(page, 'Chat bar').click();
-  await expect(ui).toHaveClass(/mock--input/);
-  await word(page, 'Message').click();
-  await expect(ui).toHaveClass(/mock--chat/);
-  expect(Math.abs((await walkShot(page).locator('.walk__name').evaluate(el => el.getBoundingClientRect().top)) - top)).toBeLessThanOrEqual(1);
-  await walkShot(page).getByRole('button', { name: 'End' }).click();
-  await expect(walkShot(page).getByRole('button', { name: 'Talk' })).toBeVisible();
-  await expect(front).toHaveAttribute('data-state', 'speaking'); // back to what you were trying
-});
+/** Where the demo's marble is drawn, and where a spot of the demo is (its centre and size, px). */
+const orbBox = (page: Page) => page.locator('.demo__orb [data-talking-marble]').boundingBox();
+const spotBox = (page: Page, home: string) => page.locator(`.demo [data-home="${home}"]`).boundingBox();
+const near = (a: { x: number; y: number; width: number } | null, b: { x: number; y: number; width: number } | null) =>
+  !!a && !!b && Math.abs(a.x + a.width / 2 - (b.x + b.width / 2)) < 3 && Math.abs(a.width - b.width) < 3;
 
-test('talk with a mic: your voice drives listening; End releases the mic', async ({ page }) => {
-  // A silent stream stands in for a microphone; nothing is recorded or sent.
-  await page.addInitScript(() => {
-    const w = window as unknown as { __stopped: number };
-    w.__stopped = 0;
-    navigator.mediaDevices.getUserMedia = async () => {
-      const stream = new AudioContext().createMediaStreamDestination().stream;
-      for (const t of stream.getTracks()) { const stop = t.stop.bind(t); t.stop = () => { w.__stopped++; stop(); }; }
-      return stream;
-    };
-  });
+test('seen in (F-99): on its own, in a chat bar (open and closed into its button) and in a call; the controls never move; the scene marble steps aside and comes back', async ({ page }) => {
+  const errors = trackErrors(page);
   await open(page);
-  await walkShot(page).getByRole('button', { name: 'Talk' }).click();
-  await expect(walkShot(page).locator('.shot__line')).toHaveText('Listening. Speak, then pause. Audio stays in this browser.');
-  await expect(orbs(page).first()).toHaveAttribute('data-state', 'listening');
-  // Silence is not the end of your turn: it keeps listening until you have spoken and paused.
-  await page.waitForTimeout(2500);
-  await expect(orbs(page).first()).toHaveAttribute('data-state', 'listening');
-  await walkShot(page).getByRole('button', { name: 'End' }).click();
-  await expect.poll(() => page.evaluate(() => (window as unknown as { __stopped: number }).__stopped)).toBeGreaterThan(0);
-});
-
-test('leaving the walk ends a conversation', async ({ page }) => {
-  await page.addInitScript(() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('no', 'NotAllowedError')); });
-  await open(page);
-  await walkShot(page).getByRole('button', { name: 'Talk' }).click();
-  await expect(walkShot(page).getByRole('button', { name: 'End' })).toBeVisible();
-  await goToShot(page, 'Guide');
-  await goToShot(page, 'Palettes');
-  await expect(walkShot(page).getByRole('button', { name: 'Talk' })).toBeVisible();
+  const seen = (name: string) => option(walkShot(page), 'Seen in', name).pick();
+  const firstLine = () => walkShot(page).locator('.walk__name').evaluate(el => el.getBoundingClientRect().top);
+  const controls = () => walkShot(page).locator('.try').evaluate(el => { const r = el.getBoundingClientRect(); return [r.top, r.height]; });
+  const at = [await firstLine(), ...(await controls())];
+  const front = page.locator('.gmarble[data-front]');
+  // On its own: the state's word under the marble, as under the intro's.
+  await expect(page.locator('.demo__caption--scene .stage-caption__word').last()).toHaveText('speaking');
+  await option(walkShot(page), 'State', 'searching').pick();
+  await expect(page.locator('.demo__caption--scene .stage-caption__word').last()).toHaveText('searching');
+  // The chat bar: the marble in the middle above it, a close key in its pigment; closing flies it into the bar's button.
+  await seen('Chat bar');
+  await expect(page.locator('.demo')).toHaveAttribute('data-seen', 'bar');
+  await expect.poll(() => front.evaluate(el => getComputedStyle(el).filter)).toBe('opacity(0)');
+  await expect.poll(async () => near(await orbBox(page), await spotBox(page, 'above')), { timeout: 3000 }).toBe(true);
+  await page.locator('.demo').getByRole('button', { name: 'Close the voice chat' }).click();
+  await expect.poll(async () => near(await orbBox(page), await spotBox(page, 'slot')), { timeout: 3000 }).toBe(true);
+  await page.locator('.demo').getByRole('button', { name: 'Open the voice chat' }).click();
+  await expect.poll(async () => near(await orbBox(page), await spotBox(page, 'above')), { timeout: 3000 }).toBe(true);
+  // The call: its name (the palette's), a running clock, the marble in the middle, the state under it.
+  await seen('Call');
+  const call = page.locator('.demo__call');
+  await expect(call).toBeVisible();
+  await expect(call.locator('.demo__call-name')).toHaveText('Pearl');
+  await expect(call.locator('.demo__call-clock')).toHaveText(/^00:0[1-9]$/, { timeout: 3000 });
+  await expect.poll(async () => near(await orbBox(page), await spotBox(page, 'call')), { timeout: 3000 }).toBe(true);
+  // Inside the screen, clear of the panel.
+  const c = (await call.boundingBox())!, panel = (await walkShot(page).locator('.shot__panel').boundingBox())!, vp = page.viewportSize()!;
+  expect(c.x).toBeGreaterThan(panel.x + panel.width);
+  expect(c.x + c.width).toBeLessThanOrEqual(vp.width);
+  expect(c.y).toBeGreaterThanOrEqual(0);
+  expect(c.y + c.height).toBeLessThanOrEqual(vp.height);
+  // Back on its own: the demo's marble flies home and hands back to the scene's.
+  await seen('On its own');
+  await expect(page.locator('.demo__orb')).toHaveCount(0, { timeout: 3000 });
+  await expect.poll(() => front.evaluate(el => getComputedStyle(el).filter)).toBe('none');
+  // Nothing in the panel moved at any point.
+  expect([await firstLine(), ...(await controls())].map(Math.round)).toEqual(at.map(Math.round));
+  expect(errors).toEqual([]);
 });
 
 for (const scheme of ['dark'] as const) {
-  test(`the walk is axe clean, trying and talking (${scheme})`, async ({ page }) => {
+  test(`the walk is axe clean, on its own, in the chat bar and in a call (${scheme})`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.addInitScript(t => {
-      navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('no', 'NotAllowedError'));
-    }, scheme);
     await page.goto('/');
     await goToShot(page, 'Palettes');
-    const axe = () => new AxeBuilder({ page }).include('#palettes').withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
+    const axe = () => new AxeBuilder({ page }).include('#palettes').include('.demo').withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
     expect((await axe()).violations.map(v => v.id)).toEqual([]);
-    await walkShot(page).getByRole('button', { name: 'Talk' }).click();
-    await expect(walkShot(page).locator('.mock')).toBeVisible();
-    expect((await axe()).violations.map(v => v.id)).toEqual([]);
+    for (const name of ['Chat bar', 'Call']) {
+      await option(walkShot(page), 'Seen in', name).pick();
+      await page.waitForTimeout(500);
+      expect((await axe()).violations.map(v => `${name} ${v.id}`)).toEqual([]);
+    }
   });
 }
 

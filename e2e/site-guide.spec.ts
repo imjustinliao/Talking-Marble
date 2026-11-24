@@ -20,8 +20,8 @@ test('the guide: only what is needed (install, usage), styled as code, then Docs
   await expect(panel.locator('.block__label')).toHaveText(['Install', 'Usage']);
   await expect(panel.locator('.tok--tag').first()).toHaveText('<TalkingMarble');
   expect(await panel.locator('.tok--str').first().evaluate(el => getComputedStyle(el).color)).not.toBe(await panel.locator('pre').first().evaluate(el => getComputedStyle(el).color));
-  // Where it runs today, every device with a browser; nothing "soon" (F-78). No tabs, no recipes (they live in the docs).
-  await expect(guide(page).getByRole('list', { name: 'Runs on' }).getByRole('listitem')).toHaveText(['Phones', 'Tablets', 'Laptops', 'Desktop apps']);
+  // No list of devices (F-100: the docs say where it runs), nothing "soon" (F-78), no tabs, no recipes (they live in the docs).
+  await expect(guide(page).getByRole('list', { name: 'Runs on' })).toHaveCount(0);
   await expect(guide(page).getByRole('group', { name: 'Framework' }).getByRole('button')).toHaveText(['React', 'Web Component']);
   await expect(guide(page).getByText(/soon/i)).toHaveCount(0);
   await expect(guide(page).locator('[role="tablist"], .code')).toHaveCount(0);
