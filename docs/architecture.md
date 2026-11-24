@@ -127,6 +127,7 @@ In the workspace, the site imports the package's TypeScript source through the `
 ### Link previews, SEO and AI-SEO (SITE-08)
 
 - All tags are static in `apps/site/index.html` (unfurlers don't run JS), absolute from `https://talking-marble.vercel.app/`: Open Graph with `og-image.jpg` (1200×630) and `og-video.mp4` (1200×630, H.264, faststart, no audio, a 6 s seamless loop idle → listening → thinking → speaking), X `summary_large_image`, a canonical, JSON-LD `WebSite` + `SoftwareSourceCode`, `sitemap.xml`, and `llms.txt` (llmstxt.org) linked as `rel="alternate"`. `apps/site/scripts/render-media.mjs` renders the icons, card and video from the live orb.
+- The README's pictures live in `docs/media/` (an animated WebP that plays on GitHub, the same clip as MP4, stills of the states, emotions and palettes, and a shot of the site), rendered from the live orb by `apps/site/scripts/render-readme.mjs` (`pnpm --filter site readme-media`); re-run it when the look, states or emotions change.
 - File names are stable; platforms cache by URL, so a re-render that must show in cached previews needs new names or each platform's re-scrape tool.
 - `robots.txt` only counts at a host's root, so at `/Talking-Marble/` it is documentation; after the first deploy, submit the sitemap in Google Search Console. The npm links 404 until `talking-marble` is published.
 
