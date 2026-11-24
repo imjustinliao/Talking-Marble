@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { expect, test, type Page } from '@playwright/test';
-import { BUILT_INS, goToShot, skipIntro, trackErrors } from './site-helpers';
+import { BUILT_INS, goToShot, option, skipIntro, trackErrors } from './site-helpers';
 
 const { default: AxeBuilder } = createRequire(new URL('../apps/site/package.json', import.meta.url))('@axe-core/playwright') as typeof import('@axe-core/playwright');
 
@@ -34,12 +34,21 @@ test('trying: switch bars for state and emotion, a toggle for halo, reach every 
   await open(page);
   const top = () => walkShot(page).locator('.walk__name').evaluate(el => el.getBoundingClientRect().top);
   const before = await top();
+  // Five at a time (F-90): one row each; the arrow turns to the rest.
+  for (const label of ['State', 'Emotion']) {
+    const bar = walkShot(page).getByRole('group', { name: label, exact: true });
+    await expect(bar.locator('.seg__opt')).toHaveCount(5);
+    const tops = await bar.locator('.seg__opt').evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().top)));
+    expect(new Set(tops).size, `${label} on one row`).toBe(1);
+  }
   for (const state of ['idle', 'connecting', 'listening', 'thinking', 'searching', 'speaking', 'error']) {
-    await word(page, state).click();
+    await (await option(walkShot(page), 'State', state)).click();
     await expect(word(page, state)).toHaveAttribute('aria-pressed', 'true');
     for (const orb of await orbs(page).all()) await expect(orb).toHaveAttribute('data-state', state);
   }
-  await word(page, 'happy').click();
+  await (await option(walkShot(page), 'Emotion', 'sad')).click();
+  for (const orb of await orbs(page).all()) await expect(orb).toHaveAttribute('data-emotion', 'sad');
+  await (await option(walkShot(page), 'Emotion', 'happy')).click();
   for (const orb of await orbs(page).all()) await expect(orb).toHaveAttribute('data-emotion', 'happy');
   await word(page, 'none').click();
   await expect(orbs(page).first()).not.toHaveAttribute('data-emotion');
@@ -52,7 +61,7 @@ test('trying: switch bars for state and emotion, a toggle for halo, reach every 
   await halo.click();
   await expect(orbs(page).first().locator('[data-halo]')).toBeVisible();
   // Walking on keeps what you tried.
-  await word(page, 'thinking').click();
+  await (await option(walkShot(page), 'State', 'thinking')).click();
   await walkShot(page).getByRole('button', { name: 'Next palette' }).click();
   await expect(walkShot(page).locator('.walk__name')).toHaveText('Ember');
   await expect(word(page, 'thinking')).toHaveAttribute('aria-pressed', 'true');

@@ -1,3 +1,4 @@
+import { option } from './site-helpers';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 const STATES = ['idle', 'connecting', 'listening', 'thinking', 'searching', 'speaking', 'error'];
@@ -41,7 +42,7 @@ test('the orb draws in all six states, with no console errors', async ({ page })
 
   const frames: string[] = [];
   for (const state of STATES) {
-    await page.locator('#create').getByRole('button', { name: state, exact: true }).click();
+    await (await option(page.locator('#create'), 'State', state)).click();
     await expect(orb).toHaveAttribute('data-state', state);
     await page.waitForTimeout(600);
     const m = await measure(page, orb);

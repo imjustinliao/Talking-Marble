@@ -35,6 +35,8 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-91 | A README with the latest: demo images and video, plain language, what it is, how it works, how to use it | in progress | |
+| F-90 | Eight emotions wrap into an uneven second row with an awkward gap: keep five per bar, with a switch to the rest | built 0.14.1: five at a time on one row (most used first), an arrow at the end turns to the rest; fits a 375 px phone | |
 | F-89 | Link previews show the title starting lowercase ("an audio-reactive orb…"); capitalise it | built 0.14.0: "Talking Marble: An audio-reactive orb…" (iMessage drops the site name, so the rest leads) | |
 | F-88 | Nothing in the project may name the owner's company or anything tied to it: this is a personal project | checked 2026-11-24: no mention in tracked files or on GitHub (the published history was squashed clean at 0.13.1); old local branches `milestone/*` still hold earlier commits that do, never pushed | |
 | F-87 | Are emotions needed? If yes, add more | built 0.14.0: kept (tone without a new state), eight now: happy, excited, calm, curious, surprised, concerned, sad, muted | |

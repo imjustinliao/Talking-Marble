@@ -106,6 +106,7 @@ The camera system from the earlier experience comes back (saved at `ffcbb19` on 
 
 - **One marble.** The scene marble is the subject of every shot and the only large marble on screen. Choosing a state, emotion, palette or setting changes *that* marble; no shot has a second large preview marble.
 - **No boxes.** No framed panels, no cards around things, no grid of boxed tiles, no scrollbar inside a section. Text and controls sit directly on the stage with generous space. Where a shot truly needs a dense control area (the playground's dials), one quiet glass strip at most, never boxes inside it.
+- **Five to a switch bar** (F-90): a bar never wraps. Past five options it shows five on one row, the most used first (states: idle, listening, thinking, searching, speaking; then connecting, error), and an arrow at its end turns to the rest and back. The track hugs what it shows.
 - **Typography, not tiles.** States and emotions are words you pick (the selected one bright, the rest dim), in one calm row or column beside or under the marble, with one plain line about the selected one. Group names ("States", "Emotions") appear once; no "state"/"emotion" under each item. System font for names; monospace only in code.
 - **Small sizes as one line, not cards.** The inline pills ("Listening…" beside a 20 px marble) and a few small marbles show sizes in a single quiet line.
 - **One balanced composition per shot.** The marble and its words read as one group with the camera's framing; nothing crammed to one side.

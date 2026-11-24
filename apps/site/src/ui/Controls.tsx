@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { LeftIcon, RightIcon } from './icons';
 
 /**
  * The lit key of a switch bar glides to the chosen option (F-71), like a light sliding along the track, instead of
@@ -30,22 +31,43 @@ export function useGlide(value: unknown) {
 }
 
 
+/** How many options a switch bar shows at once (F-90): more than this wrap into an uneven second row. */
+export const PER_PAGE = 5;
+
 /**
  * A switch bar (F-37): one glass track of rounded-square options; the chosen one is a lit key. Buttons with
- * aria-pressed, so each is one Tab stop and reads as "pressed".
+ * aria-pressed, so each is one Tab stop and reads as "pressed". Past five options (F-90) it shows five at a time on
+ * one row, with an arrow at its end that turns to the rest (and back); it opens on the page holding the choice.
  */
 export function Switch<T extends string | null>({ label, options, value, onChange, render, scope = 'try' }: {
   scope?: string; label: string; options: readonly T[]; value: T; onChange: (v: T) => void; render?: (v: T) => ReactNode;
 }) {
-  const { bar, glide } = useGlide(value);
+  const pages = Math.max(1, Math.ceil(options.length / PER_PAGE));
+  const pageOf = (v: T) => Math.max(0, Math.floor(options.indexOf(v) / PER_PAGE));
+  const [page, setPage] = useState(() => pageOf(value));
+  const [seen, setSeen] = useState(value);
+  // A choice made elsewhere (another bar, the walk) shows its page.
+  if (seen !== value) { setSeen(value); if (options.includes(value)) setPage(pageOf(value)); }
+  const shown = page < pages ? page : 0;
+  const { bar, glide } = useGlide(`${String(value)}|${shown}`);
+  const last = shown === pages - 1;
+  const what = label.toLowerCase();
   return (
     <div className="try__row">
       <p className="group-name" id={`${scope}-${label}`}>{label}</p>
-      <div ref={bar} className="seg" role="group" aria-labelledby={`${scope}-${label}`}>
+      <div ref={bar} className="seg" data-paged={pages > 1 ? '' : undefined} role="group" aria-labelledby={`${scope}-${label}`}>
         {glide}
-        {options.map(o => (
-          <button key={String(o)} type="button" className="seg__opt" aria-pressed={o === value} onClick={() => onChange(o)}>{render ? render(o) : String(o)}</button>
-        ))}
+        <span key={shown} className="seg__page">
+          {options.slice(shown * PER_PAGE, shown * PER_PAGE + PER_PAGE).map(o => (
+            <button key={String(o)} type="button" className="seg__opt" aria-pressed={o === value} onClick={() => onChange(o)}>{render ? render(o) : String(o)}</button>
+          ))}
+        </span>
+        {pages > 1 && (
+          <button type="button" className="seg__more" onClick={() => setPage(last ? 0 : shown + 1)}
+            aria-label={last ? `Back to the first ${what} options` : `More ${what} options`}>
+            {last ? <LeftIcon /> : <RightIcon />}
+          </button>
+        )}
       </div>
     </div>
   );

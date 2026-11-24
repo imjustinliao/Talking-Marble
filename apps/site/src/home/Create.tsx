@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { CopyButton } from '../components/CopyButton';
 import { MOTION, designFrom, exportJson, type Design } from '../create/model';
 import { COLOR_LABELS, type Colors } from '../palettes';
-import { STATES, orbFor } from '../presets';
+import { EMOTION_PICKS, STATE_PICKS, STATES, orbFor } from '../presets';
 import { mineColors, mineJsx, minePreset, nameMine, reserveNames, setMine, useMine } from '../scene/mine';
 import { useShotLive } from '../scene/shot';
 import { useStageWish } from '../scene/stage';
@@ -13,8 +13,8 @@ import { MicIcon, ResetIcon } from '../ui/icons';
 
 const STEPS = ['Name', 'Colours', 'Motion', 'Try it', 'Code'] as const;
 type Step = (typeof STEPS)[number];
-const STATE_NAMES = STATES.filter(s => s.kind === 'state').map(s => s.name);
-const EMOTIONS = [null, ...STATES.filter(s => s.kind === 'emotion').map(s => s.name)];
+const STATE_NAMES = STATE_PICKS;
+const EMOTIONS = EMOTION_PICKS;
 reserveNames(STATES.map(s => s.name));
 const PHASE: Record<string, string> = { listening: 'Listening. Speak, then pause.', thinking: 'Thinking…', speaking: 'Speaking. A simulated reply for now.' };
 

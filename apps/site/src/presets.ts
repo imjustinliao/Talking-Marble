@@ -19,6 +19,13 @@ export const STATES: StateInfo[] = [
   { name: 'muted', kind: 'emotion', line: 'Nearly still. It ignores audio.' },
 ];
 
+/**
+ * The order the switch bars show them in (F-90: five at a time): the states a conversation spends most time in
+ * first, then connecting and error; no emotion first, then the emotions from the most to the least used.
+ */
+export const STATE_PICKS = ['idle', 'listening', 'thinking', 'searching', 'speaking', 'connecting', 'error'];
+export const EMOTION_PICKS: (string | null)[] = [null, ...STATES.filter(s => s.kind === 'emotion').map(s => s.name)];
+
 /** The props that show a state or an emotion: an emotion is shown on `speaking`, so its effect on a voice is visible. */
 export function orbFor(info: StateInfo): { state: string; emotion?: string } {
   return info.kind === 'emotion' ? { state: 'speaking', emotion: info.name } : { state: info.name };

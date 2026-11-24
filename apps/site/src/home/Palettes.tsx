@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Switch, Toggle } from '../ui/Controls';
 import { BUILT_INS, colorsOf, paletteLabel } from '../palettes';
-import { STATES } from '../presets';
+import { EMOTION_PICKS, STATE_PICKS } from '../presets';
 import { useShotLive } from '../scene/shot';
 import { useStageWish } from '../scene/stage';
 import { endTalk, startTalk, useTalk } from '../scene/talk';
@@ -10,8 +10,8 @@ import { useSimulatedLevel } from '../simulated';
 import { MOCKS, Mock, type MockKind } from '../ui/Mocks';
 import { LeftIcon, MicIcon, RightIcon } from '../ui/icons';
 
-const STATE_NAMES = STATES.filter(s => s.kind === 'state').map(s => s.name);
-const EMOTIONS = [null, ...STATES.filter(s => s.kind === 'emotion').map(s => s.name)];
+const STATE_NAMES = STATE_PICKS;
+const EMOTIONS = EMOTION_PICKS;
 
 const PHASE_LINE: Record<string, string> = {
   listening: 'Listening. Speak, then pause. Audio stays in this browser.',
