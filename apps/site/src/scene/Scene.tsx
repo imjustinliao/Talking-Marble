@@ -11,6 +11,7 @@ import { isLowPower } from '../perf';
 import { useTrying } from './walk';
 import { Caption } from '../ui/Caption';
 import { useStandingIn } from '../ui/Demo';
+import { useScrolling } from './scrolling';
 
 /**
  * The fog (F-54): a plain black stage with mist that moves like real air when the pointer passes through it
@@ -38,6 +39,7 @@ const StageMarble = memo(function StageMarble({ active, hidden }: { active: Shot
   const wish = useStage(active);
   const pick = usePick();
   const standIn = useStandingIn();
+  const scrolling = useScrolling();
   const voice = wish.voice ?? { kind: 'sim' as const };
   const sim = useSimulatedLevel(voice.kind === 'sim' && !hidden);
   const size = wish.size === undefined || wish.size === 'full' ? MARBLE : wish.size;
@@ -70,7 +72,7 @@ const StageMarble = memo(function StageMarble({ active, hidden }: { active: Shot
         halo={wish.halo ?? true}
         level={voice.kind === 'level' ? voice.level : sim}
         label={wish.label || 'Talking Marble'}
-        paused={hidden || standIn.stage}
+        paused={hidden || standIn.stage || scrolling}
         className="reflect"
       />
       {/* The intro's demo says which state it is in (F-66); the marble's own label announces it to screen readers. */}
@@ -102,6 +104,7 @@ const FAR_SIZE = 140;
 function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRefObject<GalleryRefs> }) {
   const trying = useTrying();
   const standIn = useStandingIn();
+  const scrolling = useScrolling();
   const seen = gallery.drawing.split(' ');
   const sim = useSimulatedLevel(seen.some(k => k !== 'm'));
   return (
@@ -115,7 +118,7 @@ function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRe
         return (
           <GalleryOrb
             key={m.id} k={k} refs={refs} x={p.x} z={p.z} marble={m} onPick={gallery.onPick}
-            state={state} emotion={trying.emotion} halo={trying.halo} near={near} front={k === gallery.front} shown={shown}
+            state={state} emotion={trying.emotion} halo={trying.halo} near={near} front={k === gallery.front} shown={shown} hold={scrolling}
             // Only marbles in view take the voice: the rest keep a constant level and so never re-render with it.
             level={!shown || state === 'thinking' ? 0 : sim}
           />
@@ -126,9 +129,9 @@ function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRe
 }
 
 /** One gallery marble. Memoised: it re-renders only when what it shows changes (the voice, while in view). */
-const GalleryOrb = memo(function GalleryOrb({ k, refs, x, z, marble: m, onPick, state, emotion, halo, level, near, front, shown }: {
+const GalleryOrb = memo(function GalleryOrb({ k, refs, x, z, marble: m, onPick, state, emotion, halo, level, near, front, shown, hold }: {
   k: number; refs: MutableRefObject<GalleryRefs>; x: number; z: number; marble: GalleryMarble; onPick: (k: number) => void;
-  state: string; emotion: string | null; halo: boolean; level: number; near: boolean; front: boolean; shown: boolean;
+  state: string; emotion: string | null; halo: boolean; level: number; near: boolean; front: boolean; shown: boolean; hold: boolean;
 }) {
   return (
     <Actor x={x} z={z} size={CURVE_SIZE} actorRef={el => { refs.current.actors[k] = el; }}>
@@ -138,7 +141,7 @@ const GalleryOrb = memo(function GalleryOrb({ k, refs, x, z, marble: m, onPick, 
           <TalkingMarble
             palette={m.colors as string[]} state={state} emotion={emotion ?? undefined}
             level={level}
-            size={near ? CURVE_SIZE : FAR_SIZE} decorative paused={!shown} halo={halo} className="reflect"
+            size={near ? CURVE_SIZE : FAR_SIZE} decorative paused={!shown || hold} halo={halo} className="reflect"
             style={near ? undefined : { transform: `scale(${CURVE_SIZE / FAR_SIZE})`, transformOrigin: '50% 100%' }}
           />
         </span>

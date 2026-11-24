@@ -114,6 +114,7 @@ Below 48 CSS pixels the marble gets its own tuning, by `k = clamp((48 − size) 
 ## Rendering
 
 - Render size: `min(css × dpr, max(css × 1.5, 320))` device pixels, with `dpr` the device pixel ratio at most 2× (past that the eye gains nothing and the GPU pays). So a small marble gets the full ratio and a large one 1.5×, never under 320 px: its soft pigment looks the same and the GPU shades 44 % fewer pixels (F-106). Within 16.7 million pixels (4096²) per marble and the GPU's limits.
+- Adaptive resolution: under sustained load the renderer lowers its drawing resolution in steps down to half (1 → 0.8 → 0.65 → 0.5 of the render size, a backing of 96 px or less untouched), and restores it one step at a time when there is headroom. Load is the shared loop's own drawn-frame intervals and draw time: down when the last 45 frames have a median over 45 ms, over 20 % over 60 ms, or a median draw over 25 ms; up after 8 s with a median under 42 ms, at most 1 % over 60 ms and a draw under 12 ms; never twice within 2 s, and a step up undone within 10 s doubles the wait next time (to 64 s). Layout and CSS size never change. `window.__talkingMarbleAdaptive = false` pins full resolution (tests that check exact sizes).
 - Transparent background, premultiplied alpha; the shader writes `color * coverage, coverage`.
 - Animate only while visible on screen; still otherwise.
 - Web: every marble on a page renders through one shared WebGL2 context and is copied into its own element's canvas.

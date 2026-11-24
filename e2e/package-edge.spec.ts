@@ -1,6 +1,6 @@
 // Edge cases for the React component: hidden containers, many mounts, odd sizes, rapid changes, pixel ratios.
 import type { Page } from '@playwright/test';
-import { expect, test } from '../packages/react/test/page/fixture';
+import { expect, fullResolution, test } from '../packages/react/test/page/fixture';
 
 function collectErrors(page: Page) {
   const errors: string[] = [];
@@ -96,6 +96,7 @@ for (const [scale, backing] of [[1, 120], [3, 240]] as const) {
   test(`backs the canvas at ${scale}× device pixels as ${backing} px (capped at 2×)`, async ({ browser, testPage }) => {
     const context = await browser.newContext({ deviceScaleFactor: scale });
     const page = await context.newPage();
+    await fullResolution(page);
     await page.goto(testPage);
     await page.evaluate(() => window.harness.render({ size: 120 }));
     await expect(orb(page)).toHaveAttribute('data-ready', 'true');

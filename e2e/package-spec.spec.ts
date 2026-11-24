@@ -1,7 +1,7 @@
 // M7 The orb to spec: one shared renderer for many marbles, sharp at every size, emotions, motion that never
 // moves the layout. Screenshots go to test-results/package/.
 import type { Page } from '@playwright/test';
-import { expect, test } from '../packages/react/test/page/fixture';
+import { expect, fullResolution, test } from '../packages/react/test/page/fixture';
 
 function collectErrors(page: Page) {
   const errors: string[] = [];
@@ -81,6 +81,7 @@ test('30 marbles on one page all draw and animate through one WebGL context', as
 test('backs each marble at CSS size × device pixel ratio (a large one at 1.5×, never under 320 px): sharp from 20 px to a full-screen hero', async ({ browser, testPage }) => {
   const context = await browser.newContext({ deviceScaleFactor: 2, viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
+  await fullResolution(page);
   await page.goto(`${testPage}?view=sizes&sizes=20,32,48,240`);
   for (const size of [20, 32, 48, 240]) {
     const orb = page.getByRole('img', { name: `size ${size}, idle` });
@@ -99,6 +100,33 @@ test('backs each marble at CSS size × device pixel ratio (a large one at 1.5×,
   const css = await hero.evaluate(el => (el as HTMLElement).offsetWidth);
   expect(css).toBeGreaterThan(800);
   expect(await hero.locator('canvas').evaluate(c => (c as HTMLCanvasElement).width)).toBe(Math.round(css * 1.5));
+  await context.close();
+});
+
+test('under sustained load the drawing resolution steps down; the layout and CSS size never change', async ({ browser, testPage }) => {
+  const context = await browser.newContext({ deviceScaleFactor: 1, viewport: { width: 900, height: 700 } });
+  const page = await context.newPage();
+  const errors = collectErrors(page);
+  await page.goto(`${testPage}?view=sizes&sizes=400`);
+  const orb = page.getByRole('img', { name: 'size 400, idle' });
+  await expect(orb).toHaveAttribute('data-ready', 'true');
+  const canvas = orb.locator('canvas');
+  const box = await orb.boundingBox();
+  expect(await canvas.evaluate(c => (c as HTMLCanvasElement).width)).toBe(400);
+  // Every frame busy for 70 ms: the loop falls to ~14 fps, well under its 30.
+  await page.evaluate(() => {
+    const burn = () => { const t = performance.now(); while (performance.now() - t < 70); requestAnimationFrame(burn); };
+    requestAnimationFrame(burn);
+  });
+  // One step at a time (1 → 0.8 → 0.65 → 0.5): 320, 260 or 200 device px.
+  await expect.poll(() => canvas.evaluate(c => (c as HTMLCanvasElement).width), { timeout: 20000 }).toBeLessThan(400);
+  const [w, h] = await canvas.evaluate(c => [(c as HTMLCanvasElement).width, (c as HTMLCanvasElement).height]);
+  expect([320, 260, 200]).toContain(w);
+  expect(h).toBe(w);
+  expect(await orb.boundingBox()).toEqual(box);
+  expect(await canvas.evaluate(c => (c as HTMLElement).offsetWidth)).toBe(400);
+  await expect(orb).toHaveAttribute('data-ready', 'true');
+  expect(errors.filter(e => !/GPU stall due to ReadPixels/.test(e))).toEqual([]);
   await context.close();
 });
 

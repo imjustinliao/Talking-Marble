@@ -4,6 +4,7 @@ import { TalkingMarble, type OrbPreset } from 'talking-marble';
 import { useSimulatedLevel } from '../simulated';
 import { Caption } from './Caption';
 import { createStore } from '../scene/store';
+import { useScrolling } from '../scene/scrolling';
 import { CloseIcon, MicOffIcon, PhoneOffIcon, PlusIcon, SpeakerIcon } from './icons';
 
 /** Where the marble is seen (F-99): on its own, above a chatbox, or in a call. */
@@ -207,5 +208,6 @@ const DemoMarble = memo(function DemoMarble({ size, state, emotion, presets, pal
   size: number; state: string; emotion?: string | null; presets?: Record<string, OrbPreset>; palette: readonly string[]; halo: boolean | number;
 }) {
   const level = useSimulatedLevel(state === 'listening' || state === 'speaking' || state === 'searching');
-  return <TalkingMarble size={size} state={state} emotion={emotion ?? undefined} presets={presets} level={level} palette={palette as string[]} halo={halo} decorative />;
+  const scrolling = useScrolling();
+  return <TalkingMarble paused={scrolling} size={size} state={state} emotion={emotion ?? undefined} presets={presets} level={level} palette={palette as string[]} halo={halo} decorative />;
 });

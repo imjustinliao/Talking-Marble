@@ -24,8 +24,17 @@ declare global {
     };
     contexts: (AudioContext & { testOnly?: boolean })[];
     source: unknown;
+    /** false pins full drawing resolution (packages/react/src/render/adaptive.ts). */
+    __talkingMarbleAdaptive?: boolean;
   }
 }
+
+/**
+ * Pins full drawing resolution on this page. Headless Chromium draws WebGL in software, so the shared loop may
+ * fall behind and lower the resolution (adaptive, spec › Rendering); a test that checks exact canvas backing
+ * sizes calls this before goto.
+ */
+export const fullResolution = (page: Page) => page.addInitScript(() => { window.__talkingMarbleAdaptive = false; });
 
 /**
  * Records every AudioContext the page makes, so a test can find the orb's shared one. Call before goto.

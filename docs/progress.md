@@ -35,6 +35,7 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-108 | Laggy on every device, even a MacBook Pro; scrolling stutters | built 0.18.3: marbles hold their frame while the page scrolls (resume 220 ms after); the marble renderer lowers its resolution under sustained load and restores it with headroom. Production build, headless: scroll median 33 → 16.7 ms a frame | |
 | F-107 | The marble glitches when switching between thinking and searching | fixed 0.18.2: the searching clock runs only while searching (it had run since page load, so easing `scan` swept the pattern); a unit test fails on the old code | |
 | F-106 | The site is a bit laggy: make it efficient | built 0.18.2: a hidden marble behind the demo no longer draws; large marbles at 1.5× density (never under 320 px); the stage marble drawn at its on-screen size; the demo measures the page only when needed and only its marble re-renders with the voice. Shading time per 4 s: walk 2.7 s → 0.85 s, intro 1.6 s → 0.84 s (headless, software GL) | |
 | F-105 | The walk's magnet is too narrow: a scroll skips marbles | built 0.18.1: 0.6 screens per marble (walk 3 screens), and on the walk a stop always settles on the nearest marble | |

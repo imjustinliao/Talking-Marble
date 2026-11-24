@@ -3,6 +3,7 @@ import { easedFrom, resolveState, settled, type Eased, type OrbPreset, type Reso
 import { fallbackShadow, haloShadow } from './css';
 import { createMotion, haloOpacityOf, smallness, stepMotion, transformOf, uniformsOf, type Motion } from './motion';
 import type { UniformValue } from './renderer';
+import { observeFrame, renderScale } from './adaptive';
 import { backingSize, renderInto, rendererReady, watchRenderer } from './shared';
 
 /** One orb's live controller: springs, the clocks, visibility and drawing. Framework-free. */
@@ -42,6 +43,8 @@ const FRAME = 1000 / 30;
 // One frame loop for every orb on the page, at most 30 frames a second.
 // `frame` returns false when the orb has nothing left to animate (a settled still frame); the loop stops when
 // every orb says so, and any change wakes it again.
+// Each drawn frame's interval and draw-pass time feed the adaptive resolution (render/adaptive.ts): under
+// sustained load every orb's backing size steps down (to half at most), and back up with headroom.
 interface Live { frame(now: number): boolean; running(): boolean; side(): number }
 const live = new Set<Live>();
 let loopId = 0, lastFrame = 0, ascending = true;
@@ -55,12 +58,14 @@ function loop(now: number) {
   due.length = 0;
   for (const orb of live) if (orb.running()) due.push(orb);
   if (due.length && now - lastFrame < FRAME - 2) { due.length = 0; return; }
+  const interval = now - lastFrame;
   lastFrame = now;
   // Grouped by size, in alternating order, so consecutive draws (and frames) share the shared surface's
   // size and it is resized once per distinct size at most.
   ascending = !ascending;
   due.sort(ascending ? bySideUp : bySideDown);
   let active = false;
+  const start = performance.now();
   for (const orb of due) {
     try {
       if (orb.frame(now)) active = true;
@@ -69,6 +74,8 @@ function loop(now: number) {
       console.error('[talking-marble]', error);
     }
   }
+  // A new scale keeps the loop for one more frame, in which each orb re-sizes its canvas and redraws.
+  if (due.length && !document.hidden && observeFrame(now, interval, performance.now() - start)) active = true;
   due.length = 0;
   if (!active) { cancelAnimationFrame(loopId); loopId = 0; }
 }
@@ -82,13 +89,15 @@ export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial
   const motion: Motion = createMotion();
   const uniforms: Record<string, UniformValue> = {};
   let levelSource: (() => number) | null = null;
-  let css = 0, side = 0, last = 0, dirty = true;
+  let css = 0, side = 0, last = 0, dirty = true, scaleSeen = renderScale();
   let paused = false, onScreen = true, disposed = false, wasSettled = false;
   // The last style strings written, so an unchanged frame writes no style.
   let shownTransform = '', shownOpacity = '', shownVisibility = '', shownFilter = '';
 
   const media = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-  const reduced = () => media?.matches ?? false;
+  // Kept from the change event, so a frame reads no media query.
+  let reducedMotion = media?.matches ?? false;
+  const reduced = () => reducedMotion;
   const visible = () => onScreen && !document.hidden;
 
   const drawColors = () => target.colors ?? colors;
@@ -126,6 +135,8 @@ export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial
     running,
     side: () => side,
     frame(now) {
+      // The adaptive resolution changed: a new backing size (the canvas clears, so the frame redraws).
+      if (scaleSeen !== renderScale()) fit();
       const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
       last = now;
       const still = reduced();
@@ -152,13 +163,20 @@ export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial
     dirty = true;
   }
 
+  /** Sets the backing size for the CSS size, pixel ratio and adaptive scale; the CSS size never changes. */
+  function fit() {
+    scaleSeen = renderScale();
+    if (!(css > 0)) return;
+    side = backingSize(css, window.devicePixelRatio);
+    if (canvas.width !== side || canvas.height !== side) { canvas.width = side; canvas.height = side; dirty = true; }
+  }
+
   /** Sizes the canvas to the host's CSS size (from the resize observer; by default the last one, for a new pixel ratio). */
   function resize(width = css, height = css) {
     css = Math.min(width, height);
     // Hidden (0 × 0): nothing to draw until it is shown again, when the observer brings its size.
     if (!(css > 0)) { css = side = 0; return; }
-    side = backingSize(css, window.devicePixelRatio);
-    if (canvas.width !== side || canvas.height !== side) { canvas.width = side; canvas.height = side; }
+    fit();
     if (fallback) fallback.style.boxShadow = fallbackShadow(css);
     applyColors();
     draw();
@@ -183,7 +201,7 @@ export function createOrb({ host, canvas, halo, fallback }: OrbElements, initial
   intersection.observe(host);
   const onVisibility = () => { last = 0; wake(); };
   document.addEventListener('visibilitychange', onVisibility);
-  const onMotion = () => { dirty = true; wake(); };
+  const onMotion = () => { reducedMotion = media?.matches ?? false; dirty = true; wake(); };
   media?.addEventListener?.('change', onMotion);
   // A new device pixel ratio (zoom, another display) needs a new backing size.
   let dprQuery: MediaQueryList | null = null;

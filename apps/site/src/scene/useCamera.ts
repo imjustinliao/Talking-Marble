@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GALLERY, MARBLE, NARROW, SHOTS, STOPS, TOTAL, WALK_SCREENS, billboard, setGallerySpacing, createSpring, curvePoint, drift, gather, gridPoint, introPose, stageHome, nearestShot, poseAt, presence, stopOf, viewZoom, walkPosition, magnet, MAGNET_REACH, worldTransform, type ShotId } from './camera';
 import { isLowPower } from '../perf';
+import { markScrolling } from './scrolling';
 
 /** The scene elements the camera moves or fades each frame: the stage marble (and its pool), and the gallery. */
 export interface GalleryRefs { main: HTMLElement | null; mainPool: HTMLElement | null; orbs: (HTMLElement | null)[]; pools: (HTMLElement | null)[]; actors: (HTMLElement | null)[]; galleryEl: HTMLElement | null }
@@ -180,6 +181,7 @@ export function useCamera() {
       glide = requestAnimationFrame(step);
     };
     const onScroll = () => {
+      markScrolling();
       state.current.u = screens(); paint(state.current.u); wake();
       clearTimeout(settle);
       if (!glide) settle = window.setTimeout(snap, 200);

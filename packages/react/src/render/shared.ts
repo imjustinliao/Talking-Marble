@@ -6,6 +6,7 @@
 //   in the same task, while the drawing buffer is still valid.
 // Framework-free; nothing runs until the first marble asks for it.
 import { hexToLinear, type Linear, type OrbColors } from '../colors';
+import { renderScale, SCALES } from './adaptive';
 import { createRenderer, type Renderer, type Uniforms } from './renderer';
 
 /** Per marble: at most 4096² device pixels (a full-screen hero on a 4K display), and the GPU's limits. */
@@ -80,13 +81,20 @@ export function rendererReady(): boolean {
  * The backing size in device pixels for a marble `cssSize` CSS pixels wide (spec › Rendering): CSS size × device
  * pixel ratio, at most 2×; a large marble at most 1.5× but never under 320 px (F-106). Past 2× the eye gains nothing
  * a marble's soft pigment can show (F-54), and a big one looks the same at 1.5× while the GPU shades 44 % fewer pixels.
+ * Then × `scale`, the adaptive drawing resolution (0.5–1, render/adaptive.ts: lowered under sustained load), floor
+ * included; a backing of 96 px or less (a 48 px marble at 2×) costs next to nothing and is never lowered, nor a
+ * larger one below 96 px.
  */
-export function backingSize(cssSize: number, devicePixelRatio: number): number {
+export function backingSize(cssSize: number, devicePixelRatio: number, scale = renderScale()): number {
   const dpr = Math.min(Math.max(devicePixelRatio || 1, 1), 2);
   const maxSide = Math.min(renderer?.maxSide ?? 4096, Math.floor(Math.sqrt(PIXEL_BUDGET)));
-  const side = Math.min(cssSize * dpr, Math.max(cssSize * LARGE_DPR, LARGE_FLOOR));
+  const full = Math.min(cssSize * dpr, Math.max(cssSize * LARGE_DPR, LARGE_FLOOR));
+  const k = Math.min(Math.max(scale || 1, SCALES[SCALES.length - 1]!), 1);
+  const side = Math.max(full * k, Math.min(full, SCALE_FLOOR));
   return Math.max(1, Math.min(Math.round(side), maxSide));
 }
+/** The backing side (device px) at or under which the adaptive scale leaves a marble alone. */
+export const SCALE_FLOOR = 96;
 /** A large marble's pixel ratio, and the size under which a marble keeps its full ratio (device px; F-106). */
 export const LARGE_DPR = 1.5;
 export const LARGE_FLOOR = 320;

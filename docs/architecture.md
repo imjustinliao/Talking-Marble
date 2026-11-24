@@ -143,4 +143,5 @@ Checked on 2026-11-23 against each SDK's latest package types and official docs,
 | Autoplay policy blocks the `AudioContext` | Resume on the next user gesture; the `level` prop always works |
 | Battery on phones | 30 fps cap, pause off screen and in hidden tabs, `paused` prop, `powerPreference: 'low-power'` |
 | Port drift between platforms | `packages/core/` holds the one shader and the preset values; ports are checked against screenshots of the web orb |
+| Smoothness on every device (F-106, F-108) | Only marbles on screen draw; a marble hidden behind the demo pauses; large marbles at 1.5× density; the stage marble at its on-screen size; every scene marble holds its frame while the page scrolls; the renderer lowers its resolution in steps under sustained load and restores it with headroom; low-power devices (few cores, little memory, data saver, phones, or slow frames once settled) get the light effects only |
 | Bundle size | Budget: about 15 kB gzipped for the React entry (measured 14.4 kB at 0.15.0; not yet enforced in CI) |
