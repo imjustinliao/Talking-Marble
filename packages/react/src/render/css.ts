@@ -28,5 +28,6 @@ export function fallbackShadow(size: number): string {
 export function haloShadow([, c1, c2]: OrbColors, size: number, k = 0): string {
   const t = 1 - 0.6 * k;
   const px = (f: number) => `${(size * f * t).toFixed(1)}px`;
-  return `0 0 ${px(0.12)} ${px(0.03)} ${rgba(c2, 0.7)}, 0 0 ${px(0.3)} ${px(0.07)} ${rgba(c1, 0.45)}`;
+  // Softer than the original (F-64): the halo frames the marble, it doesn't outshine it.
+  return `0 0 ${px(0.11)} ${px(0.025)} ${rgba(c2, 0.52)}, 0 0 ${px(0.26)} ${px(0.05)} ${rgba(c1, 0.32)}`;
 }

@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "pnpm --filter talking-marble gen && pnpm --filter site dev",
     "build": "pnpm --filter talking-marble build && pnpm --filter site build",

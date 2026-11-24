@@ -1,5 +1,5 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "types": ["vite/client", "node"], "customConditions": ["talking-marble-source"] },
-  "include": ["src", "vite.config.ts"]
+  "compilerOptions": { "allowImportingTsExtensions": true, "types": ["vite/client", "node"], "customConditions": ["talking-marble-source"] },
+  "include": ["src", "scripts/*.ts", "vite.config.ts"]
 }

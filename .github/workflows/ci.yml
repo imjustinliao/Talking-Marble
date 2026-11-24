@@ -1,0 +1,29 @@
+# Checks every push and pull request: typecheck, unit tests and the build (package, then site).
+# The site deploys on Vercel, which builds main itself (vercel.json; F-81). Node 24 here matches Vercel's newest
+# build image, so a problem shows up in CI before it reaches a deploy.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # version from package.json › packageManager
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck and unit tests
+        run: pnpm typecheck && pnpm test
+      - name: Build the package, then the site
+        run: pnpm build

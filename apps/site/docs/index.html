@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Static on purpose: link unfurlers and crawlers do not run JavaScript. -->
     <title>Docs: Talking Marble, an audio-reactive orb for voice AI apps</title>
-    <meta name="description" content="Install, props, audio sources, states, custom presets and recipes for OpenAI Realtime, ElevenLabs and LiveKit for Talking Marble, the audio-reactive orb React component." />
-    <link rel="canonical" href="https://imjustinliao.github.io/Talking-Marble/docs/" />
+    <meta name="description" content="Install, props, the preset format, audio, accessibility, performance and recipes for LiveKit, ElevenLabs and OpenAI Realtime for Talking Marble, the audio-reactive orb React component." />
+    <link rel="canonical" href="https://talking-marble.vercel.app/docs/" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0b0b0d" />
 
+    <!-- The display face (F-73): Libre Franklin, a Franklin Gothic in the museum-poster style, for headlines and labels; body text stays the system font. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300..800&amp;display=swap" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -18,25 +22,25 @@
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="Talking Marble" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:url" content="https://imjustinliao.github.io/Talking-Marble/docs/" />
+    <meta property="og:url" content="https://talking-marble.vercel.app/docs/" />
     <meta property="og:title" content="Talking Marble docs" />
-    <meta property="og:description" content="Props, audio sources, states, presets and recipes for OpenAI Realtime, ElevenLabs and LiveKit." />
-    <meta property="og:image" content="https://imjustinliao.github.io/Talking-Marble/og-image.jpg" />
-    <meta property="og:image:secure_url" content="https://imjustinliao.github.io/Talking-Marble/og-image.jpg" />
+    <meta property="og:description" content="Props, the preset format, audio, accessibility, performance and recipes for LiveKit, ElevenLabs and OpenAI Realtime." />
+    <meta property="og:image" content="https://talking-marble.vercel.app/og-image.jpg" />
+    <meta property="og:image:secure_url" content="https://talking-marble.vercel.app/og-image.jpg" />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="A glossy pastel marble standing on a black reflective floor, beside the words Talking Marble." />
-    <meta property="og:video" content="https://imjustinliao.github.io/Talking-Marble/og-video.mp4" />
-    <meta property="og:video:secure_url" content="https://imjustinliao.github.io/Talking-Marble/og-video.mp4" />
+    <meta property="og:image:alt" content="A pastel marble glowing on a black stage beside the words Talking Marble: an audio-reactive orb for voice AI apps." />
+    <meta property="og:video" content="https://talking-marble.vercel.app/og-video.mp4" />
+    <meta property="og:video:secure_url" content="https://talking-marble.vercel.app/og-video.mp4" />
     <meta property="og:video:type" content="video/mp4" />
     <meta property="og:video:width" content="1200" />
     <meta property="og:video:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Talking Marble docs" />
-    <meta name="twitter:description" content="Props, audio sources, states, presets and recipes for OpenAI Realtime, ElevenLabs and LiveKit." />
-    <meta name="twitter:image" content="https://imjustinliao.github.io/Talking-Marble/og-image.jpg" />
-    <meta name="twitter:image:alt" content="A glossy pastel marble standing on a black reflective floor, beside the words Talking Marble." />
+    <meta name="twitter:description" content="Props, the preset format, audio, accessibility, performance and recipes for LiveKit, ElevenLabs and OpenAI Realtime." />
+    <meta name="twitter:image" content="https://talking-marble.vercel.app/og-image.jpg" />
+    <meta name="twitter:image:alt" content="A pastel marble glowing on a black stage beside the words Talking Marble: an audio-reactive orb for voice AI apps." />
     <link rel="alternate" type="text/plain" href="/llms.txt" title="Talking Marble for LLMs" />
 
     <script type="application/ld+json">
@@ -45,34 +49,30 @@
         "@graph": [
           {
             "@type": "TechArticle",
-            "@id": "https://imjustinliao.github.io/Talking-Marble/docs/#article",
+            "@id": "https://talking-marble.vercel.app/docs/#article",
             "headline": "Talking Marble docs",
-            "description": "Install, props, audio sources, states, custom presets and recipes for OpenAI Realtime, ElevenLabs and LiveKit.",
-            "url": "https://imjustinliao.github.io/Talking-Marble/docs/",
+            "description": "Install, props, the preset format, audio, accessibility, performance and recipes for LiveKit, ElevenLabs and OpenAI Realtime.",
+            "url": "https://talking-marble.vercel.app/docs/",
             "inLanguage": "en",
             "author": { "@type": "Person", "name": "Justin Liao", "url": "https://github.com/imjustinliao" },
-            "about": { "@id": "https://imjustinliao.github.io/Talking-Marble/#code" },
-            "isPartOf": { "@id": "https://imjustinliao.github.io/Talking-Marble/#website" }
+            "about": { "@id": "https://talking-marble.vercel.app/#code" },
+            "isPartOf": { "@id": "https://talking-marble.vercel.app/#website" }
           },
           {
             "@type": "BreadcrumbList",
             "itemListElement": [
-              { "@type": "ListItem", "position": 1, "name": "Talking Marble", "item": "https://imjustinliao.github.io/Talking-Marble/" },
-              { "@type": "ListItem", "position": 2, "name": "Docs", "item": "https://imjustinliao.github.io/Talking-Marble/docs/" }
+              { "@type": "ListItem", "position": 1, "name": "Talking Marble", "item": "https://talking-marble.vercel.app/" },
+              { "@type": "ListItem", "position": 2, "name": "Docs", "item": "https://talking-marble.vercel.app/docs/" }
             ]
           }
         ]
       }
     </script>
-    <script>
-      // Dark unless the visitor chose light before: applied before first paint, so the page never flashes.
-      try { if (localStorage.getItem('talking-marble-theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch (e) {}
-    </script>
   </head>
   <body>
     <div id="root"></div>
     <noscript>
-      <p>Talking Marble docs: install with <code>npm i talking-marble</code>, then render <code>&lt;TalkingMarble state="speaking" audio={stream} /&gt;</code>. A plain-text guide is at <a href="https://imjustinliao.github.io/Talking-Marble/llms.txt">llms.txt</a>; the source and README are on <a href="https://github.com/imjustinliao/Talking-Marble">GitHub</a>.</p>
+      <p>Talking Marble docs: install with <code>npm i talking-marble</code>, then render <code>&lt;TalkingMarble state={agentState} audio={agentStream} /&gt;</code>. A plain-text guide is at <a href="https://talking-marble.vercel.app/llms.txt">llms.txt</a>; the source and README are on <a href="https://github.com/imjustinliao/Talking-Marble">GitHub</a>.</p>
     </noscript>
     <script type="module" src="/src/docs/main.tsx"></script>
   </body>

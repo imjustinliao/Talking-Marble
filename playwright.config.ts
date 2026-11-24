@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Main uses 5174; parallel sessions set E2E_PORT (docs/parallel-plan.md).
+// Main uses 5174; side sessions set E2E_PORT (docs/architecture.md › Ports).
 const port = Number(process.env.E2E_PORT ?? 5174);
 
 export default defineConfig({

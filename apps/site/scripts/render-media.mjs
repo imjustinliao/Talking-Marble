@@ -23,7 +23,7 @@ const { chromium } = createRequire(join(repo, 'package.json'))('@playwright/test
 /** The site's stage colour (site/src/styles/base.css). */
 const DARK = '#000000';
 
-// Video: a seamless loop through the agent lifecycle (see docs/milestones/site.md › Link previews).
+// Video: a seamless loop through the agent lifecycle (docs/architecture.md › Link previews).
 const VIDEO = { width: 1200, height: 630, fps: 30, seconds: 6, fade: 0.5 };
 const TIMELINE = [ // [start second, state]; the clip is recorded for seconds + fade
   [0, 'idle'], [1.0, 'listening'], [2.2, 'thinking'], [3.2, 'speaking'], [5.2, 'idle'],

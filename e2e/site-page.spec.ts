@@ -1,27 +1,38 @@
 import { createRequire } from 'node:module';
 import { expect, test } from '@playwright/test';
-import { preview, trackErrors, walk } from './site-helpers';
+import { goToShot, trackErrors, walk } from './site-helpers';
 
 // @axe-core/playwright is a site dev dependency (root dev tools are Main's), so resolve it from apps/site/.
 const { default: AxeBuilder } = createRequire(new URL('../apps/site/package.json', import.meta.url))('@axe-core/playwright') as typeof import('@axe-core/playwright');
 
-const STATES = ['idle', 'connecting', 'listening', 'thinking', 'speaking', 'error'];
-const EMOTIONS = ['happy', 'calm', 'muted'];
-
-test('the page: hero, states, in context, footer, in order, with no console errors', async ({ page }) => {
+test('the page: intro, palettes, all six, create your own, guide, footer, in order, with no console errors', async ({ page }) => {
   const errors = trackErrors(page);
   await page.goto('/');
-  expect(await page.locator('main > section').evaluateAll(els => els.map(e => e.id))).toEqual(['top', 'states', 'in-context']);
+  expect(await page.locator('main > section').evaluateAll(els => els.map(e => e.id))).toEqual(['top', 'palettes', 'all', 'create', 'guide']);
   await expect(page.getByRole('heading', { level: 1, name: 'Talking Marble' })).toBeVisible();
   await expect(page.locator('.hero__line')).toHaveText('An audio-reactive orb for voice AI apps. React, open source.');
-  await expect(page.locator('.hero [data-talking-marble]')).toHaveAttribute('data-ready', 'true');
-  const links = page.getByRole('navigation', { name: 'Get started' });
-  await expect(links.getByRole('link', { name: 'Docs' })).toHaveAttribute('href', '/docs/');
-  await expect(links.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/imjustinliao/Talking-Marble');
-  for (const name of ['States', 'In context']) await expect(page.getByRole('heading', { level: 2, name })).toBeAttached();
+  // The intro is complete on its own, and nothing asks you to scroll (F-22, F-25).
+  await expect(page.getByText('Scroll to try it')).toHaveCount(0);
+  await expect(page.locator('[data-testid="main-marble"] [data-talking-marble]')).toHaveAttribute('data-ready', 'true');
+  // The top bar is the logo and the name only (F-30, F-31); Docs and GitHub are buttons in the intro and the Guide.
+  await expect(page.locator('.topbar a, .topbar button')).toHaveCount(1);
+  await expect(page.locator('.topbar .brand')).toHaveText('Talking Marble');
+  await expect(page.locator('.topbar .brand [data-talking-marble]')).toBeAttached();
+  for (const shot of ['#top', '#guide']) {
+    await expect(page.locator(shot).getByRole('link', { name: 'Docs', exact: true })).toHaveAttribute('href', '/docs/');
+    await expect(page.locator(shot).getByRole('link', { name: 'GitHub', exact: true })).toHaveAttribute('href', 'https://github.com/imjustinliao/Talking-Marble');
+  }
+  for (const name of ['Palettes', /^All palettes/, 'Create your own', 'Guide']) await expect(page.getByRole('heading', { level: 2, name, exact: true })).toBeAttached();
+  // The old sections are gone (F-22).
+  await expect(page.locator('#states, #in-context, #playground, #install, #colors')).toHaveCount(0);
   const footer = page.locator('footer');
   await expect(footer).toContainText('MIT © Justin Liao');
-  await expect(footer.getByRole('link', { name: 'npm' })).toHaveAttribute('href', 'https://www.npmjs.com/package/talking-marble');
+  // Follow: X and GitHub, @imjustinliao, with their icons (F-32). No theme switch: dark only (F-77).
+  const follow = footer.getByRole('navigation', { name: 'Follow' });
+  await expect(follow.getByRole('link', { name: 'X, @imjustinliao' })).toHaveAttribute('href', 'https://x.com/imjustinliao');
+  await expect(follow.getByRole('link', { name: 'GitHub, @imjustinliao' })).toHaveAttribute('href', 'https://github.com/imjustinliao');
+  await expect(follow.locator('svg')).toHaveCount(2);
+  await expect(footer.getByRole('button', { name: /Switch to (light|dark) mode/ })).toHaveCount(0);
   await walk(page);
   expect(errors).toEqual([]);
 });
@@ -38,98 +49,62 @@ test('the install command copies with one control', async ({ page, context }) =>
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('npm i talking-marble');
 });
 
-test('states: a live card for every state and emotion; choosing one shows it large', async ({ page }) => {
+test('every marble on the page draws from one shared WebGL context', async ({ page }) => {
+  // The package renders all marbles with one context and pauses offscreen ones, so the site mounts them all (M9).
+  await page.addInitScript(() => {
+    const w = window as unknown as { __gl: number };
+    w.__gl = 0;
+    for (const C of [HTMLCanvasElement, OffscreenCanvas] as const) {
+      const get = C.prototype.getContext as (this: unknown, type: string, ...rest: unknown[]) => unknown;
+      C.prototype.getContext = function (this: unknown, type: string, ...rest: unknown[]) {
+        // The fog behind the scene (F-54) has its own context; this counts the marbles'.
+        const fog = this instanceof HTMLCanvasElement && this.hasAttribute('data-fog');
+        if ((type === 'webgl2' || type === 'webgl') && !fog) w.__gl++;
+        return get.call(this, type, ...rest);
+      } as typeof C.prototype.getContext;
+    }
+  });
   await page.goto('/');
-  await page.locator('#states').scrollIntoViewIfNeeded();
-  const grid = page.getByRole('group', { name: 'Choose a state or emotion' });
-  await expect(grid.getByRole('button')).toHaveCount(STATES.length + EMOTIONS.length);
-  // States are passed as `state`; emotions layer on `speaking` through the `emotion` prop (M7).
-  for (const name of [...STATES, ...EMOTIONS]) {
-    const emotion = EMOTIONS.includes(name);
-    const state = emotion ? 'speaking' : name;
-    const card = grid.getByRole('button', { name, exact: true });
-    await expect(card.locator('[data-talking-marble]')).toHaveAttribute('data-state', state);
-    if (emotion) await expect(card.locator('[data-talking-marble]')).toHaveAttribute('data-emotion', name);
-    await card.click();
-    await expect(card).toHaveAttribute('aria-pressed', 'true');
-    await expect(preview(page)).toHaveAttribute('data-state', state);
-    if (emotion) await expect(preview(page)).toHaveAttribute('data-emotion', name);
-    await expect(page.locator('.states__name')).toHaveText(emotion ? `state="speaking" emotion="${name}"` : `state="${name}"`);
-  }
-  // The inline pills: a 20 px marble beside its status.
-  const pills = page.getByRole('list', { name: 'Inline status' }).getByRole('listitem');
-  await expect(pills).toHaveText(['Listening…', 'Thinking…', 'Speaking…']);
-  await expect(pills.first().locator('[data-talking-marble]')).toHaveCSS('width', '20px');
+  await walk(page);
+  const marbles = page.locator('[data-talking-marble]');
+  // The logo, the stage marble and the six gallery marbles (the UIs shown while talking come and go with Talk).
+  expect(await marbles.count()).toBe(8);
+  for (const m of await marbles.all()) await expect(m).toHaveAttribute('data-ready', 'true');
+  expect(await page.evaluate(() => (window as unknown as { __gl: number }).__gl)).toBe(1);
 });
 
-test('in context: three everyday UIs, each with a live marble', async ({ page }) => {
-  await page.goto('/');
-  await page.locator('#in-context').scrollIntoViewIfNeeded();
-  const figures = page.locator('#in-context figure');
-  await expect(figures).toHaveCount(3);
-  await expect(figures.locator('figcaption')).toContainText(['Chat input with a voice button.', 'Full-screen call.', 'Inline chat message.']);
-  for (const [i, state] of [[0, 'listening'], [1, 'speaking'], [2, 'thinking']] as const) {
-    await expect(figures.nth(i).locator('[data-talking-marble]')).toHaveAttribute('data-state', state);
-  }
-});
-
-test('offscreen marbles are not live (each is a WebGL context)', async ({ page }) => {
-  await page.goto('/');
-  await page.waitForTimeout(500);
-  const atTop = await page.locator('canvas').count();
-  expect(atTop).toBeLessThanOrEqual(3);
-  await page.locator('#in-context').scrollIntoViewIfNeeded();
-  await page.waitForTimeout(500);
-  expect(await page.locator('.hero [data-talking-marble]').count()).toBe(0);
-  expect(await page.locator('canvas').count()).toBeLessThanOrEqual(14);
-});
-
-test('themes: dark for everyone by default (whatever the system says), light by toggle, remembered', async ({ page }) => {
-  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  // A visitor whose system is light still lands in dark.
+test('dark only, for everyone: no theme switch, and an old light choice is ignored (F-77)', async ({ page }) => {
+  const dark = () => page.evaluate(() => { const [r, g, b] = (getComputedStyle(document.body).backgroundColor.match(/\d+/g) ?? ['255', '255', '255']).map(Number); return `${r! + g! + b! < 60}`; });
   await page.emulateMedia({ colorScheme: 'light' });
-  await page.goto('/');
-  await expect.poll(bg).toBe('rgb(11, 11, 13)');
-  await expect(page.locator('html')).not.toHaveAttribute('data-theme');
-  await page.getByRole('button', { name: 'Switch to light mode' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await expect.poll(bg).toBe('rgb(246, 246, 244)');
-  // Remembered, and applied before first paint (no dark flash): the attribute is there as the HTML is parsed.
-  await page.reload({ waitUntil: 'commit' });
-  await page.waitForSelector('body', { state: 'attached' });
-  expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
-  await page.waitForLoadState('load');
-  await expect.poll(bg).toBe('rgb(246, 246, 244)');
-  // Same on the docs page.
-  await page.goto('/docs/');
-  await expect.poll(bg).toBe('rgb(246, 246, 244)');
-  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
-  await expect.poll(bg).toBe('rgb(11, 11, 13)');
-  await page.reload();
-  await expect.poll(bg).toBe('rgb(11, 11, 13)');
+  await page.addInitScript(() => { try { localStorage.setItem('talking-marble-theme', 'light'); } catch { /* none */ } });
+  for (const path of ['/', '/docs/']) {
+    await page.goto(path);
+    await expect.poll(dark).toBe('true');
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme');
+    await expect(page.getByRole('button', { name: /Switch to (light|dark) mode/ })).toHaveCount(0);
+  }
 });
 
-test('keyboard only: skip link, cards by Tab and Enter, visible focus', async ({ page }) => {
+test('keyboard only: skip link, words by Tab and Enter, visible focus', async ({ page }) => {
   await page.goto('/');
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
-  const card = page.getByRole('button', { name: 'thinking', exact: true });
-  await card.focus();
+  const word = page.locator('#palettes').getByRole('button', { name: 'thinking', exact: true });
+  await word.focus();
   await page.keyboard.press('Tab');
   await page.keyboard.press('Shift+Tab');
-  await expect(card).toBeFocused();
-  expect(await card.evaluate(el => getComputedStyle(el).outlineStyle)).not.toBe('none');
+  await expect(word).toBeFocused();
+  expect(await word.evaluate(el => getComputedStyle(el).outlineStyle)).not.toBe('none');
   await page.keyboard.press('Enter');
-  await expect(preview(page)).toHaveAttribute('data-state', 'thinking');
+  await expect(word).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.gmarble__orb [data-talking-marble]').first()).toHaveAttribute('data-state', 'thinking');
 });
 
-for (const scheme of ['dark', 'light'] as const) {
+for (const scheme of ['dark'] as const) {
   for (const path of ['/', '/docs/']) {
     test(`axe finds no accessibility violations on ${path} (${scheme})`, async ({ page }) => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      await page.addInitScript(t => { try { if (t === 'light') localStorage.setItem('talking-marble-theme', 'light'); } catch { /* none */ } }, scheme);
       await page.goto(path);
-      if (scheme === 'light') await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
       if (path === '/') await walk(page);
       await page.waitForTimeout(400);
       const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();

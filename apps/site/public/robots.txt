@@ -1,8 +1,6 @@
 # Everyone is welcome, search engines and AI crawlers alike (GPTBot, OAI-SearchBot, ClaudeBot,
 # Claude-SearchBot, PerplexityBot, Google-Extended, Applebot-Extended, CCBot…).
-# Note: crawlers read robots.txt only at a host's root. On GitHub Pages this file is served at
-# /Talking-Marble/robots.txt, so it is informational; it takes effect if the site moves to its own domain.
 User-agent: *
 Allow: /
 
-Sitemap: https://imjustinliao.github.io/Talking-Marble/sitemap.xml
+Sitemap: https://talking-marble.vercel.app/sitemap.xml

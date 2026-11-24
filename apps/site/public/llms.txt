@@ -1,35 +1,46 @@
 # Talking Marble
 
-> Talking Marble (`talking-marble` on npm, MIT) is an audio-reactive animated orb React component for voice AI apps. Pass your agent's state and its audio; the orb eases between six states and swells with the voice. It is a UI component only: developers bring their own voice AI (OpenAI Realtime, ElevenLabs, LiveKit…).
+> Talking Marble (`talking-marble` on npm, MIT) is an audio-reactive animated orb for voice AI apps: a React component and a Web Component (`<talking-marble>`) for any web framework or plain HTML. Pass your agent's state and its audio; the orb eases between six states and swells with the voice. It is a UI component only: developers bring their own voice AI (LiveKit, ElevenLabs, OpenAI Realtime…).
 
 Key facts:
 
-- Install: `npm i talking-marble`. Peer dependency: React 18 or newer. No other runtime dependencies (one WebGL2 canvas, Web Audio).
-- Usage: `<TalkingMarble state="speaking" audio={remoteStream} />`.
-- States: `idle`, `connecting`, `listening`, `thinking`, `speaking`, `error`, named after the common voice-agent lifecycle so an SDK's state can be passed straight in. Custom states are presets passed with `presets`; the package exports the example presets `muted`, `happy` and `calm`.
-- Props: `state`, `audio` (MediaStream | HTMLMediaElement | AudioNode), `level` (0–1, overrides audio), `palette` (pearl, ember, lagoon, ink, rose, aurora, or four hex colors), `size` (px; default fills its container), `presets`, `halo` (default true), `paused`, `aria-label` (otherwise decorative), `className`, `style`.
-- Only `listening` (gently) and `speaking` (fully) react to audio. Audio is analyzed in the browser and never sent anywhere.
-- Exports: `TalkingMarble`, `palettes`, `states`, `resolveState`, `resolvePalette`, `muted`, `happy`, `calm`, and types `OrbState`, `BuiltInState`, `OrbPreset`, `OrbParams`, `OrbPalette`, `OrbColors`, `PaletteName`, `OrbAudioSource`, `TalkingMarbleProps`.
-- Preset parameters (any subset): `flow` 0–2, `energy` 0–1, `warp` 1–3.5, `brightness` 0.5–1.5, `saturation` 0–1.5, `tint` (hex), `tintAmount` 0–1, `breath` 0–1, `halo` 0–1, `levelResponse` 0–1 (0 ignores audio).
+- Install: `npm i talking-marble`. React 18 or newer for the React component (an optional peer); the Web Component needs nothing else. No other runtime dependencies (one WebGL2 canvas, Web Audio).
+- Usage (React): `<TalkingMarble state={agentState} audio={agentStream} palette="pearl" />`.
+- Usage (Web Component): `import 'talking-marble/element'`, then `<talking-marble state="idle" palette="pearl"></talking-marble>`; set `el.state` and `el.audio` from script. Attributes: `state`, `emotion`, `palette` (a name or comma-separated hex), `size`, `halo`, `level`, `presets` (JSON), `label`, `decorative`, `paused`.
+- Platforms: the web today, through React or the Web Component: every modern browser on phones, tablets, laptops and desktops, and desktop apps built on web tech (Electron, Tauri). Native ports (React Native, SwiftUI, Android, Flutter) are planned; none exists yet.
+- States: `idle`, `connecting`, `listening`, `thinking`, `speaking`, `error`, named after the common voice-agent lifecycle so an SDK's state can be passed straight in. One material in every state: states change only energy, motion and brightness, never colour.
+- Emotions layer on a state with `emotion`: `muted`, `happy`, `calm`, or your own preset. Each number an emotion sets moves the state's value 65% of the way toward its own.
+- Props (all optional): `state` (default `idle`), `emotion`, `audio` (MediaStream | HTMLMediaElement | AudioNode), `level` (0–1, overrides audio), `palette` (pearl, ember, lagoon, ink, rose, aurora, or four hex colors, ground first; default pearl), `size` (CSS px; default fills its container, square), `presets` (your own states and emotions by name), `label` (default "Assistant": it reads "Assistant, speaking"), `decorative` (aria-hidden), `halo` (default true, or a strength 0–1.5), `paused`, `aria-label` (replaces the whole name), `className`, `style`.
+- Preset format (any subset; out-of-range values are clamped): `speed` 0–4 (default 1), `turbulence` 0–1 (0.5), `veins` 0–1 (0.5), `softness` 0–1 (0.5), `detail` 0–1 (0.5), `spin` −2–2 (0), `waves` 0–1 (0), `ripples` 0–1 (0), `rippleDirection` "out" or "in" ("out"), `whirl` 0–3 (0), `chop` 0–1 (0), `glow` 0–1 (0), `brightness` 0.5–1.5 (1), `halo` 0–1 (0.5), `breath` 0–1 (0), `beat` 0–1.5 (0), `bounce` 0–1 (0), `sway` 0–1 (0), `wobble` 0–1 (0), `shake` 0–1 (0), `size` 0.5–1.2 (1), `reactivity` 0–1 (0; 0 ignores audio), plus optional `colors` (four hex colors) and `label`.
+- Audio: only states that listen react (`listening` gently, `speaking` fully, or any preset with `reactivity` above 0). The level is smoothed. One shared AudioContext, resumed on the next click, tap or key if the browser blocked it. Audio is analyzed in the browser and never sent anywhere.
+- Accessibility: an image named for its state ("Assistant, listening"), or decorative; reduced motion gives a still frame; no flashing.
+- Performance: every orb on a page shares one WebGL2 context; at most 30 frames a second, only while on screen and the tab is visible; sharp from 20 px to full screen; server-renders as a CSS picture of the orb.
+- Exports (`talking-marble/element` adds `TalkingMarbleElement` and `defineTalkingMarble`): `TalkingMarble`, `palettes`, `states`, `emotions`, `muted`, `happy`, `calm`, `resolveState`, `resolvePalette`, and types `OrbState`, `BuiltInState`, `OrbEmotion`, `BuiltInEmotion`, `OrbPreset`, `OrbParams`, `ResolvedPreset`, `OrbPalette`, `OrbColors`, `PaletteName`, `OrbAudioSource`, `TalkingMarbleProps`.
 
 ## Docs
 
-- [Docs page](https://imjustinliao.github.io/Talking-Marble/docs/): the full reference on one page
-- [Install and quick start](https://imjustinliao.github.io/Talking-Marble/docs/#quick-start): the smallest working example
-- [Props](https://imjustinliao.github.io/Talking-Marble/docs/#props): every prop, its type and default
-- [Audio sources](https://imjustinliao.github.io/Talking-Marble/docs/#audio-sources): MediaStream, media element, AudioNode or a level number
-- [States and custom presets](https://imjustinliao.github.io/Talking-Marble/docs/#states): the six states and the preset parameters
-- [Recipes](https://imjustinliao.github.io/Talking-Marble/docs/#recipes): wiring OpenAI Realtime, ElevenLabs Agents and LiveKit Agents (state mapping and where to get the audio)
-- [Customize](https://imjustinliao.github.io/Talking-Marble/docs/#customize): colors, size, halo, your own states, motion and accessibility
-- [Colors](https://imjustinliao.github.io/Talking-Marble/#colors): every palette, recolorable, and your own
-- [Pick](https://imjustinliao.github.io/Talking-Marble/#pick): choose the marble to take into the demo
-- [Demo](https://imjustinliao.github.io/Talking-Marble/#talk): a short spoken conversation with the marble in the browser, states and emotions on a word drum
-- [Install](https://imjustinliao.github.io/Talking-Marble/#install): install and usage, with the palette you picked
+- [Docs page](https://talking-marble.vercel.app/docs/): the full reference on one page
+- [Quick start](https://talking-marble.vercel.app/docs/#quick-start): the smallest working example
+- [Web Component](https://talking-marble.vercel.app/docs/#web-component): `<talking-marble>` for any web framework or plain HTML
+- [Props](https://talking-marble.vercel.app/docs/#props): every prop, its type and default
+- [States and emotions](https://talking-marble.vercel.app/docs/#states): the six states, the three emotions, how they combine
+- [Preset format](https://talking-marble.vercel.app/docs/#presets): every field with its range and default
+- [Audio](https://talking-marble.vercel.app/docs/#audio): MediaStream, media element, AudioNode or a level number
+- [Accessibility](https://talking-marble.vercel.app/docs/#accessibility): labels, decorative use, reduced motion, no flashing
+- [Performance](https://talking-marble.vercel.app/docs/#performance): the shared renderer, pausing, sizes, server rendering
+- [Recipes](https://talking-marble.vercel.app/docs/#recipes): wiring LiveKit Agents, ElevenLabs Agents and OpenAI Realtime (state mapping and where to get the audio)
+
+## Site
+
+- [Palettes](https://talking-marble.vercel.app/#palettes): the six built-in palettes one by one; try every state, emotion and the halo, and talk to each
+- [All palettes](https://talking-marble.vercel.app/#all): all six together
+- [Create your own](https://talking-marble.vercel.app/#create): your colours, your own state, try it, copy the code or export the preset
+- [Guide](https://talking-marble.vercel.app/#guide): install and usage with your marble, for React or the Web Component, and a prompt for your AI coding agent
 
 ## Source
 
 - [GitHub repository](https://github.com/imjustinliao/Talking-Marble): source, issues and the platform-neutral core (shader and presets as JSON)
-- [Core spec](https://github.com/imjustinliao/Talking-Marble/blob/main/packages/core/spec.md): how parameters map to the shader, easing rates and audio-level math
+- [Core spec](https://github.com/imjustinliao/Talking-Marble/blob/main/packages/core/spec.md): how parameters map to the shader, easing and the audio-level math
 
 ## Optional
 

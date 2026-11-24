@@ -7,7 +7,7 @@ Two things are designed here: **the orb** (the product, what developers ship) an
 ## Feel
 
 - **Orb**: alive, tactile, calm. A lit sphere of flowing pigment that never visibly loops or jumps. It reacts to voice without twitching. Never: a jittery audio visualiser, a neon "AI" glow, bars or waveforms.
-- **Site**: clean, dark by default with a light mode, generous spacing, plain and literal copy; the marble is the hero. Never: a generic AI landing page (gradient blobs, taglines, emoji headings).
+- **Site**: clean, dark only (F-77), generous spacing, plain and literal copy; the marble is the hero. Never: a generic AI landing page (gradient blobs, taglines, emoji headings).
 
 ## The orb
 
@@ -47,7 +47,7 @@ A preset is plain data with plain names and documented ranges, the same in every
 
 ### Sizes (2026-11-23 spec)
 
-- **Sharp everywhere**: the canvas renders at the element's CSS size × device pixel ratio (up to 3×), within a total-pixel budget sized for a full-screen hero, not today's 512-pixel cap.
+- **Sharp everywhere**: the canvas renders at the element's CSS size × device pixel ratio (up to 2×), within a total-pixel budget sized for a full-screen hero, not today's 512-pixel cap.
 - **Small sizes have their own tuning** (below about 48 px): broader veins, less fine detail, no grain, no whole-marble movement (no bob, shake or swell that would jog the line of text), a tighter halo or none below 32 px, and slightly more contrast so a 20 px marble still reads as itself.
 - **Many marbles on one page** (the state grid, chat messages): browsers allow only about 16 WebGL contexts per page, so every marble on a page shares one renderer and one context, each still drawn into its own element.
 
@@ -69,30 +69,83 @@ The six existing palettes, each ground plus three pigments: Pearl (default), Emb
 
 ## The site
 
-> **2026-11-23 spec (approved)**, replacing the scroll-camera "experience" (F-4 to F-8, see `docs/product.md` › Superseded). Model: libraries.dev/orbs, for its structure and quality bar, not its look.
+> **2026-11-23 spec (approved)**, with the owner's later call (F-11, 2026-11-23: "Bring camera back"): the spec's sections are the content, and the scroll camera from the earlier experience carries them as shots. Model: libraries.dev/orbs for structure and quality bar, not its look.
 
 One site in `apps/site`, two static pages: `/` and `/docs/`.
 
 ### Language
 
-- **Themes**: dark by default, a light mode (follows the system, with a toggle). Tokens: background, surface, raised surface, text, secondary text, hairline, focus, in both themes. The marble's colours are the only saturated colour on the page.
-- **Type**: the system UI font for everything; a monospace for code. Large, light headings; plain body text.
+- **Theme** (owner, F-77: "remove light mode and the switcher, keep the dark"): dark only, for every visitor; no switch. Tokens: background, surface, raised surface, text, secondary text, hairline, focus. The marble's colours are the only saturated colour on the page.
+- **Type** (owner, F-73: "like MoMA… a fashion magazine"): two faces. Libre Franklin, a Franklin Gothic in the museum-poster style, for headlines (bold, tightly set) and for small labels (uppercase, widely tracked kickers: group names, the overview's names, the intro's state); the system UI font for reading and controls; a monospace for code.
 - **Layout**: generous spacing (section padding ~120 px on desktop, ~72 px on phones), content centred in a column of ~1120 px, cards with a hairline and 16 px radius. Looks as considered on a phone as on desktop.
 - **Copy**: plain and literal. Say what it is and what it does. No taglines ("spin the words"), no repeated labels, buttons of a word or two (or one icon with an accessible name), one action per control.
-- **Motion**: restrained: hover and press feedback, sections fading in once. The marble is the only thing that moves on its own.
+- **Motion**: the scroll camera (below) moves between shots; within a shot, motion is restrained (hover and press feedback, content arriving once). Only transform and opacity animate.
 
-### `/`
+**Chrome** (owner, 2026-11-23, F-25 to F-32): the top bar holds only the logo (a small live marble in your colours) and the name, larger, centred. No links or toggle up there: the shot index at the edge is the navigation, its hover label plain text with no pill. Docs and GitHub are buttons (icon and text) in the intro and the Guide. The footer, at the end of the Guide and on `/docs/`, is one calm line spread across the width (F-33): MIT © Justin Liao on one side; on the other, Follow @imjustinliao with the X and GitHub icons. No theme switch (F-77). One text size, icons a touch larger, generous space between groups. No cue to scroll.
 
-1. **Hero**: the live marble, one plain line ("An audio-reactive orb for voice AI apps. React, open source."), `npm i talking-marble` with a copy button, links to GitHub and the docs.
-2. **States**: a grid of cards, one per state and emotion, each animating live and labelled. Each card shows the marble at its own size and, like the libraries.dev grid, small inline pills too: a 20 px marble beside "Listening…", "Thinking…", "Speaking…".
-3. **In context**: the marble inside three realistic UIs, live: a chat input bar with a voice button (as in ChatGPT's voice mode), a full-screen call view, and an inline chat message.
-4. **Playground**: the marble (preview pane, light/dark background switch) beside the controls from the prototype: state, emotion, palette plus a custom colour picker (each palette editable, with Reset), size (20, 32, 64, 240 px and full), audio source (simulated voice, your mic, level slider), and the preset dials for designing your own state. Below it, the exact code for the current settings, live, with Copy, and **Export preset** (JSON).
-5. **Install**: tabs for React, React Native, SwiftUI, Android, Flutter. React: the install command, minimal usage, and how to connect LiveKit, ElevenLabs and OpenAI Realtime, each in a few lines. The others: "Coming soon", honestly, nothing else.
-6. **Footer**: GitHub, npm, MIT © Justin Liao.
+**Two button families, for balance** (owner, 2026-11-23, F-35, F-37): choices on the walk are **switch bars**, not lines of words: a glass track (dark, translucent, a fine inner highlight) holding rounded-square options; the chosen one is a lit key, white with black text and a soft white glow around it, like a backlit control. The halo is a **toggle** in the same language: a glass track, lit white with a black knob when on. Black and white, high contrast, light from the control itself. The other buttons stay in the marble's family (below).
+
+**The marble's own texture** (owner, 2026-11-23, F-44: "the text with colour gotta have the same textures as the marble, animated similarly"): where the UI takes the marble's colour, it takes its texture. The intro's word "Marble" wears the live marble itself: each frame the middle of the stage marble is copied into the letters, so it moves with it. Thin accents (the chosen word's ink stroke, the pigment rings on the install command and Talk, the index marker, the Guide panel's top edge) carry the pigments as soft pools that flow slowly. Code keeps flat tints so it stays readable.
+
+**Themed around the marble** (F-28): some UI takes its look from the marble in focus, never all of it. Its colours are CSS variables that follow the marble (the walk's front marble, your pick, your own): the chosen word's underline is a short ink stroke in its pigments, most buttons simply flip to the text colour on hover (white on black, black on white; F-35) while only the marble's own actions, the install command and Talk, answer with a thin ring of its pigments (its light, not a light of their own), the logo is a live marble, and "Marble" in the intro's title carries its pigments.
+
+### `/`: one scene, a scroll camera, the sections as shots (F-11)
+
+The camera system from the earlier experience comes back (saved at `ffcbb19` on `milestone/site`), adapted to the current package and sections:
+
+- **One scene** behind everything that never cuts away: a plain stage, a glossy floor with the marble's light pool and reflection, and the ink floor (below). Dark and light versions.
+- **The ink floor** (owner, 2026-11-23, F-23: "the background textures look like stains rather than actual textures"; inspiration: sound drawn as ink, not a copy of any look): the floor around the marble carries the texture. Faint range rings of fine engraved marks (hairline arcs, a few px long, varied width and brightness) circle the marble at doubling distances, always centred under the marble in focus (F-38, never between two), and turn very slowly, neighbours in opposite directions. When the marble listens or speaks, its sound spreads over the floor as ripples of broken ink strokes (many short arcs of varied length and weight, with a few broad faint washes under them, like pigment soaked into paper) in ivory and the marble's own pigments, fading with distance. No blotches, no dust, no blurred spots: every mark is a crisp stroke. Quiet when the marble is quiet.
+- **Intro on every load** (about 2.5 s, skippable by click, key or scroll): a point of light forms into the marble, the name appears, the camera settles on the hero.
+- **Scrolling drives the camera** along keyframed shots, B-roll style (dolly, truck, crane, push in; never a plain centre zoom), damped by a critically damped spring. Continuity: the marble is always in frame and each move starts on it in its current colours (F-8).
+- **Each section below is one shot.** While a shot is settled its content is a normal, fully interactive page area (controls, scrolling inside long panels, keyboard); the camera only moves between shots. A slim index at the edge shows the shots; Page Up/Down and the index jump between them.
+- **Phones**: the same shots with gentler moves; panels become bottom sheets. **Reduced motion**: no camera moves; shots cross-fade.
+- Plain copy, short one-action buttons and no repeated labels still apply inside every shot.
+
+**Styling inside the scene (owner, 2026-11-23, F-12: "this styling is horrible", on a States shot with the scene marble beside a framed panel holding a second preview marble, a grid of nine boxed cards and its own scrollbar):**
+
+- **One marble.** The scene marble is the subject of every shot and the only large marble on screen. Choosing a state, emotion, palette or setting changes *that* marble; no shot has a second large preview marble.
+- **No boxes.** No framed panels, no cards around things, no grid of boxed tiles, no scrollbar inside a section. Text and controls sit directly on the stage with generous space. Where a shot truly needs a dense control area (the playground's dials), one quiet glass strip at most, never boxes inside it.
+- **Typography, not tiles.** States and emotions are words you pick (the selected one bright, the rest dim), in one calm row or column beside or under the marble, with one plain line about the selected one. Group names ("States", "Emotions") appear once; no "state"/"emotion" under each item. System font for names; monospace only in code.
+- **Small sizes as one line, not cards.** The inline pills ("Listening…" beside a 20 px marble) and a few small marbles show sizes in a single quiet line.
+- **One balanced composition per shot.** The marble and its words read as one group with the camera's framing; nothing crammed to one side.
+- The same applies to every shot: in context shows the three UIs as objects in the scene (no surrounding frames), the playground's preview is the scene marble itself.
+
+**Camera distance changes from shot to shot** (owner, 2026-11-23, F-17: "it's gotta have different distance, like initially it's further so the marble is smaller, then you zoom in; you don't have this anymore"): the opening is a wide, distant shot where the marble is small in the frame; scrolling pushes the camera in, so the marble grows; later shots vary their distance (close, medium, pulling back) like B-roll, never all at the same framing. The change in distance is the main sense of travel, so it must be clearly visible.
+
+**A black stage with fog that moves like air** (owner, 2026-11-23, F-54, replacing F-42 to F-53's skies, mountains, 3D atmosphere and floor rings: "it's now super laggy… keep it 2D with an illusion of 3D… start from black empty again, then add the fog"): the stage is plain black (off-white in light mode). Low over it lies fog, denser toward the horizon and finer with distance, an illusion of depth drawn in 2D, its billows drifting slowly and changing shape as they go, never just sliding; every visit draws its own fog, so no two visitors see the same (F-82). Moving the pointer is a hand passing through mist: a small fluid simulation carries the fog along the air you push, curls it into swirls behind your hand, and lets it settle back into its resting shape over a few seconds. Gentle, like a hand, not a fan (F-55, F-56): a thin, ragged streak of moving air along the path the pointer took (never a round patch), a few fingers wide, a fast flick capped, barely any curl, the air calming within a moment; never a hole or a light: the fog only moves. **Light from the top** (F-57, F-72, F-74, F-76): subtle, and lit the way real light lights mist. A source just above the top edge, where the logo is, in layers each wider and dimmer than the last (core, halo, bloom, haze), reaching only a little way down, with a faint band of sky-light along the whole top edge, about even at the left and right and stronger in the middle (F-79: bright enough to read as light, never a wash). A few soft shafts fall from it, each its own direction, width and brightness, wavering and broken as mist drifts through them, never a fan of straight parallel lines; they show mostly where there is mist to catch them, so the fog gives the light its depth. A slow breath. Sunlight mixed with white, neither pure white nor orange; faint, so the marble stays the only colour. No rings, mountains, sky or ground. **Performance first** (F-54): every effect looks right on a low-power device first. The fog simulates on a grid about 128 cells wide and draws at half the screen's size, at 30 frames a second (20 on low-power devices), only while visible. Marbles render at most 2× the screen's density; gallery marbles out of focus render small and are scaled up; no live backdrop blur over moving content; the camera rests when it arrives (no handheld drift on low-power devices); the word "Marble" copies the live marble at 20 frames a second and not at all on low-power devices. A device that proves slower than its specs is moved to low power after a few seconds.
+
+**Hierarchy: show the necessary, the rest on request** (owner, 2026-11-23, F-13: "everything concentrated and disorganized, too much info, gotta have info hierarchy and show necessary things, only if asked it shows more"):
+
+- Each shot has **one primary thing** (the marble plus one choice or one action), **at most one line** of text, and **one way to see more**. Everything else stays hidden until asked for (a "More" control, a click on an item, a tab), and closes again.
+- Order of importance, per shot:
+  - **Intro**: the marble, the name, one line, the install command (copy). GitHub and Docs live in the top bar only.
+  - **Palettes**: the marble in front and its name; then state, emotion, halo and Talk, always in the same place.
+  - **Pick**: "Pick one", then all six at once.
+  - **Create your own**: one step at a time, one group of controls per step.
+  - **Guide**: install, usage, Docs and GitHub. Nothing else.
+- Nothing appears twice on screen (a name, a link, a label). Fewer, larger, calmer elements beat many small ones.
+- **Nothing jumps** (owner, 2026-11-23, F-18: "when expanding, I don't want things to move up or down but fixed"): opening a second layer (Edit, More), stepping between in-context UIs or changing a palette never moves what is already on screen. Layers open below their control as an overlay; shots whose content changes size keep their top edge fixed and grow downward. No awkward empty gaps inside a row (a name never sits in a box wider than itself with its arrow far away).
+- **Everything wears the pick** (owner, 2026-11-23, F-21): every marble on the page outside the gallery (the in-context UIs, the inline pills) wears the palette picked in the gallery, like the stage marble.
+
+**The path is magnetic** (F-52, F-67, F-80): when scrolling stops close to a place (any shot, or a marble on the walk; within about a quarter of a screen), the page glides the rest of the way, slowly, easing in and out, never a jump. Stopped far from every place, in the middle of a long move, it stays put, so a small scroll never becomes a big sudden move. A finger on the screen is waited for; any wheel, touch, key or click stops a glide; past the Guide the page rests where it is.
+
+The shots, in order (owner, 2026-11-23, F-22: "rethink the flow"; supersedes the F-15 order and the States, In context, Playground and Install shots):
+
+1. **Intro** (wide, far): complete on its own. The live marble, cycling through a voice agent's states, with the state's name under it in small tracked type that dissolves from word to word, no box (F-66), the name, one plain line, `npm i talking-marble` with copy, and Docs and GitHub buttons. Everything below it is the experience, optional (no scroll cue, F-25).
+2. **Palettes** (the walk, pushing in): the six built-in palettes one by one along the gallery, far enough apart that one is in focus at a time and the next shows only at the edge (F-36). Their colours are fixed here (no Edit, no Yours: making your own is shot 4). For the marble in front: its name as the title, then one fixed control block under it, the same for every palette:
+   - **State** (idle, connecting, listening, thinking, speaking, error) and **Emotion** (none, happy, calm, muted) as switch bars, changing the marble in front;
+   - **Halo** as a toggle;
+   - **Talk**: press it and speak. Your mic drives *listening*; when you pause, the marble *thinks*, then *speaks* a simulated reply (a voice-like level, no words yet); End stops and releases the mic. While talking, the marble is shown in an everyday UI beside it (a call screen first; Chat bar and Message one word away), each small marble wearing this palette (F-21). Mic denied or missing: a one-line note and the simulated voice. **Later** a real voice model replaces the simulated reply in the same place (a backend milestone of its own, direction to agree with the owner).
+   - Your settings stay as you walk from marble to marble. **The dock** (F-41): Talk, and below it previous, "3 / 6", next (round glass arrows, well spaced), sit at the bottom in the middle of the page (F-45), not with the controls on the left: the left side is what you try, the dock is how you talk to it and move on. Switch bars and the toggle never change size when changed. The lit key is one light that glides along the track to the chosen option (F-71), never a sudden on and off.
+3. **All palettes** (pull back, F-60): no prompt and no button. As the walk ends the camera pulls back while the six marbles gather from their line into two rows of three, the first three above, each with its palette's name under it, the group centred on screen (F-68). Scrolling on zooms in to Create your own; the walk's marbles stand on one straight line at one height, so nothing moves up or down as you walk (F-59).
+4. **Create your own** (push in, F-61 to F-63): the marble here is a plain, unpainted globe, not one of the palettes. Two levels: the steps, a switch bar (Colours, Motion, Try it, Code) with one always chosen, Colours first (F-70), and below it only the chosen step. (1) **Colours**: four colour pickers and Reset (back to the plain globe). (2) **Motion**: a few dials, your own state. (3) **Try it**: the walk's State and Emotion switch bars (your own state among them), the halo's strength as a slider (F-65), and Talk. (4) **Code**: your state's name, the code for your marble with Copy, and Export preset. Your marble carries into the Guide.
+5. **Guide** (pull back to wide; owner, F-24, F-29, F-34): minimal, with the code styled as code. Above one quiet panel: a switch bar of what it works with (React, Web Component; PLAT-01) and **Copy prompt**, which copies a short prompt for an AI coding agent to add your marble (install, usage with your colours and preset, what `state` and `audio` are, the docs link). The panel (a hairline, its top edge a thin line in the marble's pigments) holds **Install** and **Usage**, each code block inset with its own Copy, the code tinted with the marble's pigments. Then Docs and GitHub. Inspiration: libraries.dev/orbs' Install tab, not its look.
 
 ### `/docs/`
 
-A props table, the preset format (every field, its range and default), the audio options, accessibility notes (labels, reduced motion, no flashing) and performance notes (pausing, the shared renderer, sizes). A slim index on the side (top on phones), one column of text.
+A props table, the palettes (the six built-ins as small live marbles you can choose, which re-tint the page; your own four colours; the halo), the preset format (every field, its range and default), the audio options, accessibility notes (labels, reduced motion, no flashing) and performance notes (pausing, the shared renderer, sizes). A slim numbered index on the side (top on phones), the section being read marked by a stroke of the marble's pigments; one column of text with numbered sections.
+
+The look (owner, F-46) comes from the home stage: the same black (or off-white) ground with slow veils of cloud fog, the marble's own light washed faintly over the top in its pigments, and a soft light following the pointer. A live marble speaks beside the title in the visitor's palette. Code blocks and tables are glass panels (a hairline, a top edge in the marble's pigments, the code inset and tinted with its pigments); the install command is a glass pill under the platform words.
 
 ### States every screen handles
 
@@ -104,7 +157,7 @@ Mic asked only on click; denied or missing → a one-line note and the simulated
 - [ ] Side by side with the original orb at the same palette and time, the web orb is visually indistinguishable
 
 ### DES-02: States read at a glance
-- [ ] Each of the six states is distinguishable at 20, 48 and 240 px, in both site themes, while the material stays the same
+- [ ] Each of the six states is distinguishable at 20, 48 and 240 px, on the dark stage, while the material stays the same
 
 ### DES-03: Reacts like a voice, not a meter
 - [ ] With real speech, the orb swells and settles smoothly, with no visible flicker

@@ -18,9 +18,9 @@ Developers building voice AI apps (OpenAI Realtime, ElevenLabs, LiveKit and so o
 
 ## Goals
 
-- v1: the web/React component on npm, and one site in `apps/site` (showcase, playground, install, docs) deployed to GitHub Pages through GitHub Actions, running on the real package.
-- Platforms: v1 is web/React. Electron and Tauri apps get it for free because they run on web tech. Later ports: SwiftUI (iOS, macOS, visionOS, plus a simplified watchOS version), React Native, Android Compose and Flutter. Keep the shader and the presets in a platform-neutral `packages/core` so each port only needs a small renderer.
-- Design bar: clean, dark by default, a light mode, generous spacing, and copy that's plain and literal (no taglines like "spin the words"). It has to look good on a phone as well as desktop.
+- v1: the web/React component on npm, and one site in `apps/site` (showcase, playground, install, docs) deployed on Vercel (owner, F-81), running on the real package.
+- Platforms (owner, F-78: "all possible devices, web or app, phone or laptop or anything… this is for voice interface applications"): cover as many as possible. v1 is web/React. Electron and Tauri apps get it for free because they run on web tech. Later ports: SwiftUI (iOS, macOS, visionOS, plus a simplified watchOS version), React Native, Android Compose and Flutter. Keep the shader and the presets in a platform-neutral `packages/core` so each port only needs a small renderer.
+- Design bar: clean, dark only (owner, F-77), generous spacing, and copy that's plain and literal (no taglines like "spin the words"). It has to look good on a phone as well as desktop.
 
 ## MVP features
 
@@ -79,7 +79,7 @@ Stable IDs by area. The boxes are acceptance items: tick one only after it was c
 - [ ] Developers can design their own state here and copy it out
 
 ### SITE-05: Install
-- [ ] Tabs for React, React Native, SwiftUI, Android and Flutter. Only React works for now; the others are labelled "coming soon" honestly
+- [ ] Where it runs today, by device (F-78): React, so every phone, tablet, laptop and desktop with a modern browser, and Electron and Tauri apps. A native platform is listed only once it ships, never as "soon"; the ports are PLAT-01
 - [ ] The install command, minimal usage, and how to connect common voice SDKs (LiveKit, ElevenLabs, OpenAI Realtime), each in a few lines
 
 ### SITE-06: Docs
@@ -88,9 +88,28 @@ Stable IDs by area. The boxes are acceptance items: tick one only after it was c
 ### SITE-07: Footer
 - [ ] GitHub, npm, MIT © Justin Liao
 
+### SITE-09: The camera experience (owner, 2026-11-23, F-11)
+- [ ] The scroll camera, intro, scene and textures come back, carrying the sections (hero, states, in context, playground, install, footer) as shots, in dark and light, on phones, with reduced motion handled
+
+### SITE-10: The experience, v2 (owner, 2026-11-23, F-22)
+- [ ] Intro complete on its own; the scroll below is an optional experience
+- [ ] Walk the six built-in palettes (colours fixed): try every state, emotion and halo on each, and **Talk** to it (mic drives listening, then a simulated reply), seen in a call screen, chat bar or message (folds in SITE-02 and SITE-03)
+- [ ] Pull back over all six and pick one to start from
+- [ ] **Create your own** in steps: colours, motion, states, name it with code and Export preset (replaces SITE-04's playground)
+- [ ] **Guide**: numbered steps for install, usage with your marble, voice SDK snippets and the docs (replaces SITE-05's tabs)
+- [ ] The ink floor as the scene's texture (F-23)
+
 ### SITE-08: Deploy
-- [ ] One site in `apps/site`, deployed to GitHub Pages through GitHub Actions
+- [ ] One site in `apps/site`, deployed on Vercel at talking-marble.vercel.app (F-81; GitHub Actions runs the checks)
 - [x] Icons, link-preview image and video, SEO metadata, `robots.txt`, `sitemap.xml`, `llms.txt` (F-3) ✓ on the site branch; re-render for the new site
+
+### PLAT-01: Every device (owner, 2026-11-23, F-78; approved 2026-11-23, step by step)
+Voice interfaces live everywhere, so the marble should too. Each step is a small renderer over the shared core (CORE-01 first), shipped and listed on the site only when it works:
+- [x] 1. A Web Component, `<talking-marble>`: any web framework or none (Vue, Svelte, Angular, Astro, plain HTML), same WebGL renderer ✓ 0.13.0
+- [ ] 2. React Native / Expo: iOS and Android apps
+- [ ] 3. SwiftUI with Metal: iPhone, iPad, Mac, Vision Pro (a simplified watchOS later)
+- [ ] 4. Android Jetpack Compose
+- [ ] 5. Flutter
 
 ### PKG-01: Publish to npm
 - [ ] Publish to npm, but only after the site runs on the real package
@@ -98,8 +117,9 @@ Stable IDs by area. The boxes are acceptance items: tick one only after it was c
 
 ## Later
 
-- React Native, SwiftUI (iOS, macOS, visionOS, simplified watchOS), Android Compose and Flutter ports, each a small renderer over `packages/core`.
+- The native ports: now PLAT-01.
 - Electron and Tauri: v1 is plain web, so it runs in both; a check there comes later.
+- A real voice model behind the site's Talk demo (owner, 2026-11-23): needs a small backend (the model's key stays on a server, never in the site). Direction, provider and cost to agree with the owner first. The package itself still brings no voice side.
 
 ## Not doing
 
@@ -109,7 +129,7 @@ Stable IDs by area. The boxes are acceptance items: tick one only after it was c
 
 Built or specified earlier, replaced by the owner's overall spec (the spec's structure is libraries.dev-like sections, clean, with a light mode and plain copy):
 
-- The scroll-camera "experience" (F-5): intro on every load, camera shots, film-grain stage, dust, glossy floor. Replaced by plain sections.
+- ~~The scroll-camera "experience" (F-5)~~ **brought back by the owner 2026-11-23 (F-11, "Bring camera back")**: the camera now carries the spec's sections as shots (SITE-09).
 - The curved gallery hallway (old SITE-04) → the state showcase grid (SITE-02).
 - The guided talk-to-it demo with speech synthesis and the word drum (old SITE-05) → the marble in realistic UIs (SITE-03) and the playground's audio sources (SITE-04).
 - The palettes-first flow (old SITE-07, F-6) → palette and custom colors live in the playground (SITE-04).

@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { docsData } from './scripts/docs-data.ts';
 
 const coreDir = fileURLToPath(new URL('../../packages/core', import.meta.url));
 const genScript = fileURLToPath(new URL('../../packages/react/scripts/gen-core.mjs', import.meta.url));
@@ -20,9 +21,9 @@ function watchCore(): Plugin {
 }
 
 export default defineConfig({
-  // GitHub Pages serves the site from /Talking-Marble/.
-  base: process.env.GITHUB_PAGES ? '/Talking-Marble/' : '/',
-  plugins: [react(), watchCore()],
+  // Served from the host's root (Vercel, F-81).
+  base: '/',
+  plugins: [react(), watchCore(), docsData()],
   // In the workspace, import the package's TypeScript source for instant reloads; releases use dist.
   resolve: { conditions: ['talking-marble-source'] },
   server: { port: 5173, strictPort: true, host: '127.0.0.1' },

@@ -1,4 +1,5 @@
-/* Talking Marble's site: dark for everyone by default, a light mode by toggle, system fonts, hairline cards.
+/* Talking Marble's site: dark only (F-77), a Franklin Gothic for display and the system font for reading (F-73),
+   hairline cards.
    The marbles are the only saturated colour on the page. */
 
 :root {
@@ -14,25 +15,13 @@
   --focus: #f4f4f5;
   --primary-bg: #f4f4f5;
   --primary-text: #0b0b0d;
-  --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Two faces, as in a fashion magazine (F-73): a Franklin Gothic (the museum-poster face) for headlines and small
+     tracked labels; the system font for reading. */
+  --display: "Libre Franklin", "Franklin Gothic Medium", "Franklin Gothic", "Helvetica Neue", Arial, sans-serif;
   --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --gutter: clamp(20px, 5vw, 40px);
-}
-:root[data-theme="light"] {
-  color-scheme: light;
-  --bg: #f6f6f4;
-  --surface: #ffffff;
-  --raised: #efefec;
-  --text: #141416;
-  --text-2: #4a4a50;
-  --text-3: #64646b;
-  --hair: rgba(0, 0, 0, 0.1);
-  --hair-strong: rgba(0, 0, 0, 0.22);
-  --focus: #141416;
-  --primary-bg: #141416;
-  --primary-text: #ffffff;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -50,8 +39,27 @@ code, pre, .mono { font-family: var(--mono); }
 .fine { font-size: 13px; color: var(--text-3); }
 
 /* Buttons: a word or two, or one icon with an accessible name */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--hair-strong); font-size: 15px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease; }
-.btn:hover { background: var(--raised); border-color: var(--text-3); }
+.btn { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--hair-strong); font-size: 15px; font-weight: 500; text-decoration: none; white-space: nowrap; }
+.btn:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+/* Themed around the marble (F-28): its colours, set on the page (--m0 ground, --m1…--m3 pigments). Most buttons
+   simply flip to the text colour on hover (F-35); only the marble's own actions (the install command, Talk) answer
+   with a thin ring of its pigments: the marble's light on the control, not a light of its own. */
+@property --m0 { syntax: '<color>'; inherits: true; initial-value: #f6f5ee; }
+@property --m1 { syntax: '<color>'; inherits: true; initial-value: #ef9fc5; }
+@property --m2 { syntax: '<color>'; inherits: true; initial-value: #61d9d0; }
+@property --m3 { syntax: '<color>'; inherits: true; initial-value: #f3c76f; }
+.talk, .install-pill { position: relative; isolation: isolate; }
+/* The marble's texture for small accents (F-44): its pigments as soft, overlapping pools that flow slowly, as the
+   marble's do. The hero word wears the live marble itself (MarbleText). */
+:root { --marbled: radial-gradient(38% 55% at 22% 34%, var(--m1), transparent 70%), radial-gradient(42% 60% at 68% 62%, var(--m2), transparent 70%), radial-gradient(30% 45% at 48% 18%, var(--m3), transparent 70%), radial-gradient(26% 40% at 86% 26%, var(--m1), transparent 70%), radial-gradient(34% 50% at 12% 82%, var(--m3), transparent 70%), var(--m2); }
+@keyframes marbled { 0% { background-position: 0% 30%; } 50% { background-position: 60% 85%; } 100% { background-position: 100% 15%; } }
+@media (prefers-reduced-motion: reduce) { .talk::before, .install-pill::before, .word::after, .marble-text__words, .index a::after, .panel::before { animation: none !important; } }
+/* Low-power devices keep the pigments still: a flowing background repaints every frame (F-54) */
+html[data-tier="low"] :is(.talk::before, .install-pill::before, .word::after, .marble-text__words, .index a::after, .panel::before) { animation: none !important; }
+.talk::before, .install-pill::before { content: ""; position: absolute; inset: -1px; z-index: -1; border-radius: inherit; padding: 1.5px; background: var(--marbled); background-size: 300% 300%; animation: marbled 14s ease-in-out infinite alternate; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity 0.3s ease; }
+.talk:hover::before, .talk:focus-visible::before, .install-pill:hover::before, .install-pill:focus-visible::before { opacity: 1; }
+.btn.talk:hover { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--text); border-color: transparent; }
+.talk:hover, .install-pill:hover { box-shadow: 0 0 22px -6px color-mix(in srgb, var(--m1) 55%, transparent); }
 .btn:active { transform: scale(0.98); }
 .btn--primary { background: var(--primary-bg); color: var(--primary-text); border-color: var(--primary-bg); }
 .btn--primary:hover { background: var(--primary-bg); opacity: 0.88; }
@@ -61,25 +69,24 @@ code, pre, .mono { font-family: var(--mono); }
 .icon-btn[data-status="copied"] { color: var(--text); }
 .card { background: var(--surface); border: 1px solid var(--hair); border-radius: 16px; }
 
-/* Code */
-.code { margin: 0; border-radius: 16px; overflow: hidden; min-width: 0; background: var(--surface); border: 1px solid var(--hair); }
-.code figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 4px 2px 16px; border-bottom: 1px solid var(--hair); }
-.code figcaption .caps { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
-.code pre { margin: 0; padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.65; color: var(--text); tab-size: 2; }
 
 /* Top bar */
 .topbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 8px; padding: 10px var(--gutter); background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 1px solid var(--hair); }
-.brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; text-decoration: none; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
-.brand__dot { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, #fff 0 10%, #f6f5ee 24%, #ef9fc5 50%, #61d9d0 74%, #f3c76f); }
-.topbar nav { display: flex; margin-left: auto; }
-.topbar nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--text-2); text-decoration: none; font-size: 15px; border-radius: 8px; transition: color 0.2s ease; }
-.topbar nav a:hover, .topbar nav a[aria-current="page"] { color: var(--text); }
+.topbar { justify-content: center; padding-top: 22px; } /* a little more air above the logo and name (F-58) */
+.brand { display: inline-flex; align-items: center; gap: 12px; min-height: 48px; text-decoration: none; font-family: var(--display); font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.brand__logo { display: inline-flex; width: 30px; height: 30px; }
 
 /* Footer: one line */
-.footer { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 20px; padding: 48px var(--gutter) 56px; border-top: 1px solid var(--hair); color: var(--text-3); font-size: 14px; }
-.footer nav { display: flex; gap: 4px; }
-.footer a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; color: var(--text-2); text-decoration: none; }
-.footer a:hover { color: var(--text); }
+.footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 24px; padding: 32px var(--gutter) 36px; border-top: 1px solid var(--hair); color: var(--text-2); font-size: 13px; }
+.footer__end { display: flex; align-items: center; gap: 14px; }
+.follow { display: flex; align-items: center; gap: 2px; }
+.follow__label { margin-right: 6px; }
+.footer .icon-btn { width: 40px; height: 40px; color: var(--text-2); }
+.footer .icon-btn:hover { color: var(--text); }
+@media (max-width: 520px) { .footer { justify-content: center; } }
+/* Docs and GitHub, as buttons */
+.links { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn--link svg { margin: 0; }
 
-@media (max-width: 640px) { .hide-sm { display: none !important; } .topbar nav a { padding: 0 8px; } }
+@media (max-width: 640px) { .hide-sm { display: none !important; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

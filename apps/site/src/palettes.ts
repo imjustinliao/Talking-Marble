@@ -5,10 +5,14 @@ export type PaletteId = PaletteName | 'yours';
 export type Colors = [string, string, string, string];
 export type Edits = Partial<Record<PaletteId, Colors>>;
 
-export const PALETTE_IDS = [...(Object.keys(palettes) as PaletteName[]), 'yours'] as PaletteId[];
+/** The built-in palettes: the gallery walked on the home page (their colours are fixed there, F-22). */
+export const BUILT_INS = Object.keys(palettes) as PaletteName[];
+/** Every palette a picker offers: the built-ins, then the visitor's own. */
+export const PALETTE_IDS = [...BUILT_INS, 'yours'] as PaletteId[];
 export const COLOR_LABELS = ['Ground', 'Pigment 1', 'Pigment 2', 'Pigment 3'] as const;
-/** "Yours" starts as Pearl until it is changed. */
-const defaults = (id: PaletteId): Colors => [...palettes[id === 'yours' ? 'pearl' : id]] as Colors;
+/** "Yours" starts unpainted (F-20): a plain neutral marble, not a copy of a built-in palette, until it is coloured. */
+export const UNPAINTED: Colors = ['#ededeb', '#c9c9c6', '#b1b1ae', '#dcdcd9'];
+const defaults = (id: PaletteId): Colors => [...(id === 'yours' ? UNPAINTED : palettes[id])] as Colors;
 
 export const colorsOf = (id: PaletteId, edits: Edits): Colors => edits[id] ?? defaults(id);
 export const isEdited = (id: PaletteId, edits: Edits) => edits[id] !== undefined && edits[id]!.join() !== defaults(id).join();

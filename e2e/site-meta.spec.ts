@@ -7,8 +7,8 @@ import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 
-// The GitHub Pages build (base /Talking-Marble/), served from a temp folder on a free port, as Pages would serve it.
-const SITE = 'https://imjustinliao.github.io/Talking-Marble/';
+// The production build, served from a temp folder on a free port from the root, as Vercel serves it (F-81).
+const SITE = 'https://talking-marble.vercel.app/';
 const siteDir = fileURLToPath(new URL('../apps/site', import.meta.url));
 const TYPES: Record<string, string> = {
   '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg',
@@ -19,20 +19,19 @@ const TYPES: Record<string, string> = {
 let dist = '';
 let server: Server;
 let origin = '';
-/** A production URL (https://imjustinliao.github.io/Talking-Marble/x) on the local server. */
-const local = (url: string) => url.replace('https://imjustinliao.github.io', origin);
+/** A production URL (https://talking-marble.vercel.app/x) on the local server. */
+const local = (url: string) => url.replace(SITE.slice(0, -1), origin);
 
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(60_000);
 
 test.beforeAll(async () => {
-  dist = mkdtempSync(join(tmpdir(), 'talking-marble-pages-'));
-  execFileSync('pnpm', ['exec', 'vite', 'build', '--outDir', dist, '--emptyOutDir'], { cwd: siteDir, env: { ...process.env, GITHUB_PAGES: '1' }, stdio: 'pipe' });
+  dist = mkdtempSync(join(tmpdir(), 'talking-marble-site-'));
+  execFileSync('pnpm', ['exec', 'vite', 'build', '--outDir', dist, '--emptyOutDir'], { cwd: siteDir, stdio: 'pipe' });
   server = createServer((req, res) => {
     const path = decodeURIComponent(new URL(req.url!, 'http://x').pathname);
-    if (!path.startsWith('/Talking-Marble/')) { res.writeHead(404).end(); return; }
-    let rel = normalize(path.slice('/Talking-Marble/'.length) || 'index.html');
-    if (rel.endsWith('/')) rel += 'index.html'; // as Pages serves /docs/
+    let rel = normalize(path.slice(1) || 'index.html');
+    if (rel.endsWith('/')) rel += 'index.html'; // as Vercel serves /docs/
     if (rel.startsWith('..')) { res.writeHead(403).end(); return; }
     try {
       const body = readFileSync(join(dist, rel));
@@ -70,7 +69,7 @@ function dimensions(file: Buffer): [number, number] {
 }
 
 test('the head has complete, absolute link-preview and SEO tags', async ({ page }) => {
-  await page.goto(`${origin}/Talking-Marble/`);
+  await page.goto(`${origin}/`);
   const meta = (key: string) => page.locator(`meta[property="${key}"], meta[name="${key}"]`).first().getAttribute('content');
 
   await expect(page).toHaveTitle(/Talking Marble/);
@@ -82,7 +81,7 @@ test('the head has complete, absolute link-preview and SEO tags', async ({ page 
   expect(await meta('og:url')).toBe(SITE);
   expect(await meta('twitter:card')).toBe('summary_large_image');
   for (const key of ['og:image', 'og:image:secure_url', 'og:video', 'og:video:secure_url', 'twitter:image']) {
-    expect(await meta(key), key).toMatch(/^https:\/\/imjustinliao\.github\.io\/Talking-Marble\/\S+$/);
+    expect(await meta(key), key).toMatch(/^https:\/\/talking-marble\.vercel\.app\/\S+$/);
   }
   expect(await meta('og:image:type')).toBe('image/jpeg');
   expect(await meta('og:video:type')).toBe('video/mp4');
@@ -95,14 +94,14 @@ test('the head has complete, absolute link-preview and SEO tags', async ({ page 
 });
 
 test('the docs page is real HTML with its own canonical, title and cards', async ({ page }) => {
-  await page.goto(`${origin}/Talking-Marble/docs/`);
+  await page.goto(`${origin}/docs/`);
   await expect(page).toHaveTitle(/^Docs/);
   expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe(`${SITE}docs/`);
   expect(await page.locator('meta[property="og:url"]').getAttribute('content')).toBe(`${SITE}docs/`);
   expect(await page.locator('meta[property="og:image"]').getAttribute('content')).toBe(`${SITE}og-image.jpg`);
   // Linked assets carry the Pages base path.
   for (const href of await page.locator('link[rel="icon"], link[rel="manifest"], script[type="module"]').evaluateAll(els => els.map(e => (e as HTMLLinkElement).href || (e as HTMLScriptElement).src))) {
-    expect(new URL(href).pathname, href).toMatch(/^\/Talking-Marble\//);
+    expect(new URL(href).origin, href).toBe(origin);
   }
   const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!);
   expect(ld['@graph'].map((n: { '@type': string }) => n['@type'])).toEqual(['TechArticle', 'BreadcrumbList']);
@@ -111,7 +110,7 @@ test('the docs page is real HTML with its own canonical, title and cards', async
 });
 
 test('every referenced file resolves, with sizes that match the tags and platform limits', async ({ page, request }) => {
-  await page.goto(`${origin}/Talking-Marble/`);
+  await page.goto(`${origin}/`);
   const meta = async (key: string) => (await page.locator(`meta[property="${key}"]`).getAttribute('content'))!;
   const get = async (url: string) => {
     const res = await request.get(url);
@@ -124,20 +123,20 @@ test('every referenced file resolves, with sizes that match the tags and platfor
     els => els.map(el => (el as HTMLLinkElement).href),
   );
   expect(links.length).toBe(5);
-  for (const href of links) expect(new URL(href).pathname, href).toMatch(/^\/Talking-Marble\//);
+  for (const href of links) expect(new URL(href).origin, href).toBe(origin);
   for (const href of links) await get(href);
 
   const touch = await get(await page.locator('link[rel="apple-touch-icon"]').evaluate(el => (el as HTMLLinkElement).href));
   expect(dimensions(await touch.body())).toEqual([180, 180]);
 
-  const ico = await (await get(`${origin}/Talking-Marble/favicon.ico`)).body();
+  const ico = await (await get(`${origin}/favicon.ico`)).body();
   expect(ico.readUInt16LE(2)).toBe(1); // icon type
   expect([...Array(ico.readUInt16LE(4)).keys()].map(i => ico[6 + 16 * i])).toEqual([16, 32, 48]);
 
-  const manifest = await (await get(`${origin}/Talking-Marble/site.webmanifest`)).json();
+  const manifest = await (await get(`${origin}/site.webmanifest`)).json();
   expect(manifest.name).toBe('Talking Marble');
   for (const icon of manifest.icons as { src: string; sizes: string }[]) {
-    const file = await (await get(new URL(icon.src, `${origin}/Talking-Marble/site.webmanifest`).href)).body();
+    const file = await (await get(new URL(icon.src, `${origin}/site.webmanifest`).href)).body();
     expect(dimensions(file).join('x'), icon.src).toBe(icon.sizes);
   }
   expect(manifest.icons.some((i: { purpose?: string }) => i.purpose === 'maskable')).toBe(true);
@@ -156,14 +155,14 @@ test('every referenced file resolves, with sizes that match the tags and platfor
   expect(video.length + image.length).toBeLessThan(5 * 1024 * 1024);
 
   // Crawler and AI files at the site root.
-  expect(await (await get(`${origin}/Talking-Marble/robots.txt`)).text()).toContain(`Sitemap: ${SITE}sitemap.xml`);
-  expect(await (await get(`${origin}/Talking-Marble/sitemap.xml`)).text()).toContain(`<loc>${SITE}</loc>`);
-  const llms = await (await get(`${origin}/Talking-Marble/llms.txt`)).text();
+  expect(await (await get(`${origin}/robots.txt`)).text()).toContain(`Sitemap: ${SITE}sitemap.xml`);
+  expect(await (await get(`${origin}/sitemap.xml`)).text()).toContain(`<loc>${SITE}</loc>`);
+  const llms = await (await get(`${origin}/llms.txt`)).text();
   expect(llms.startsWith('# Talking Marble\n')).toBe(true);
   expect(llms).toContain('npm i talking-marble');
-  expect(await (await get(`${origin}/Talking-Marble/sitemap.xml`)).text()).toContain(`<loc>${SITE}docs/</loc>`);
+  expect(await (await get(`${origin}/sitemap.xml`)).text()).toContain(`<loc>${SITE}docs/</loc>`);
   expect(llms).toContain(`${SITE}docs/#props`);
   // The dev-only render page is not shipped.
-  expect((await request.get(`${origin}/Talking-Marble/media.html`)).status()).toBe(404);
+  expect((await request.get(`${origin}/media.html`)).status()).toBe(404);
   expect(statSync(join(dist, 'index.html')).size).toBeGreaterThan(0);
 });

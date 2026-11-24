@@ -6,7 +6,7 @@ How every coding agent works on Talking Marble. This file is a map: rules live h
 
 - **Talking Marble**: a reusable, audio-reactive animated orb component that developers drop into their own voice AI apps (MIT, © Justin Liao). Not an assistant app.
 - **Stakes**: MVP. Working, clean and shipped beats complete. <!-- change to "production" once real users depend on it -->
-- **Built here**: the orb UI library (web/React in v1) plus a static showcase/docs/playground site in this repo, deployed to GitHub Pages via GitHub Actions. No voice/AI backend: developers wire in their own.
+- **Built here**: the orb UI library (web/React in v1) plus a static showcase/docs/playground site in this repo, deployed on Vercel (Hobby; `vercel.json`), GitHub Actions for checks. No voice/AI backend: developers wire in their own.
 - **Stack**: TypeScript, pnpm workspace, raw WebGL2 + Web Audio, React (peer >=18), tsdown, Vite site, Vitest + Playwright (see docs/architecture.md)
 - **Owner**: pro
 

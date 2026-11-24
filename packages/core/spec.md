@@ -50,6 +50,8 @@ A preset is plain data: any subset of these, plus optional `colors` (four hex co
 | `size` | 0.5–1.2 | 1 | Size within its box (never changes layout) |
 | `reactivity` | 0–1 | 0 | How strongly it answers audio; 0 ignores audio |
 
+The halo is drawn softer than the original orb's (F-64: two layers of light at about three quarters of the original strength), and the component's `halo` prop scales it: `true` is 1, `false` 0, a number from 0 to 1.5 a strength.
+
 ### Resolution
 
 1. **State**: `base`, then the built-in state's values, then the developer's preset of the same name. Unknown names resolve to `idle` (web: one console warning in development).
@@ -109,7 +111,7 @@ Below 48 CSS pixels the marble gets its own tuning, by `k = clamp((48 − size) 
 
 ## Rendering
 
-- Render size: the view's CSS size × device pixel ratio (at most 3×), within 16.7 million pixels (4096²) per marble and the GPU's limits.
+- Render size: the view's CSS size × device pixel ratio (at most 2×; past that the eye gains nothing and the GPU pays), within 16.7 million pixels (4096²) per marble and the GPU's limits.
 - Transparent background, premultiplied alpha; the shader writes `color * coverage, coverage`.
 - Animate only while visible on screen; still otherwise.
 - Web: every marble on a page renders through one shared WebGL2 context and is copied into its own element's canvas.

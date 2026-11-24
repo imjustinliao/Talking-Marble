@@ -1,7 +1,7 @@
 {
   "name": "talking-marble",
   "version": "0.0.0",
-  "description": "An audio-reactive animated orb for voice AI apps.",
+  "description": "An audio-reactive animated orb for voice AI apps: a React component and a Web Component.",
   "license": "MIT",
   "author": "Justin Liao",
   "repository": {
@@ -16,15 +16,25 @@
     "react",
     "webgl",
     "audio",
-    "visualizer"
+    "visualizer",
+    "web-component",
+    "custom-element"
   ],
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/element.js",
+    "./src/element.ts"
+  ],
   "exports": {
     ".": {
       "talking-marble-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./element": {
+      "talking-marble-source": "./src/element.ts",
+      "types": "./dist/element.d.ts",
+      "default": "./dist/element.js"
     },
     "./package.json": "./package.json"
   },
@@ -40,6 +50,11 @@
   },
   "peerDependencies": {
     "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

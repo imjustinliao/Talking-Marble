@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>talking-marble element test page</title>
+    <style>
+      html, body { margin: 0; font: 12px system-ui, sans-serif; background: #101114; color: #eee; }
+      main { display: flex; gap: 24px; padding: 24px; align-items: center; }
+      .box { width: 200px; }
+    </style>
+  </head>
+  <body>
+    <!-- The Web Component with no React on the page (PLAT-01): plain HTML attributes. -->
+    <main>
+      <talking-marble id="a" state="speaking" palette="ember" size="160" label="Nova"></talking-marble>
+      <talking-marble id="b" palette="#00ff88, #112233, #445566, #778899" size="96" halo="false" decorative></talking-marble>
+      <div class="box"><talking-marble id="c" state="mine" presets='{"mine":{"speed":2}}'></talking-marble></div>
+    </main>
+    <script type="module">
+      import '../../src/element.ts';
+      // A tone for the audio property, in its own context.
+      window.tone = () => {
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator(), gain = ctx.createGain(), dest = ctx.createMediaStreamDestination();
+        osc.frequency.value = 220; gain.gain.value = 0.8; osc.connect(gain).connect(dest); osc.start();
+        return dest.stream;
+      };
+      window.elementReady = true;
+    </script>
+  </body>
+</html>

@@ -32,14 +32,16 @@ test('the orb draws in all six states, with no console errors', async ({ page })
   await page.goto('/');
   // Opaque page background so screenshots measure the orb, not the page.
   await page.emulateMedia({ colorScheme: 'dark' });
-  // The state controls live in the States section: go there as a visitor would (the nav link).
-  await page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'States' }).click();
-  const orb = page.locator('[data-talking-marble][role="img"]');
+  // The stage marble's states are tried in Create your own (F-22): go there as a visitor would (its link in the
+  // index), to its States step.
+  await page.getByRole('navigation', { name: 'Shots' }).getByRole('link', { name: 'Create your own' }).click();
+  await page.locator('#create .steps').getByRole('button', { name: 'Try it', exact: true }).click();
+  const orb = page.getByTestId('main-marble').locator('[data-talking-marble][role="img"]');
   await expect(orb).toHaveAttribute('data-ready', 'true');
 
   const frames: string[] = [];
   for (const state of STATES) {
-    await page.getByRole('button', { name: state, exact: true }).click();
+    await page.locator('#create').getByRole('button', { name: state, exact: true }).click();
     await expect(orb).toHaveAttribute('data-state', state);
     await page.waitForTimeout(600);
     const m = await measure(page, orb);

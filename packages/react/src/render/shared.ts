@@ -75,7 +75,8 @@ export function targetContextType(): 'bitmaprenderer' | '2d' {
 
 /** The backing size in device pixels for a marble `cssSize` CSS pixels wide (spec › Rendering). */
 export function backingSize(cssSize: number, devicePixelRatio: number): number {
-  const dpr = Math.min(Math.max(devicePixelRatio || 1, 1), 3);
+  // Past 2x the eye gains nothing a marble's soft pigment can show, and the GPU pays for every pixel (F-54).
+  const dpr = Math.min(Math.max(devicePixelRatio || 1, 1), 2);
   const maxSide = Math.min(renderer?.maxSide ?? 4096, Math.floor(Math.sqrt(PIXEL_BUDGET)));
   return Math.max(1, Math.min(Math.round(cssSize * dpr), maxSide));
 }

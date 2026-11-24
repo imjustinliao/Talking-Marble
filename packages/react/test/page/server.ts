@@ -1,5 +1,5 @@
 // Serves test/page for the package's Playwright specs on a free ephemeral port, apart from the site
-// (and from the reserved ports 5173–5177, docs/parallel-plan.md).
+// (and from the reserved ports 5173–5177, docs/architecture.md › Ports).
 import { createServer as createNetServer } from 'node:net';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

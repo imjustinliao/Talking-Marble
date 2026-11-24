@@ -4,7 +4,8 @@ import { resolvePalette, type OrbPalette } from './colors';
 import { fallbackBackground } from './render/css';
 import { orbLabel } from './label';
 import { createOrb, type OrbController } from './render/orb';
-import { isKnownEmotion, isKnownState, resolveState, type OrbEmotion, type OrbPreset, type OrbState } from './state';
+import { resolveState, type OrbEmotion, type OrbPreset, type OrbState } from './state';
+import { haloStrengthOf, warnUnknown } from './common';
 
 export type { OrbAudioSource };
 
@@ -31,24 +32,19 @@ export interface TalkingMarbleProps {
   label?: string;
   /** Hide the orb from assistive technology (`aria-hidden`), when its state is shown elsewhere. */
   decorative?: boolean;
-  /** The soft light behind the orb. Default true. It never changes layout. */
-  halo?: boolean;
+  /**
+   * The soft light behind the orb: true (the standard halo), false (none), or a strength from 0 to 1.5, where 1 is
+   * the standard. Default true. It never changes layout.
+   */
+  halo?: boolean | number;
   /** Stop animating without unmounting. */
   paused?: boolean;
   /** Replaces the whole accessible name (`label` and the state). */
   'aria-label'?: string;
+  /** Class names for the outer element. */
   className?: string;
+  /** Styles for the outer element. Its height stays automatic, so the orb stays square. */
   style?: CSSProperties;
-}
-
-const warned = new Set<string>();
-/** Development builds only: bundlers replace process.env.NODE_ENV; where nothing defines it, stay quiet. */
-function isDev(): boolean {
-  try {
-    return process!.env!.NODE_ENV !== 'production';
-  } catch {
-    return false;
-  }
 }
 
 /** An audio-reactive orb for voice AI apps. */
@@ -59,6 +55,7 @@ export function TalkingMarble({
   const innerRef = useRef<HTMLSpanElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const haloRef = useRef<HTMLSpanElement>(null);
+  const haloStrength = haloStrengthOf(halo);
   const fallbackRef = useRef<HTMLSpanElement>(null);
   const orbRef = useRef<OrbController | null>(null);
   const tapRef = useRef<AudioTap | null>(null);
@@ -86,14 +83,7 @@ export function TalkingMarble({
   }, []);
 
   useEffect(() => {
-    if (!isKnownState(state, presets) && !warned.has(state) && isDev()) {
-      warned.add(state);
-      console.warn(`[talking-marble] Unknown state "${state}", showing "idle". Add it to \`presets\` to define it.`);
-    }
-    if (emotion && !isKnownEmotion(emotion, presets) && !warned.has(`emotion:${emotion}`) && isDev()) {
-      warned.add(`emotion:${emotion}`);
-      console.warn(`[talking-marble] Unknown emotion "${emotion}", ignored. Add it to \`presets\` to define it.`);
-    }
+    warnUnknown(state, emotion, presets);
     orbRef.current?.setState(state, presets, emotion);
   }, [state, presets, emotion]);
 
@@ -130,11 +120,13 @@ export function TalkingMarble({
       {/* The whole-marble movement (bounce, sway, jelly, shake, size) goes on this inner layer, so the outer
           element's layout and the user's style never move. */}
       <span ref={innerRef} style={{ position: 'absolute', inset: 0, display: 'block' }}>
+        <span data-halo-strength="" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: Math.min(1, haloStrength), filter: haloStrength > 1 ? `brightness(${haloStrength})` : undefined }}>
         <span
           ref={haloRef}
           data-halo=""
-          style={{ position: 'absolute', inset: '1%', borderRadius: '50%', pointerEvents: 'none', display: halo ? 'block' : 'none' }}
+          style={{ position: 'absolute', inset: '1%', borderRadius: '50%', pointerEvents: 'none', display: haloStrength > 0 ? 'block' : 'none' }}
         />
+        </span>
         <span
           ref={fallbackRef}
           data-fallback=""

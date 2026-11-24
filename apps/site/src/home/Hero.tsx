@@ -1,26 +1,37 @@
+import { useEffect, useState } from 'react';
 import { CopyButton } from '../components/CopyButton';
-import { useSimulatedLevel } from '../simulated';
-import { GITHUB } from '../ui/Chrome';
-import { ArrowIcon } from '../ui/icons';
-import { LiveMarble } from '../ui/LiveMarble';
+import { LinkButtons } from '../ui/Chrome';
+import { MarbleText } from '../ui/MarbleText';
+import { useShotLive } from '../scene/shot';
+import { useStageWish } from '../scene/stage';
 
 const INSTALL = 'npm i talking-marble';
+/** The opening loop: a voice agent's happy path. `error` is shown where states are chosen, not here. */
+export const HERO_CYCLE = ['idle', 'connecting', 'listening', 'thinking', 'speaking'] as const;
+const STEP_MS = 4200;
+const CAPTION: Record<(typeof HERO_CYCLE)[number], string> = { idle: 'Idle', connecting: 'Connecting', listening: 'Listening', thinking: 'Thinking', speaking: 'Speaking' };
 
-/** The marble, one plain line, the install command and two links. */
+/**
+ * The intro, complete on its own (F-22): the name, one plain line, the install command, and Docs and GitHub as
+ * buttons (F-26). Everything below is the experience; nothing asks you to scroll (F-25). The marble is the stage's.
+ */
 export function Hero() {
-  const level = useSimulatedLevel(true);
+  const live = useShotLive();
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (!live) return;
+    const t = setInterval(() => setI(n => (n + 1) % HERO_CYCLE.length), STEP_MS);
+    return () => clearInterval(t);
+  }, [live]);
+  useStageWish('top', { state: HERO_CYCLE[i]!, caption: CAPTION[HERO_CYCLE[i]!], voice: { kind: 'sim' } });
   return (
-    <section id="top" className="hero" aria-labelledby="hero-title">
-      <LiveMarble size={280} className="hero__marble" state="speaking" level={level} decorative />
-      <h1 id="hero-title" className="hero__title">Talking Marble</h1>
+    <div className="hero">
+      <h1 id="top-title" className="hero__title">Talking <MarbleText text="Marble" className="hero__marble" /></h1>
       <p className="hero__line">An audio-reactive orb for voice AI apps. React, open source.</p>
       <div className="hero__actions">
         <CopyButton className="install-pill" text={INSTALL} what="install command" label={<code>{INSTALL}</code>} />
       </div>
-      <nav className="hero__links" aria-label="Get started">
-        <a className="btn btn--primary" href={`${import.meta.env.BASE_URL}docs/`}>Docs<ArrowIcon /></a>
-        <a className="btn" href={GITHUB}>GitHub</a>
-      </nav>
-    </section>
+      <LinkButtons />
+    </div>
   );
 }
