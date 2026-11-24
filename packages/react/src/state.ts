@@ -1,7 +1,7 @@
 import { emotionData, stateData } from './generated/core';
 import { resolvePalette, type OrbColors } from './colors';
 
-/** The six built-in states, the common voice-agent lifecycle (LiveKit, Deepgram, Stream). */
+/** The built-in states: the common voice-agent lifecycle (LiveKit, Deepgram, Stream), plus `searching` for tool calls. */
 export type BuiltInState = keyof typeof stateData.states;
 /** A built-in state, or the name of one of your presets. */
 export type OrbState = BuiltInState | (string & {});
@@ -12,7 +12,7 @@ export type OrbEmotion = BuiltInEmotion | (string & {});
 
 /** The numeric parameters, in packages/core/spec.md › Parameters order. The one list every other place derives from. */
 export const NUMERIC = [
-  'speed', 'turbulence', 'veins', 'softness', 'detail', 'spin', 'waves', 'ripples', 'whirl', 'chop',
+  'speed', 'turbulence', 'veins', 'softness', 'detail', 'spin', 'waves', 'ripples', 'whirl', 'chop', 'scan',
   'glow', 'brightness', 'halo', 'breath', 'beat', 'bounce', 'sway', 'wobble', 'shake', 'size', 'reactivity',
 ] as const;
 export type NumericKey = (typeof NUMERIC)[number];
@@ -39,7 +39,7 @@ export type ResolvedPreset = OrbParams & {
 /** Each numeric parameter's range (packages/core/spec.md › Parameters). */
 export const paramRanges: Record<NumericKey, readonly [number, number]> = {
   speed: [0, 4], turbulence: [0, 1], veins: [0, 1], softness: [0, 1], detail: [0, 1], spin: [-2, 2],
-  waves: [0, 1], ripples: [0, 1], whirl: [0, 3], chop: [0, 1], glow: [0, 1], brightness: [0.5, 1.5],
+  waves: [0, 1], ripples: [0, 1], whirl: [0, 3], chop: [0, 1], scan: [0, 1], glow: [0, 1], brightness: [0.5, 1.5],
   halo: [0, 1], breath: [0, 1], beat: [0, 1.5], bounce: [0, 1], sway: [0, 1], wobble: [0, 1], shake: [0, 1],
   size: [0.5, 1.2], reactivity: [0, 1],
 };
@@ -51,7 +51,7 @@ export const states: Record<BuiltInState, OrbPreset> = stateData.states as Recor
 /** The built-in emotions, which layer on a state (`emotion` prop). Each is an ordinary preset. */
 export const emotions: Record<BuiltInEmotion, OrbPreset> = emotionData as Record<BuiltInEmotion, OrbPreset>;
 /** The built-in emotions one by one. */
-export const { muted, happy, calm } = emotions;
+export const { muted, happy, calm, excited, curious, surprised, concerned, sad } = emotions;
 
 /** How far an emotion moves a state's values toward its own (packages/core/spec.md › Resolution). */
 export const EMOTION_WEIGHT = 0.65;

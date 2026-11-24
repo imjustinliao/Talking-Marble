@@ -9,8 +9,8 @@ The platform-neutral contract. Every port (web, SwiftUI, React Native, Compose, 
 | `shader/orb.frag.glsl` | The orb, GLSL ES 3.0. Ports translate it line for line (Metal, SkSL/AGSL, Flutter fragment shaders). |
 | `shader/orb.vert.glsl` | A full-screen quad: `vUv` from -1 to 1 across the orb's square. |
 | `presets/palettes.json` | Named palettes: four sRGB hex colors each, ground then three pigments. |
-| `presets/states.json` | `base` (every parameter's resting value: the original orb) and the six built-in `states`, each only the parameters it changes. |
-| `presets/emotions.json` | The built-in emotions (`muted`, `happy`, `calm`), which layer on a state. |
+| `presets/states.json` | `base` (every parameter's resting value: the original orb) and the seven built-in `states`, each only the parameters it changes. |
+| `presets/emotions.json` | The eight built-in emotions (`muted`, `happy`, `calm`, `excited`, `curious`, `surprised`, `concerned`, `sad`), which layer on a state. |
 
 ## One material
 
@@ -38,6 +38,7 @@ A preset is plain data: any subset of these, plus optional `colors` (four hex co
 | `rippleDirection` | `"out"` or `"in"` | `"out"` | Which way the rings (and a voice's rings) travel |
 | `whirl` | 0–3 | 0 | A whirlpool twisting the pattern toward the centre |
 | `chop` | 0–1 | 0 | Short crossing waves |
+| `scan` | 0–1 | 0 | Searching: a lens magnifies the centre, the pattern streams out of it, and a ping of light travels outward |
 | `glow` | 0–1 | 0 | Light from within |
 | `brightness` | 0.5–1.5 | 1 | Overall light |
 | `halo` | 0–1 | 0.5 | The halo's opacity at rest |
@@ -64,7 +65,7 @@ Each frame derives the shader's uniforms from the eased parameters (`k` is the s
 
 | Uniform | Value | At base |
 |---------|-------|---------|
-| `uTime`, `uSwirl`, `uSpin`, `uWaveTime`, `uRipplePhase` | the clocks (Motion) | |
+| `uTime`, `uSwirl`, `uSpin`, `uWaveTime`, `uRipplePhase`, `uScanPhase` | the clocks (Motion) | |
 | `uLevel` | `level` (0 with reduced motion) | 0 |
 | `uWarp` | `1 + 2.4 × turbulence` | 2.2 |
 | `uVoiceWarp`, `uVoiceBright` | 2, 0.45 | |
@@ -77,7 +78,7 @@ Each frame derives the shader's uniforms from the eased parameters (`k` is the s
 | `uBrightness` | `brightness × (1 + 0.1 × pulse)` | 1 |
 | `uWaveAmp`, `uWaveFreq`, `uWaveAngle` | `0.1 × waves`, `2.2 × uScale / 1.2`, 0.35 rad | 0 |
 | `uRippleAmp`, `uRippleFreq` | `0.1 × ripples + 0.22 × level`, 8 | 0 |
-| `uVortex`, `uChop` | `whirl`, `chop` | 0 |
+| `uVortex`, `uChop`, `uScan` | `whirl`, `chop`, `scan` | 0 |
 
 ## Motion
 
@@ -89,6 +90,7 @@ Run per frame with `dt` in seconds, capped at 0.1. Draw at most 30 frames a seco
    - `time += dt × speed`; `swirl += dt × level × 4`; `spin += dt × spin × 0.5`
    - `waveTime += dt × 1.8 × speed × (1 + 1.2 × level)`
    - `ripplePhase += dt × 6 × (1 + 3 × level) × (+1 out, −1 in)`
+   - `scanPhase += dt × (0.8 + 0.4 × speed)`
    - `breathPhase += dt × 2π / (1.6 + 2.4 × (1 − min(speed, 1)))`
    - `beatPhase += dt × 2π × 0.9`; `bouncePhase += dt × 2π × (0.25 + 1.55 × bounce^1.5)`; `jellyPhase += dt × 2π × 4.5`
 4. **Pulse** (the beat): with `f` the fractional part of `beatPhase / 2π`, `pulse = beat × (e^(−((f − 0.12) × 12)²) + 0.5 e^(−((f − 0.32) × 12)²))`.

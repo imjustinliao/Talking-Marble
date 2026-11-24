@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-const STATES = ['idle', 'connecting', 'listening', 'thinking', 'speaking', 'error'];
+const STATES = ['idle', 'connecting', 'listening', 'thinking', 'searching', 'speaking', 'error'];
 
 /** Screenshots the orb and measures it in the page: how much is covered, and how varied the color is. */
 async function measure(page: Page, orb: Locator) {

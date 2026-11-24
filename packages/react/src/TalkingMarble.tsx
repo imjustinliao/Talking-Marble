@@ -12,7 +12,7 @@ export type { OrbAudioSource };
 export interface TalkingMarbleProps {
   /** A built-in state or one of your presets. Default `idle`. Unknown names show `idle`. */
   state?: OrbState;
-  /** An emotion layered on the state: `muted`, `happy`, `calm` or one of your presets. Optional. */
+  /** An emotion layered on the state: `happy`, `excited`, `calm`, `curious`, `surprised`, `concerned`, `sad`, `muted` or one of your presets. Optional. */
   emotion?: OrbEmotion | null;
   /**
    * Audio to react to, in states that listen (`listening`, `speaking`, or any preset with `reactivity`).

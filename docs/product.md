@@ -30,12 +30,13 @@ Stable IDs by area. The boxes are acceptance items: tick one only after it was c
 - [ ] The shader and the presets live in a platform-neutral `packages/core`, so each port only needs a small renderer (today: `core/` at the repo root, not a package)
 - [x] Developers can add their own states through presets ✓
 
-### ORB-03: Six built-in states
+### ORB-03: Seven built-in states
 - [x] `idle`, `connecting`, `listening`, `thinking`, `speaking`, `error`, named the way voice SDKs name them (LiveKit, Deepgram, Stream) ✓
+- [x] `searching` for tool calls and lookups: a lens magnifies the centre and the pattern streams out of it (F-83) ✓
 - [x] These exact names, so a developer can pass their SDK's state straight in ✓
 
 ### EMO-01: Emotions layer on a state
-- [ ] Emotions (`muted`, `happy`, `calm`) layer on top of a state (an `emotion` prop)
+- [x] Emotions (`happy`, `excited`, `calm`, `curious`, `surprised`, `concerned`, `sad`, `muted`) layer on top of a state (an `emotion` prop; eight since F-87) ✓
 - [x] They are themselves examples of custom presets (exported today as presets) ✓
 
 ### ORB-08: One material in every state

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { CopyButton } from '../components/CopyButton';
-import { MOTION, NAME, designFrom, exportJson, type Design } from '../create/model';
+import { MOTION, designFrom, exportJson, type Design } from '../create/model';
 import { COLOR_LABELS, type Colors } from '../palettes';
 import { STATES, orbFor } from '../presets';
-import { mineColors, mineJsx, minePreset, setMine, useMine } from '../scene/mine';
+import { mineColors, mineJsx, minePreset, nameMine, reserveNames, setMine, useMine } from '../scene/mine';
 import { useShotLive } from '../scene/shot';
 import { useStageWish } from '../scene/stage';
 import { endTalk, startTalk, useTalk } from '../scene/talk';
@@ -11,24 +11,24 @@ import { ColorPicker } from '../ui/ColorPicker';
 import { Switch, useGlide } from '../ui/Controls';
 import { MicIcon, ResetIcon } from '../ui/icons';
 
-const STEPS = ['Colours', 'Motion', 'Try it', 'Code'] as const;
+const STEPS = ['Name', 'Colours', 'Motion', 'Try it', 'Code'] as const;
 type Step = (typeof STEPS)[number];
 const STATE_NAMES = STATES.filter(s => s.kind === 'state').map(s => s.name);
 const EMOTIONS = [null, ...STATES.filter(s => s.kind === 'emotion').map(s => s.name)];
-const BUILT_IN = STATES.map(s => s.name);
+reserveNames(STATES.map(s => s.name));
 const PHASE: Record<string, string> = { listening: 'Listening. Speak, then pause.', thinking: 'Thinking…', speaking: 'Speaking. A simulated reply for now.' };
 
 /**
  * Create your own (F-22): the stage marble, large, starts as a plain globe (F-61) and becomes yours. Two levels
- * (F-63): the steps, a switch bar (F-62) with one always chosen, Colours first (F-70); only the chosen step shows
- * below it, so nothing is shown all at once. Colours; Motion (its own state, a few plain dials); Try it (every
+ * (F-63): the steps, a switch bar (F-62) with one always chosen, Name first (F-86; Colours before it, F-70); only the chosen step shows
+ * below it, so nothing is shown all at once. Name (its `label` and preset name); Colours; Motion (its own state, a few plain dials); Try it (every
  * state and emotion, yours included, the halo's strength, and Talk, as on the walk); Code.
  */
 export function Create() {
   const mine = useMine();
   const talk = useTalk();
   const live = useShotLive();
-  const [step, setStep] = useState<Step>('Colours');
+  const [step, setStep] = useState<Step>('Name');
   const { bar, glide } = useGlide(step);
   const [state, setState] = useState<string>('speaking');
   const [emotion, setEmotion] = useState<string | null>(null);
@@ -49,11 +49,11 @@ export function Create() {
     presets: step === 'Motion' ? { [mine.name]: design as unknown as Record<string, number> } : presets,
     palette: [...colors],
     halo: mine.halo,
+    label: mine.title.trim() || undefined,
     voice: talking && talk.phase === 'listening' && talk.stream ? { kind: 'mic', stream: talk.stream } : { kind: 'sim' },
   });
 
   const setColor = (i: number, hex: string) => { const next = [...colors] as Colors; next[i] = hex; setMine({ colors: next }); };
-  const nameOk = NAME.test(mine.name) && !BUILT_IN.includes(mine.name);
   const choose = (s: Step) => { if (step === 'Try it' && s !== 'Try it') endTalk(); setStep(s); };
 
   return (
@@ -67,6 +67,16 @@ export function Create() {
       </div>
 
       <div id="create-step" className="create__step" aria-live="polite">
+        {step === 'Name' && (
+          <div className="create__name">
+            <label className="pg-input">Name your marble
+              <input value={mine.title} onChange={e => nameMine(e.target.value)} placeholder="Nova" maxLength={32} spellCheck={false} autoComplete="off" />
+            </label>
+            <p className="shot__line">
+              {mine.title.trim() ? `Screen readers will call it “${mine.title.trim()}, speaking”.` : 'Give it a name: screen readers say it with its state, like “Nova, speaking”.'}
+            </p>
+          </div>
+        )}
         {step === 'Colours' && (
           <div className="pg-colors">
             {COLOR_LABELS.map((label, i) => <ColorPicker key={label} label={label} value={colors[i]!} onChange={hex => setColor(i, hex)} />)}
@@ -108,15 +118,10 @@ export function Create() {
         )}
         {step === 'Code' && (
           <div className="create__name">
-            {mine.design && (
-              <label className="pg-input">Your state’s name
-                <input value={mine.name} onChange={e => setMine({ name: e.target.value.toLowerCase() })} aria-invalid={!nameOk} spellCheck={false} />
-              </label>
-            )}
             <pre className="create__code mono" aria-label="Your marble’s code">{mineJsx(mine)}</pre>
             <div className="create__actions">
               <CopyButton className="btn btn--small" text={mineJsx(mine)} what="code" label="Copy code" />
-              {mine.design && nameOk && <CopyButton className="btn btn--small" text={exportJson(mine.name, design)} what="preset" label="Export preset" />}
+              {mine.design && <CopyButton className="btn btn--small" text={exportJson(mine.name, design)} what="preset" label="Export preset" />}
             </div>
           </div>
         )}

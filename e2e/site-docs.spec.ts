@@ -72,7 +72,7 @@ test('the props table lists every prop of TalkingMarbleProps, with a description
   }
   // The aliases are spelled out, and the defaults come from the component.
   const row = (name: string) => rows.find(r => r[0] === name)!;
-  expect(row('state')[1]).toBe("'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'error' | string");
+  expect(row('state')[1]).toBe("'idle' | 'connecting' | 'listening' | 'thinking' | 'searching' | 'speaking' | 'error' | string");
   expect(row('state')[2]).toBe("'idle'");
   expect(row('palette')[1]).toContain("'pearl' | 'ember'");
   expect(row('halo')[2]).toBe('true');

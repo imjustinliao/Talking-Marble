@@ -7,7 +7,7 @@ const { default: AxeBuilder } = createRequire(new URL('../apps/site/package.json
 const create = (page: Page) => page.locator('#create');
 const stage = (page: Page) => page.getByTestId('main-marble');
 const step = (page: Page, name: string) => create(page).locator('.steps').getByRole('button', { name, exact: true });
-const STEPS = ['Colours', 'Motion', 'Try it', 'Code'];
+const STEPS = ['Name', 'Colours', 'Motion', 'Try it', 'Code'];
 const UNPAINTED = '#ededeb #c9c9c6 #b1b1ae #dcdcd9';
 
 async function open(page: Page) {
@@ -16,16 +16,16 @@ async function open(page: Page) {
   await goToShot(page, 'Create your own');
 }
 
-test('create your own: a switch bar of steps, Colours chosen first, one step shown at a time; the row never moves (F-62, F-63, F-70)', async ({ page }) => {
+test('create your own: a switch bar of steps, Name chosen first, one step shown at a time; the row never moves (F-62, F-63, F-86)', async ({ page }) => {
   const errors = trackErrors(page);
   await open(page);
   const row = () => create(page).locator('.steps').evaluate(el => el.getBoundingClientRect().top);
   const at = await row();
   // A switch bar: one step is always chosen, Colours to begin with, and only it shows below.
   await expect(create(page).locator('.steps .seg__opt')).toHaveText(STEPS);
-  await expect(step(page, 'Colours')).toHaveAttribute('aria-pressed', 'true');
-  await expect(create(page).getByRole('button', { name: /^Pigment 1: #/ })).toBeVisible();
-  for (const name of [...STEPS.slice(1), 'Colours']) {
+  await expect(step(page, 'Name')).toHaveAttribute('aria-pressed', 'true');
+  await expect(create(page).getByRole('textbox', { name: 'Name your marble' })).toBeVisible();
+  for (const name of [...STEPS.slice(1), 'Name']) {
     await step(page, name).click();
     await expect(step(page, name)).toHaveAttribute('aria-pressed', 'true');
     await expect(create(page).locator('.steps [aria-pressed="true"]')).toHaveCount(1);
@@ -33,8 +33,8 @@ test('create your own: a switch bar of steps, Colours chosen first, one step sho
     expect(Math.abs((await row()) - at)).toBeLessThanOrEqual(1);
   }
   // Choosing the chosen step again keeps it open.
-  await step(page, 'Colours').click();
-  await expect(step(page, 'Colours')).toHaveAttribute('aria-pressed', 'true');
+  await step(page, 'Name').click();
+  await expect(step(page, 'Name')).toHaveAttribute('aria-pressed', 'true');
   // The lit key glides to the chosen step (F-71): one key, sitting on it.
   await step(page, 'Code').click();
   await expect.poll(() => page.evaluate(() => {
@@ -80,17 +80,23 @@ test('try it: every state and emotion, your own state too, the halo strength int
   await expect(orb).toHaveAttribute('data-state', 'mine');
   await step(page, 'Try it').click();
   await expect(create(page).getByRole('button', { name: 'mine', exact: true })).toBeVisible();
+  // Naming it (F-86) names its state and its label: "Sparkle" → presets={{ sparkle }}, label="Sparkle".
+  await step(page, 'Name').click();
+  await create(page).getByRole('textbox', { name: 'Name your marble' }).fill('Sparkle');
+  await expect(stage(page).locator('[data-talking-marble]')).toHaveAttribute('aria-label', /^Sparkle, /);
   await step(page, 'Code').click();
-  const name = create(page).getByRole('textbox', { name: /name/ });
-  await name.fill('sparkle');
+  await expect(create(page).locator('.create__code')).toContainText('label="Sparkle"');
   await expect(create(page).locator('.create__code')).toContainText('presets={{ sparkle: { speed: 3');
   await create(page).getByRole('button', { name: /Export preset/ }).click();
   const json = JSON.parse(await page.evaluate(() => navigator.clipboard.readText()));
   expect(json.sparkle.speed).toBe(3);
-  await name.fill('idle');
-  await expect(name).toHaveAttribute('aria-invalid', 'true');
-  await expect(create(page).getByRole('button', { name: /Export preset/ })).toHaveCount(0);
-  await name.fill('sparkle');
+  // A built-in's name never replaces the built-in: "Idle" becomes myidle.
+  await step(page, 'Name').click();
+  await create(page).getByRole('textbox', { name: 'Name your marble' }).fill('Idle');
+  await step(page, 'Code').click();
+  await expect(create(page).locator('.create__code')).toContainText('presets={{ myidle: {');
+  await step(page, 'Name').click();
+  await create(page).getByRole('textbox', { name: 'Name your marble' }).fill('Sparkle');
   await goToShot(page, 'Guide');
   await expect(page.locator('#guide').getByLabel('usage', { exact: true })).toContainText('presets={presets}');
 });

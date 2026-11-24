@@ -6,9 +6,9 @@ The handoff note for the next session, agent or account. Keep it short; newest e
 ## Now
 
 - **Phase**: Building <!-- Setup · Building · Shipping · Live · Paused -->
-- **Milestone**: M13 Experience v2 in owner review; PLAT-01 (every device) approved, step 1 (Web Component) built in 0.13.0
+- **Milestone**: M13 Experience v2 in owner review; F-83 to F-89 built in 0.14.0 (searching state, eight emotions, Name step, docs spacing and glass bar); PLAT-01 step 1 (Web Component) built in 0.13.0
 - **Next action**: npm publish (PKG-01, owner's npm account) so the site's install command works; then PLAT-01 step 2 needs CORE-01's shared core. The site is live on Vercel at https://talking-marble.vercel.app/ (owner deployed 2026-11-24; every push to `main` redeploys)
-- **In flight**: nothing. Kept after the tidy pass (their commits exist nowhere else): `milestone/site` (`ffcbb19`, the earlier experience), `milestone/site-sections`, and `milestone/orb-spec` and `milestone/camera` in the finished Site and Package sessions' worktrees
+- **In flight**: nothing; preview: main site 5173. Kept after the tidy pass (their commits exist nowhere else): `milestone/site` (`ffcbb19`, the earlier experience), `milestone/site-sections`, and `milestone/orb-spec` and `milestone/camera` in the finished Site and Package sessions' worktrees
 
 ## Milestones
 
@@ -35,6 +35,13 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-89 | Link previews show the title starting lowercase ("an audio-reactive orb…"); capitalise it | built 0.14.0: "Talking Marble: An audio-reactive orb…" (iMessage drops the site name, so the rest leads) | |
+| F-88 | Nothing in the project may name the owner's company or anything tied to it: this is a personal project | checked 2026-11-24: no mention in tracked files or on GitHub (the published history was squashed clean at 0.13.1); old local branches `milestone/*` still hold earlier commits that do, never pushed | |
+| F-87 | Are emotions needed? If yes, add more | built 0.14.0: kept (tone without a new state), eight now: happy, excited, calm, curious, surprised, concerned, sad, muted | |
+| F-86 | Create your own: name your marble | built 0.14.0: a Name step first; the name is the `label` and, made plain, its state's preset name | |
+| F-85 | Docs top bar: liquid glass, not black, with a subtle light along the bottom edge | built 0.14.0 | |
+| F-84 | Docs page too condensed (no space between text and code…); update content where needed | built 0.14.0: more space throughout, code panels opened up; states, emotions and `scan` documented | |
+| F-83 | A new state, searching: a magnifier-like effect, the pattern streaming out from the centre like a Doppler effect | built 0.14.0: `searching` and its parameter `scan` (lens, outward stream, a ping of light) | |
 | F-82 | The fog's patterns random every time, moving naturally, so each visitor sees different ones | built 0.13.0: a fresh seed and clock per visit; its shapes morph as they drift | |
 | F-81 | Make the marketing site live, on Vercel; is a plan needed? | built 0.13.1: `vercel.json`, address talking-marble.vercel.app, CI checks only; deployed by the owner 2026-11-24, checked live (home, docs, llms.txt, sitemap, robots; no console errors) | |
 | F-80 | The magnet: smooth, not sudden; pull only when close to the overview or Create, not after a small scroll | built 0.13.0: within 0.28 screens of a place, an eased glide of 0.5–1 s; any input stops it | |
@@ -141,7 +148,7 @@ Statuses: open · in progress · done · won't do (why). Remove done rows once t
 ## Session log
 
 <!-- - **YYYY-MM-DD** (agent, tool): one line. Keep the last ~10. -->
-- **2026-11-24** (Claude Opus 5.5, Claude Code desktop): Picked up from "Repository review - v0" after the owner's Vercel deploy; checked the live site and recorded it.
+- **2026-11-24** (Claude Opus 5.5, Claude Code desktop): Picked up from "Repository review - v0" after the owner's Vercel deploy; checked the live site. Built F-83 to F-89 (0.14.0).
 - **2026-11-23** (owner): Second push: 0.11.0 to 0.13.1 published as one clean commit on top of 0.8.5, because one local commit mentioned another project; the local archive branches of the step-by-step history were deleted 2026-11-24 at the owner's request (never pushed, not needed). Hosting moved to Vercel (F-81).
 - **2026-11-23** (Claude Opus 5.5, Claude Code desktop): Took over after the other account stopped (Main `7c9abdb5` hit its limit; `17dfe1c4` merged M12 and launched M10, which never ran). Restarted M10 in a new Site session. Built M13 (new flow, Talk, Create your own, minimal Guide, ink floor, marble-themed chrome; F-22 to F-32) and F-18–F-21 on main (fixed layouts, pick prompt + See all, unpainted Yours, small marbles wear the pick); full e2e green after two fixes.
 - **2026-11-23** (Claude Sonnet 5.5, Claude Code desktop): Resumed after the usage-limit stop; Site session had finished M12. Verified (60 unit, typecheck, build, 83 e2e) and merged `milestone/camera` at 0.10.5. Not pushed.

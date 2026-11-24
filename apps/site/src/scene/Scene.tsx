@@ -65,7 +65,7 @@ const StageMarble = memo(function StageMarble({ active, hidden }: { active: Shot
         halo={wish.halo ?? true}
         audio={voice.kind === 'mic' ? voice.stream : null}
         level={voice.kind === 'mic' ? undefined : voice.kind === 'level' ? voice.level : sim}
-        label="Talking Marble"
+        label={wish.label || 'Talking Marble'}
         paused={hidden}
         className="reflect"
       />

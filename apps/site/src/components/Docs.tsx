@@ -12,7 +12,7 @@ import { Recipes } from './Recipes';
 
 const QUICK_START = `import { TalkingMarble, type OrbState } from 'talking-marble';
 
-// state: 'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'error'
+// state: 'idle' | 'connecting' | 'listening' | 'thinking' | 'searching' | 'speaking' | 'error'
 // stream: the agent's audio, if you have it
 export function Assistant({ state, stream }: { state: OrbState; stream?: MediaStream | null }) {
   return <TalkingMarble state={state} audio={stream} palette="pearl" size={160} />;
@@ -32,7 +32,7 @@ const ELEMENT = `<script type="module">
 /** The Web Component's attributes and properties (packages/react/src/element.ts). */
 const ELEMENT_ATTRS: [string, string, string][] = [
   ['state', 'state', 'A built-in state or one of your presets. Default `idle`.'],
-  ['emotion', 'emotion', 'An emotion layered on the state: `muted`, `happy`, `calm` or one of your presets.'],
+  ['emotion', 'emotion', 'An emotion layered on the state: `happy`, `excited`, `calm`, `curious`, `surprised`, `concerned`, `sad`, `muted` or one of your presets.'],
   ['palette', 'palette', 'A palette name, or four hex colours separated by commas (the property also takes an array).'],
   ['size', 'size', 'Width and height in CSS px. Absent: it fills its container\'s width, square.'],
   ['halo', 'halo', '`true` (default), `false`, or a strength from 0 to 1.5.'],
@@ -74,7 +74,8 @@ const celebrating: OrbPreset = {
 
 <TalkingMarble state="celebrating" presets={{ celebrating }} />
 
-// An emotion layers on any state: built-in (muted, happy, calm) or your own preset.
+// An emotion layers on any state: a built-in one (happy, excited, calm, curious, surprised, concerned, sad, muted)
+// or your own preset.
 <TalkingMarble state={agentState} emotion="happy" />`;
 
 /** Every numeric field at its resting value, four to a line. */
@@ -255,8 +256,8 @@ export function Docs() {
             rows={props.map(p => [<code key="n">{p.name}</code>, <code key="t">{p.type}</code>, defaultCell(p.default), inline(p.description)])}
           />
           <p>
-            Also exported: <code>palettes</code>, <code>states</code>, <code>emotions</code> (and <code>muted</code>, <code>happy</code>,{' '}
-            <code>calm</code> one by one), <code>resolveState</code>, <code>resolvePalette</code>, and the types <code>OrbState</code>,{' '}
+            Also exported: <code>palettes</code>, <code>states</code>, <code>emotions</code> (and each built-in emotion,{' '}
+            <code>happy</code> to <code>muted</code>, one by one), <code>resolveState</code>, <code>resolvePalette</code>, and the types <code>OrbState</code>,{' '}
             <code>BuiltInState</code>, <code>OrbEmotion</code>, <code>BuiltInEmotion</code>, <code>OrbPreset</code>, <code>OrbParams</code>,{' '}
             <code>ResolvedPreset</code>, <code>OrbPalette</code>, <code>OrbColors</code>, <code>PaletteName</code>, <code>OrbAudioSource</code>{' '}
             and <code>TalkingMarbleProps</code>.
@@ -264,7 +265,8 @@ export function Docs() {
 
           <h2 id="states">States and emotions</h2>
           <p>
-            The six states follow the common voice-agent lifecycle, so you can pass your SDK&apos;s state straight in. The material
+            Six states follow the common voice-agent lifecycle, so you can pass your SDK&apos;s state straight in; the seventh,{' '}
+            <code>searching</code>, is for while the agent looks something up or calls a tool. The material
             never changes between states: only energy, motion and brightness do, and the voice drives them. Every change eases from
             where the orb is; nothing jumps.
           </p>

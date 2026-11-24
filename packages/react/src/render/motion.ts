@@ -7,14 +7,14 @@ const TAU = Math.PI * 2;
 
 /** One orb's clocks and live values. */
 export interface Motion {
-  time: number; swirl: number; spin: number; waveTime: number; ripplePhase: number;
+  time: number; swirl: number; spin: number; waveTime: number; ripplePhase: number; scanPhase: number;
   breathPhase: number; beatPhase: number; bouncePhase: number; jellyPhase: number; clock: number;
   level: number; pulse: number; burst: number; lastShake: number;
 }
 
 export function createMotion(): Motion {
   return {
-    time: 0, swirl: 0, spin: 0, waveTime: 0, ripplePhase: 0, breathPhase: 0, beatPhase: 0, bouncePhase: 0,
+    time: 0, swirl: 0, spin: 0, waveTime: 0, ripplePhase: 0, scanPhase: 0, breathPhase: 0, beatPhase: 0, bouncePhase: 0,
     jellyPhase: 0, clock: 0, level: 0, pulse: 0, burst: 0, lastShake: 0,
   };
 }
@@ -41,6 +41,7 @@ export function stepMotion(m: Motion, eased: Eased, target: OrbParams, rawLevel:
   m.spin += dt * x.spin * 0.5;
   m.waveTime += dt * 1.8 * x.speed * (1 + 1.2 * L);
   m.ripplePhase += dt * 6 * (1 + 3 * L) * (target.rippleDirection === 'in' ? -1 : 1);
+  m.scanPhase += dt * (0.8 + 0.4 * x.speed);
   m.breathPhase += (dt * TAU) / (1.6 + 2.4 * (1 - Math.min(x.speed, 1)));
   m.beatPhase += dt * TAU * 0.9;
   m.bouncePhase += dt * TAU * (0.25 + 1.55 * Math.pow(Math.max(0, x.bounce), 1.5));
@@ -77,6 +78,8 @@ export function uniformsOf(m: Motion, x: Record<NumericKey, number>, k: number, 
   out.uRipplePhase = m.ripplePhase;
   out.uVortex = x.whirl;
   out.uChop = x.chop;
+  out.uScan = x.scan;
+  out.uScanPhase = m.scanPhase;
   return out;
 }
 

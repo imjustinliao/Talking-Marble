@@ -6,7 +6,7 @@ import { emotionData, fragmentSource, stateData } from '../src/generated/core';
 
 describe('core data', () => {
   it('has the six built-in states with the exact lifecycle names', () => {
-    expect(Object.keys(states)).toEqual(['idle', 'connecting', 'listening', 'thinking', 'speaking', 'error']);
+    expect(Object.keys(states)).toEqual(['idle', 'connecting', 'listening', 'thinking', 'searching', 'speaking', 'error']);
   });
   it('has six palettes of four valid hex colors', () => {
     expect(Object.keys(palettes)).toEqual(['pearl', 'ember', 'lagoon', 'ink', 'rose', 'aurora']);
@@ -102,7 +102,7 @@ describe('states and emotions', () => {
     expect(resolveState('idle', undefined, 'nope')).toEqual(resolveState('idle'));
   });
   it('exports the emotions, also one by one', () => {
-    expect(Object.keys(emotions)).toEqual(['muted', 'happy', 'calm']);
+    expect(Object.keys(emotions)).toEqual(['muted', 'happy', 'calm', 'excited', 'curious', 'surprised', 'concerned', 'sad']);
     expect(muted.reactivity).toBe(0);
     expect(happy.bounce).toBe(1);
     expect(calm.speed).toBeLessThan(1);

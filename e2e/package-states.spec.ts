@@ -7,7 +7,7 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '../packages/react/test/page/fixture';
 
-const STATES = ['idle', 'connecting', 'listening', 'thinking', 'speaking', 'error'];
+const STATES = ['idle', 'connecting', 'listening', 'thinking', 'searching', 'speaking', 'error'];
 const SIZES = [240, 48, 20];
 const SAMPLE_MS = 3200; // longer than the slowest bounce and breath (about 2.6 s) and three heartbeats
 const MOTION_MS = 150; // pattern motion: frames this far apart
@@ -246,7 +246,7 @@ for (const bg of ['dark', 'light'] as const) {
   });
 
   test(`emotions grid on ${bg}`, async ({ page, testPage }) => {
-    await openGrid(page, `${testPage}?view=states&emotions=1&sizes=${SIZES.join()}&bg=${bg}`, 3 * SIZES.length);
+    await openGrid(page, `${testPage}?view=states&emotions=1&sizes=${SIZES.join()}&bg=${bg}`, 8 * SIZES.length);
     await page.locator('#root').screenshot({ path: `test-results/package/emotions-${bg}.png` });
   });
 }

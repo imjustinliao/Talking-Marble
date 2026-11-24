@@ -10,8 +10,8 @@ One repository, a pnpm workspace with three parts:
 packages/core/             platform-neutral: the contract every port reuses (private package `@talking-marble/core`)
   shader/orb.frag.glsl     the orb fragment shader (GLSL ES 3.0), the single source of the look
   presets/palettes.json    the six palettes (ground + three pigments, sRGB hex)
-  presets/states.json      the six built-in states, as parameter values
-  presets/examples.json    the example presets / emotions (muted, happy, calm)
+  presets/states.json      the seven built-in states, as parameter values
+  presets/emotions.json    the eight built-in emotions (happy, excited, calm, curious, surprised, concerned, sad, muted)
   spec.md                  how parameters map to uniforms, the easing rates, the audio-level math
 packages/react/            the npm package `talking-marble` (TypeScript, React)
   src/render/              WebGL2 renderer, framework-free (built from packages/core)
@@ -55,8 +55,8 @@ The public API, the contract developers build against (changes need the owner's 
 import { TalkingMarble } from 'talking-marble';
 
 <TalkingMarble
-  state="speaking"            // 'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'error' | any preset name
-  emotion="happy"             // M7: optional; 'muted' | 'happy' | 'calm' | any preset name; layers on the state
+  state="speaking"            // 'idle' | 'connecting' | 'listening' | 'thinking' | 'searching' | 'speaking' | 'error' | any preset name
+  emotion="happy"             // optional; one of the eight built-in emotions or any preset name; layers on the state
   audio={remoteStream}        // MediaStream | HTMLMediaElement | AudioNode, optional
   level={0.4}                 // 0–1, optional; overrides audio when given
   palette="pearl"             // a palette name, or four colors: ['#f6f5ee', '#ef9fc5', '#61d9d0', '#f3c76f']
@@ -70,7 +70,7 @@ import { TalkingMarble } from 'talking-marble';
 />
 ```
 
-Also exported: `palettes`, `states`, `emotions` (M7: `muted`, `happy`, `calm`), `resolveState`, `resolvePalette`, and the types `OrbState`, `BuiltInState`, `OrbEmotion`, `OrbPreset`, `OrbPalette`, `OrbColors`, `PaletteName`, `OrbAudioSource`, `TalkingMarbleProps`.
+Also exported: `palettes`, `states`, `emotions` (and each built-in emotion by name), `resolveState`, `resolvePalette`, and the types `OrbState`, `BuiltInState`, `OrbEmotion`, `OrbPreset`, `OrbPalette`, `OrbColors`, `PaletteName`, `OrbAudioSource`, `TalkingMarbleProps`.
 
 **The Web Component** (PLAT-01 step 1, owner-approved 2026-11-23): `import 'talking-marble/element'` registers `<talking-marble>` for any web framework or plain HTML, with no React (React is an optional peer). It drives the same framework-free orb controller (`src/render/orb.ts`) as the React component, inside a shadow root; the halo-strength rule and the unknown-name warnings are shared (`src/common.ts`).
 

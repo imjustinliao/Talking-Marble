@@ -4,6 +4,7 @@
 // - Pigment: domain-warped fBm, q = fbm(p), r = fbm(p + q) (Quilez, "Domain Warping").
 // - Globe: analytic sphere; normal (x, y, sqrt(1 - x^2 - y^2)); edge antialiased with fwidth.
 // - Water: the pattern rolls in swells, ripples out or in from the centre, drains in a whirlpool or turns choppy.
+// - Search: a lens magnifies the centre and the pattern streams out of it, with a ping of light travelling outward.
 // - Output: ACES filmic fit (Narkowicz), sRGB encode, interleaved gradient noise dither (Jimenez 2014).
 // One material in every state: states change only energy, motion and brightness (core/spec.md).
 // With every uniform at its resting value (spec.md › Parameters) this is the original orb, pixel for pixel.
@@ -35,6 +36,8 @@ uniform float uRippleFreq;
 uniform float uRipplePhase;
 uniform float uVortex;      // whirlpool twist toward the centre
 uniform float uChop;        // short crossing waves
+uniform float uScan;        // search: the pattern streams out of a magnified centre
+uniform float uScanPhase;   // the search's clock
 uniform vec3 uBase;         // ground, linear
 uniform vec3 uColor1;       // pigments, linear
 uniform vec3 uColor2;
@@ -91,6 +94,9 @@ void main() {
   q.z += uWaveAmp * .6 * cos(along * uWaveFreq * 3.1416 - uWaveTime);
   q.xy *= 1.0 + uRippleAmp * sin(length(q.xy) * uRippleFreq * 3.1416 - uRipplePhase); // rings out or in
   q += uChop * .09 * (sin(q.yzx * 6.3 + t * 3.1) + .6 * sin(q.zxy * 9.7 - t * 4.3));  // chop
+  float sr = length(q.xy);                                            // search:
+  q.xy *= 1.0 - uScan * .42 * exp(-sr * sr * 4.5);                    //   a lens magnifies the centre
+  q.z += uScan * (sr * 2.4 - uScanPhase);                             //   each ring of the pattern moves outward
 
   vec3 color = pigment(q * uScale, t, uWarp + uLevel * uVoiceWarp);
   vec3 key = normalize(vec3(-.65, .8, 1.2));
@@ -105,6 +111,8 @@ void main() {
   lit += vec3(1.0, .97, .92) * (softbox * .65 + ribbon * .23);
   lit += mix(vec3(.83, .91, 1.0), uColor3, .22) * rim * (.22 + back * .34);
   lit += uColor1 * back * .075;
+  float ping = fract(uScanPhase * .42);                              // a ping of light travels out from the centre
+  lit *= 1.0 + uScan * .16 * (1.0 - ping) * exp(-pow((length(uv) - ping * 1.15) * 9.0, 2.0));
   lit *= uBrightness * (1.0 + uLevel * uVoiceBright);
   // Fine stationary film grain gives the pigment its tactile, in-focus surface.
   lit += (hash(vec3(gl_FragCoord.xy, 19.7)) - .5) * .045 * uGrain;

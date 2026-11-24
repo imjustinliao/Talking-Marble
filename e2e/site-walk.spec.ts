@@ -34,7 +34,7 @@ test('trying: switch bars for state and emotion, a toggle for halo, reach every 
   await open(page);
   const top = () => walkShot(page).locator('.walk__name').evaluate(el => el.getBoundingClientRect().top);
   const before = await top();
-  for (const state of ['idle', 'connecting', 'listening', 'thinking', 'speaking', 'error']) {
+  for (const state of ['idle', 'connecting', 'listening', 'thinking', 'searching', 'speaking', 'error']) {
     await word(page, state).click();
     await expect(word(page, state)).toHaveAttribute('aria-pressed', 'true');
     for (const orb of await orbs(page).all()) await expect(orb).toHaveAttribute('data-state', state);

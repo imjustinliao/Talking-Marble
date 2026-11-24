@@ -11,6 +11,7 @@ export const GROUPS: { name: string; fields: NumField[] }[] = [
     { key: 'turbulence', label: 'Turbulence', min: 0, max: 1, step: 0.01 },
     { key: 'spin', label: 'Spin', min: -2, max: 2, step: 0.05 },
     { key: 'whirl', label: 'Whirl', min: 0, max: 3, step: 0.05 },
+    { key: 'scan', label: 'Scan', min: 0, max: 1, step: 0.01 },
   ] },
   { name: 'Shape', fields: [
     { key: 'veins', label: 'Veins', min: 0, max: 1, step: 0.01 },

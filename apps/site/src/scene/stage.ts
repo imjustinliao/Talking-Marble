@@ -12,6 +12,8 @@ export interface StageWish {
   emotion?: string | null;
   presets?: Record<string, OrbPreset>;
   size?: number | 'full';
+  /** Who the marble is, for screen readers (Create: the name you gave it). */
+  label?: string;
   /** The halo: on, off, or a strength (0 to 1.5, 1 the standard). */
   halo?: boolean | number;
   /** Its colours, when the shot shows a marble of its own (Create your own); otherwise the pick's. */

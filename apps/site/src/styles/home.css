@@ -271,6 +271,10 @@ body { overscroll-behavior-y: none; }
   .walk__name { font-size: 2rem; }
   .hero__title { font-size: 2.4rem; }
   .word, .words--small .word { font-size: 15px; min-height: 30px; }
+  /* Seven states and eight emotions (F-83, F-87) still fit one short screen */
+  .try { gap: 6px; margin-top: 4px; }
+  .seg { gap: 2px; padding: 3px; }
+  .seg__opt { min-height: 26px; padding: 0 8px; font-size: 12px; }
   .group-name { font-size: 12px; }
   .shot__line { font-size: 14px; }
   .mock--call { zoom: 0.6; }
