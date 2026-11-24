@@ -335,8 +335,11 @@ html[data-demo="walk"] .gallery, html[data-demo="stage"] [data-testid="main-marb
 .gmarble, [data-testid="main-marble"] { transition: filter 0.35s ease 0.05s; }
 
 /* The state's word under the marble, as under the intro's (F-66): smaller here, beside the controls */
-.demo .stage-caption { position: fixed; left: var(--cx); right: auto; top: min(calc(var(--cy) + var(--size) * 0.4 + 30px), calc(var(--room-b) - 30px)); transform: translateX(-50%); font-size: 17px; letter-spacing: 0.24em; opacity: 0; transition: opacity 0.35s ease; }
+/* Under the marble with room to spare (F-111): half its size, plus a seventh for bounces, growth and the halo */
+.demo .stage-caption { position: fixed; left: var(--cx); right: auto; top: min(calc(var(--cy) + var(--size) * 0.64 + 18px), calc(var(--room-b) - 30px)); transform: translateX(-50%); font-size: 17px; letter-spacing: 0.24em; opacity: 0; transition: opacity 0.35s ease; }
 .demo[data-live][data-seen="none"] .demo__caption--scene { opacity: 1; }
+/* Scrolling: it fades out at once (it never trails a marble walking past), and back in where the walk settles */
+.demo[data-moving] .demo__caption--scene { opacity: 0 !important; transition: opacity 0.12s ease !important; }
 .demo[data-live][data-seen="none"] .demo__caption--scene, .demo .demo__caption--scene { transition: opacity 0.35s ease; }
 
 /* Shared entrance: each interface fades and rises into place; leaving, it fades back */

@@ -35,6 +35,7 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-111 | The state word under the marble: not smooth while scrolling, too close, off-centre; it should vanish while the walk passes | built 0.18.6: hidden while scrolling or the camera glides, re-centred when the marble rests (within 1 px), at least ~48 px under it in every emotion | |
 | F-110 | Make `npm i talking-marble` work | done: 0.1.0 published by the owner (npm 2FA); the README is copied into the package with absolute links at pack time; checked by installing from npm and server-rendering; coming-soon notes removed, npm badge and links added | |
 | F-109 | Scrolling between the six palettes still stutters; Aurora glitches arriving at all six | built 0.18.5: Marble shows the scene's own marble again (no swapping as the front changes); in Chatbox and Call the whole gallery steps aside and pauses; every gallery marble draws at one size (no canvas resizes) | |
 | F-108 | Laggy on every device, even a MacBook Pro; scrolling stutters | built 0.18.3: marbles hold their frame while the page scrolls (resume 220 ms after); the marble renderer lowers its resolution under sustained load and restores it with headroom. Production build, headless: scroll median 33 → 16.7 ms a frame | |

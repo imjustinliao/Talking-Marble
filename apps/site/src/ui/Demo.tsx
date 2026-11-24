@@ -4,7 +4,7 @@ import { TalkingMarble, type OrbPreset } from 'talking-marble';
 import { useSimulatedLevel } from '../simulated';
 import { Caption } from './Caption';
 import { createStore } from '../scene/store';
-import { useScrolling } from '../scene/scrolling';
+import { isScrolling, useScrolling } from '../scene/scrolling';
 import { CloseIcon, MicOffIcon, PhoneOffIcon, PlusIcon, SpeakerIcon } from './icons';
 
 /** Where the marble is seen (F-99): on its own, above a chatbox, or in a call. */
@@ -59,6 +59,8 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
   const flight = useRef<{ from: Box; start: number } | null>(null);
   const drawn = useRef<Box | null>(null);
   const homeRef = useRef(home);
+  const seenRef = useRef(seen);
+  seenRef.current = shown ? seen : 'none';
   const [base, setBase] = useState(240);
 
   // A new spot: fly from where the marble is drawn now.
@@ -92,14 +94,34 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
     // Measured only when something can have changed: a flight, a new spot, or every half second (a held layout, a
     // marble that rests): the page is not read every frame (F-106).
     let lastMeasure = 0, lastHome = '';
+    let moving = false, stillSince = 0, lastCx: number | null = null, sampledAt = 0;
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
+      // While the page scrolls, while the camera glides, or when the marble has come to rest somewhere other than where
+      // the layout was measured, the state's word hides (F-111); once the marble is still, the layout is measured afresh
+      // and the word fades back in, centred under it. The marble is sampled ten times a second, not every frame.
+      if (now - sampledAt >= 100) {
+        sampledAt = now;
+        const r = scene()?.getBoundingClientRect();
+        if (r && r.width) {
+          const cx = r.left + r.width / 2;
+          if (lastCx === null || Math.abs(cx - lastCx) > 1.5) stillSince = now;
+          // Only Marble re-centres on a small rest; the chatbox and call stay exactly where they are (F-102).
+          else if (held && seenRef.current === 'none' && Math.abs(cx - held.cx) > 3) { stillSince = now; held = null; }
+          lastCx = cx;
+        }
+      }
+      const nowMoving = isScrolling() || now - stillSince < 250;
+      if (nowMoving !== moving) { moving = nowMoving; el.toggleAttribute('data-moving', moving); }
+      // Marble re-measures when the marble moves; the chatbox and call keep their place (only a resize, or the marble
+      // really moving, over 60 px, moves them: F-102).
+      if (moving && seenRef.current === 'none') held = null;
       if (!flight.current && held && homeRef.current === lastHome && now - lastMeasure < 500 && !(!shown && homeRef.current === 'scene')) return;
       lastMeasure = now; lastHome = homeRef.current;
       // Lay the chrome out around the scene's spot, inside the room the panel leaves.
       const spot = scene()?.getBoundingClientRect();
       const panel = document.querySelector(anchor.panel)?.getBoundingClientRect();
-      if (spot && panel && (!held || Math.abs(spot.left + spot.width / 2 - held.cx) > 60 || Math.abs(spot.top + spot.height / 2 - held.cy) > 60 || Math.abs(spot.width - held.size) > 60)) {
+      if (!(moving && seenRef.current === 'none') && spot && panel && (!held || Math.abs(spot.left + spot.width / 2 - held.cx) > 60 || Math.abs(spot.top + spot.height / 2 - held.cy) > 60 || Math.abs(spot.width - held.size) > 60)) {
         held = { cx: spot.left + spot.width / 2, cy: spot.top + spot.height / 2, size: spot.width };
         const narrow = innerWidth < 720;
         // The room beside the panel on the marble's side (the walk's marble is right of its panel, Create's left), or above

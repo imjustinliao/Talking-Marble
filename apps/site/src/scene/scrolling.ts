@@ -16,3 +16,5 @@ export function markScrolling() {
 }
 
 export const useScrolling = () => scrolling.use().on;
+/** The same, outside React (read each frame). */
+export const isScrolling = () => scrolling.get().on;
