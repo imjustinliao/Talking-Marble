@@ -1,6 +1,6 @@
 {
   "name": "talking-marble",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "An audio-reactive orb for voice AI apps: shows what your agent is doing and moves with its voice. A React component and a Web Component.",
   "license": "MIT",
   "author": "Justin Liao",
@@ -50,13 +50,17 @@
   },
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "gen": "node scripts/gen-core.mjs",
     "build": "node scripts/gen-core.mjs && tsdown",
     "test": "node scripts/gen-core.mjs && vitest run",
-    "typecheck": "node scripts/gen-core.mjs && tsc"
+    "typecheck": "node scripts/gen-core.mjs && tsc",
+    "prepack": "node scripts/pack-files.mjs",
+    "prepublishOnly": "pnpm run build"
   },
   "peerDependencies": {
     "react": ">=18"
@@ -74,5 +78,22 @@
     "react-dom": "19.3.1",
     "tsdown": "0.23.7",
     "vite": "8.3.8"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./element": {
+        "types": "./dist/element.d.ts",
+        "default": "./dist/element.js"
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
