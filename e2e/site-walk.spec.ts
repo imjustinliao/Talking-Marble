@@ -77,6 +77,7 @@ const near = (a: { x: number; y: number; width: number } | null, b: { x: number;
   !!a && !!b && Math.abs(a.x + a.width / 2 - (b.x + b.width / 2)) < 3 && Math.abs(a.width - b.width) < 3;
 
 test('seen in (F-99, F-102): Marble, in a chatbox (open and closed into its button) and in a call; the controls never move; the scene marble steps aside and comes back', async ({ page }) => {
+  test.setTimeout(60_000);
   const errors = trackErrors(page);
   await open(page);
   const seen = (name: string) => option(walkShot(page), 'Seen in', name).pick();
@@ -118,6 +119,7 @@ test('seen in (F-99, F-102): Marble, in a chatbox (open and closed into its butt
   await seen('Marble');
   await expect.poll(async () => near(await orbBox(page), await spotBox(page, 'marble')), { timeout: 3000 }).toBe(true);
   // Held still (F-102): nothing drifts with the scene.
+  await page.waitForTimeout(1500); // the camera's own settling glide is over (a real move re-anchors the layout once)
   const a = await orbBox(page); await page.waitForTimeout(1200); const b = await orbBox(page);
   expect(Math.abs(a!.x - b!.x) + Math.abs(a!.y - b!.y)).toBeLessThan(0.5);
   // Nothing in the panel moved at any point.

@@ -41,7 +41,9 @@ export function stepMotion(m: Motion, eased: Eased, target: OrbParams, rawLevel:
   m.spin += dt * x.spin * 0.5;
   m.waveTime += dt * 1.8 * x.speed * (1 + 1.2 * L);
   m.ripplePhase += dt * 6 * (1 + 3 * L) * (target.rippleDirection === 'in' ? -1 : 1);
-  m.scanPhase += dt * (0.8 + 0.4 * x.speed);
+  // The search's clock runs only while searching, at its strength (F-107): entering or leaving `searching` eases the
+  // stream in and out, instead of a long-run clock sweeping the pattern as the strength springs.
+  m.scanPhase += dt * (0.8 + 0.4 * x.speed) * x.scan;
   m.breathPhase += (dt * TAU) / (1.6 + 2.4 * (1 - Math.min(x.speed, 1)));
   m.beatPhase += dt * TAU * 0.9;
   m.bouncePhase += dt * TAU * (0.25 + 1.55 * Math.pow(Math.max(0, x.bounce), 1.5));

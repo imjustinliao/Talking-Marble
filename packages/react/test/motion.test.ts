@@ -107,12 +107,32 @@ describe('CSS layers', () => {
 });
 
 describe('motion edge cases', () => {
-  it('advances the scan by dt × (0.8 + 0.4 × speed), and freezes it in reduced motion', () => {
-    const target = resolveState('thinking');
+  it('switching from thinking to searching after a long time eases the stream in, with no sweep (F-107)', () => {
+    const thinking = resolveState('thinking'), searching = resolveState('searching');
+    const m = createMotion();
+    const eased = easedFrom(thinking);
+    for (let i = 0; i < 6000; i++) stepMotion(m, eased, thinking, 0, 0.1, false); // ten minutes of thinking
+    // The pattern's offset along the stream, per frame, as searching springs in: it may only grow gently.
+    let last = uniformsOf(m, eased.x, 0, false);
+    const offset = (u: Record<string, unknown>) => (u.uScan as number) * 2.4 - (u.uScanPhase as number);
+    for (let i = 0; i < 60; i++) {
+      stepMotion(m, eased, searching, 0, 1 / 30, false);
+      const now = { ...uniformsOf(m, eased.x, 0, false) };
+      expect(Math.abs(offset(now) - offset(last))).toBeLessThan(0.5); // the old long-run clock moved it by ~60 a frame
+      last = now;
+    }
+  });
+
+  it('advances the scan by dt × (0.8 + 0.4 × speed) × scan, and freezes it in reduced motion', () => {
+    const target = resolveState('searching');
     const m = createMotion();
     const eased = easedFrom(target);
     stepMotion(m, eased, target, 0, 0.1, false);
-    expect(m.scanPhase).toBeCloseTo(0.1 * (0.8 + 0.4 * target.speed), 9);
+    expect(m.scanPhase).toBeCloseTo(0.1 * (0.8 + 0.4 * target.speed) * target.scan, 9);
+    // Not searching: the clock stands still.
+    const idle = createMotion();
+    stepMotion(idle, easedFrom(resolveState('thinking')), resolveState('thinking'), 0, 0.1, false);
+    expect(idle.scanPhase).toBe(0);
     const still = createMotion();
     stepMotion(still, easedFrom(target), target, 0, 0.1, true);
     expect(still.scanPhase).toBe(0);
@@ -154,8 +174,12 @@ describe('motion edge cases', () => {
 describe('backing size (packages/core/spec.md › Rendering)', () => {
   it('is the CSS size × device pixel ratio, at most 2× and 4096 px, and at least 1 px', () => {
     expect(backingSize(200, 1)).toBe(200);
-    expect(backingSize(200, 2)).toBe(400);
-    expect(backingSize(200, 3)).toBe(400);
+    // Large marbles: 1.5×, never under 320 device px (F-106).
+    expect(backingSize(200, 2)).toBe(320);
+    expect(backingSize(200, 3)).toBe(320);
+    expect(backingSize(400, 2)).toBe(600);
+    expect(backingSize(120, 2)).toBe(240);
+    expect(backingSize(160, 2)).toBe(320);
     expect(backingSize(200, 1.5)).toBe(300);
     expect(backingSize(4096, 1)).toBe(4096);
     expect(backingSize(4096, 2)).toBe(4096);

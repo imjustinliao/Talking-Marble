@@ -97,7 +97,7 @@ void main() {
   q += uChop * .09 * (sin(q.yzx * 6.3 + t * 3.1) + .6 * sin(q.zxy * 9.7 - t * 4.3));  // chop
   float sr = length(q.xy);                                            // search:
   q.xy *= 1.0 - uScan * .42 * exp(-sr * sr * 4.5);                    //   a lens magnifies the centre
-  q.z += uScan * (sr * 2.4 - uScanPhase);                             //   each ring of the pattern moves outward
+  q.z += uScan * sr * 2.4 - uScanPhase;                               //   each ring of the pattern moves outward
 
   vec3 color = pigment(q * uScale, t, uWarp + uLevel * uVoiceWarp);
   vec3 key = normalize(vec3(-.65, .8, 1.2));

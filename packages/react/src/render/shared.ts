@@ -76,13 +76,20 @@ export function rendererReady(): boolean {
   return renderer !== null;
 }
 
-/** The backing size in device pixels for a marble `cssSize` CSS pixels wide (spec › Rendering). */
+/**
+ * The backing size in device pixels for a marble `cssSize` CSS pixels wide (spec › Rendering): CSS size × device
+ * pixel ratio, at most 2×; a large marble at most 1.5× but never under 320 px (F-106). Past 2× the eye gains nothing
+ * a marble's soft pigment can show (F-54), and a big one looks the same at 1.5× while the GPU shades 44 % fewer pixels.
+ */
 export function backingSize(cssSize: number, devicePixelRatio: number): number {
-  // Past 2x the eye gains nothing a marble's soft pigment can show, and the GPU pays for every pixel (F-54).
   const dpr = Math.min(Math.max(devicePixelRatio || 1, 1), 2);
   const maxSide = Math.min(renderer?.maxSide ?? 4096, Math.floor(Math.sqrt(PIXEL_BUDGET)));
-  return Math.max(1, Math.min(Math.round(cssSize * dpr), maxSide));
+  const side = Math.min(cssSize * dpr, Math.max(cssSize * LARGE_DPR, LARGE_FLOOR));
+  return Math.max(1, Math.min(Math.round(side), maxSide));
 }
+/** A large marble's pixel ratio, and the size under which a marble keeps its full ratio (device px; F-106). */
+export const LARGE_DPR = 1.5;
+export const LARGE_FLOOR = 320;
 
 /**
  * Draws one frame into `target` (the marble's own canvas, already sized `side` × `side`; its context is

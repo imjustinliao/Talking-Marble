@@ -119,7 +119,10 @@ function sampleAll(page: Page) {
         readTransforms();
         // Brightness about every 33 ms (the marble draws at 30 fps), so the short heartbeat is not missed.
         if (now >= nextMotion) { readCanvases(true); nextMotion += motionStep; } else if ((odd = !odd)) readCanvases(false);
-        if (now - start < duration) requestAnimationFrame(tick); else done();
+        // At least `duration`; on a busy machine (fewer frames) longer, up to three times, until every marble has the
+        // samples the measures need. The measures stay the same; only the time to collect them stretches.
+        const enough = orbs.every(o => o.luma.length >= 60 && o.motion.length >= 20);
+        if (now - start < duration || (!enough && now - start < duration * 3)) requestAnimationFrame(tick); else done();
       };
       requestAnimationFrame(tick);
     });

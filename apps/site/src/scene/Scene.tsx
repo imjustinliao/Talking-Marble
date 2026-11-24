@@ -10,6 +10,7 @@ import { createFog } from './fog';
 import { isLowPower } from '../perf';
 import { useTrying } from './walk';
 import { Caption } from '../ui/Caption';
+import { useStandingIn } from '../ui/Demo';
 
 /**
  * The fog (F-54): a plain black stage with mist that moves like real air when the pointer passes through it
@@ -36,13 +37,32 @@ const Fog = memo(function Fog() {
 const StageMarble = memo(function StageMarble({ active, hidden }: { active: ShotId; hidden: boolean }) {
   const wish = useStage(active);
   const pick = usePick();
+  const standIn = useStandingIn();
   const voice = wish.voice ?? { kind: 'sim' as const };
   const sim = useSimulatedLevel(voice.kind === 'sim' && !hidden);
   const size = wish.size === undefined || wish.size === 'full' ? MARBLE : wish.size;
+  // Drawn at about the size it shows on screen, not its world size (F-106): the camera often shows it at half size or
+  // less, and every pixel drawn is shaded. Measured when the shot changes and every 1.5 s, in 40 px steps (so the
+  // canvas is not resized for small moves), then scaled up to fill its place in the world.
+  const box = useRef<HTMLSpanElement>(null);
+  const [drawn, setDrawn] = useState(size);
+  useEffect(() => {
+    const measure = () => {
+      const w = box.current?.getBoundingClientRect().width ?? 0;
+      if (!w) return;
+      const want = Math.min(size, Math.max(120, Math.ceil((w * 1.05) / 40) * 40));
+      setDrawn(d => (Math.abs(want - d) >= 40 ? want : d));
+    };
+    const first = setTimeout(measure, 1100);
+    const every = setInterval(measure, 1500);
+    return () => { clearTimeout(first); clearInterval(every); };
+  }, [active, size]);
+  const at = Math.min(drawn, size);
   return (
-    <span className="stage-marble__orb" data-testid="main-marble" data-palette={pick.palette} data-colors={(wish.palette ?? colorsOf(pick.palette)).join(' ')} {...Object.fromEntries(Object.entries(wish.data ?? {}).map(([k, v]) => [`data-${k}`, v]))}>
+    <span ref={box} className="stage-marble__orb" data-testid="main-marble" style={{ width: size, height: size }} data-palette={pick.palette} data-colors={(wish.palette ?? colorsOf(pick.palette)).join(' ')} {...Object.fromEntries(Object.entries(wish.data ?? {}).map(([k, v]) => [`data-${k}`, v]))}>
       <TalkingMarble
-        size={size}
+        size={at}
+        style={at === size ? undefined : { transform: `scale(${size / at})`, transformOrigin: '0 0' }}
         state={wish.state}
         emotion={wish.emotion ?? undefined}
         presets={wish.presets}
@@ -50,7 +70,7 @@ const StageMarble = memo(function StageMarble({ active, hidden }: { active: Shot
         halo={wish.halo ?? true}
         level={voice.kind === 'level' ? voice.level : sim}
         label={wish.label || 'Talking Marble'}
-        paused={hidden}
+        paused={hidden || standIn.stage}
         className="reflect"
       />
       {/* The intro's demo says which state it is in (F-66); the marble's own label announces it to screen readers. */}
@@ -81,6 +101,7 @@ const FAR_SIZE = 140;
  */
 function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRefObject<GalleryRefs> }) {
   const trying = useTrying();
+  const standIn = useStandingIn();
   const seen = gallery.drawing.split(' ');
   const sim = useSimulatedLevel(seen.some(k => k !== 'm'));
   return (
@@ -89,7 +110,8 @@ function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRe
         const p = curvePoint(k);
         const state = trying.state;
         const near = k === gallery.front && gallery.active;
-        const shown = seen.includes(String(k));
+        // Hidden behind the demo's stand-in (F-106): not drawn either.
+        const shown = seen.includes(String(k)) && !(standIn.walk && k === gallery.front);
         return (
           <GalleryOrb
             key={m.id} k={k} refs={refs} x={p.x} z={p.z} marble={m} onPick={gallery.onPick}

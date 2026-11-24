@@ -78,26 +78,27 @@ test('30 marbles on one page all draw and animate through one WebGL context', as
   expect(notices).toEqual([]);
 });
 
-test('backs each marble at CSS size × device pixel ratio: sharp from 20 px to a full-screen hero', async ({ browser, testPage }) => {
+test('backs each marble at CSS size × device pixel ratio (a large one at 1.5×, never under 320 px): sharp from 20 px to a full-screen hero', async ({ browser, testPage }) => {
   const context = await browser.newContext({ deviceScaleFactor: 2, viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
   await page.goto(`${testPage}?view=sizes&sizes=20,32,48,240`);
   for (const size of [20, 32, 48, 240]) {
     const orb = page.getByRole('img', { name: `size ${size}, idle` });
     await expect(orb).toHaveAttribute('data-ready', 'true');
-    expect(await orb.locator('canvas').evaluate(c => [(c as HTMLCanvasElement).width, (c as HTMLCanvasElement).height])).toEqual([size * 2, size * 2]);
+    const side = Math.round(Math.min(size * 2, Math.max(size * 1.5, 320)));
+    expect(await orb.locator('canvas').evaluate(c => [(c as HTMLCanvasElement).width, (c as HTMLCanvasElement).height])).toEqual([side, side]);
   }
   // Below 32 px the halo is gone; at 48 px and up it shows.
   expect(await page.getByRole('img', { name: 'size 20, idle' }).locator('[data-halo]').evaluate(el => (el as HTMLElement).style.visibility)).toBe('hidden');
   expect(await page.getByRole('img', { name: 'size 48, idle' }).locator('[data-halo]').evaluate(el => (el as HTMLElement).style.visibility)).toBe('');
 
-  // A full-screen hero: the viewport's shorter side, at 2× (no 512 px cap).
+  // A full-screen hero: the viewport's shorter side, at 1.5× (no 512 px cap).
   await page.goto(`${testPage}?view=sizes&full=1`);
   const hero = page.getByRole('img', { name: 'full, idle' });
   await expect(hero).toHaveAttribute('data-ready', 'true');
   const css = await hero.evaluate(el => (el as HTMLElement).offsetWidth);
   expect(css).toBeGreaterThan(800);
-  expect(await hero.locator('canvas').evaluate(c => (c as HTMLCanvasElement).width)).toBe(css * 2);
+  expect(await hero.locator('canvas').evaluate(c => (c as HTMLCanvasElement).width)).toBe(Math.round(css * 1.5));
   await context.close();
 });
 

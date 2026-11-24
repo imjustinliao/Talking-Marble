@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { TalkingMarble, type OrbPreset } from 'talking-marble';
 import { useSimulatedLevel } from '../simulated';
 import { Caption } from './Caption';
+import { createStore } from '../scene/store';
 import { CloseIcon, MicOffIcon, PhoneOffIcon, PlusIcon, SpeakerIcon } from './icons';
 
 /** Where the marble is seen (F-99): on its own, above a chatbox, or in a call. */
@@ -12,6 +13,13 @@ export const SEEN_IN: { id: SeenIn; label: string }[] = [
   { id: 'bar', label: 'Chatbox' },
   { id: 'call', label: 'Call' },
 ];
+
+/**
+ * Which scene marble a demo stands in for right now. That marble is hidden meanwhile, so it pauses too and the GPU
+ * draws one marble in its place, not two (efficiency, F-106).
+ */
+const standingIn = createStore<{ walk: boolean; stage: boolean }>({ walk: false, stage: false });
+export const useStandingIn = standingIn.use;
 
 /** The marble the demo stands in for, and the panel it must keep clear of. */
 export interface DemoAnchor { marble: string; panel: string }
@@ -52,7 +60,6 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
   const drawn = useRef<Box | null>(null);
   const homeRef = useRef(home);
   const [base, setBase] = useState(240);
-  const level = useSimulatedLevel(present && (state === 'listening' || state === 'speaking' || state === 'searching'));
 
   // A new spot: fly from where the marble is drawn now.
   useEffect(() => {
@@ -60,11 +67,13 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
     homeRef.current = home;
   }, [home]);
 
-  // The scene's own marble steps aside while the demo's is out.
+  // The scene's own marble steps aside (hidden and paused) while the demo's is out.
   useEffect(() => {
-    const root = document.documentElement;
-    if (present) root.setAttribute('data-demo', anchor.marble === 'stage' ? 'stage' : 'walk');
-    return () => root.removeAttribute('data-demo');
+    const root = document.documentElement, which = anchor.marble === 'stage' ? 'stage' : 'walk';
+    if (!present) return;
+    root.setAttribute('data-demo', which);
+    standingIn.set({ [which]: true });
+    return () => { root.removeAttribute('data-demo'); standingIn.set({ [which]: false }); };
   }, [present, anchor.marble]);
 
   const on = live || present;
@@ -80,8 +89,13 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
     const scene = () => document.querySelector<HTMLElement>(anchor.marble === 'stage'
       ? '[data-testid="main-marble"] [data-talking-marble]'
       : '.gmarble[data-front] [data-talking-marble]');
+    // Measured only when something can have changed: a flight, a new spot, or every half second (a held layout, a
+    // marble that rests): the page is not read every frame (F-106).
+    let lastMeasure = 0, lastHome = '';
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
+      if (!flight.current && held && homeRef.current === lastHome && now - lastMeasure < 500 && !(!shown && homeRef.current === 'scene')) return;
+      lastMeasure = now; lastHome = homeRef.current;
       // Lay the chrome out around the scene's spot, inside the room the panel leaves.
       const spot = scene()?.getBoundingClientRect();
       const panel = document.querySelector(anchor.panel)?.getBoundingClientRect();
@@ -100,7 +114,8 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
         v('--cx', held.cx); v('--cy', held.cy); v('--size', held.size);
         v('--room-l', room.l); v('--room-r', room.r); v('--room-t', room.t); v('--room-b', room.b);
         el.style.setProperty('--fit', String(Math.min(0.9, (room.b - room.t) / 600, (room.r - room.l) / 320)));
-        const want = Math.round(spot.width);
+        // Drawn at the largest size it is shown at (Marble's four fifths), never larger: fewer pixels to shade.
+        const want = Math.round(spot.width * 0.8);
         if (Math.abs(want - base) / base > 0.15) setBase(want);
       }
       if (!node) return;
@@ -179,10 +194,18 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
       <Caption word={state} className="demo__caption demo__caption--scene" />
       {present && (
         <div ref={orb} className="demo__orb" aria-hidden="true">
-          <TalkingMarble size={base} state={state} emotion={emotion ?? undefined} presets={presets} level={level} palette={palette as string[]} halo={halo} decorative />
+          <DemoMarble size={base} state={state} emotion={emotion} presets={presets} palette={palette} halo={halo} />
         </div>
       )}
     </div>,
     document.body,
   );
 }
+
+/** The demo's marble, with its simulated voice. Its own component, so only it re-renders with the voice (F-106). */
+const DemoMarble = memo(function DemoMarble({ size, state, emotion, presets, palette, halo }: {
+  size: number; state: string; emotion?: string | null; presets?: Record<string, OrbPreset>; palette: readonly string[]; halo: boolean | number;
+}) {
+  const level = useSimulatedLevel(state === 'listening' || state === 'speaking' || state === 'searching');
+  return <TalkingMarble size={size} state={state} emotion={emotion ?? undefined} presets={presets} level={level} palette={palette as string[]} halo={halo} decorative />;
+});

@@ -90,7 +90,7 @@ Run per frame with `dt` in seconds, capped at 0.1. Draw at most 30 frames a seco
    - `time += dt × speed`; `swirl += dt × level × 4`; `spin += dt × spin × 0.5`
    - `waveTime += dt × 1.8 × speed × (1 + 1.2 × level)`
    - `ripplePhase += dt × 6 × (1 + 3 × level) × (+1 out, −1 in)`
-   - `scanPhase += dt × (0.8 + 0.4 × speed)`
+   - `scanPhase += dt × (0.8 + 0.4 × speed) × scan` (it runs only while searching, so switching in or out never sweeps the pattern; F-107)
    - `breathPhase += dt × 2π / (1.6 + 2.4 × (1 − min(speed, 1)))`
    - `beatPhase += dt × 2π × 0.9`; `bouncePhase += dt × 2π × (0.25 + 1.55 × bounce^1.5)`; `jellyPhase += dt × 2π × 4.5`
 4. **Pulse** (the beat): with `f` the fractional part of `beatPhase / 2π`, `pulse = beat × (e^(−((f − 0.12) × 12)²) + 0.5 e^(−((f − 0.32) × 12)²))`.
@@ -113,7 +113,7 @@ Below 48 CSS pixels the marble gets its own tuning, by `k = clamp((48 − size) 
 
 ## Rendering
 
-- Render size: the view's CSS size × device pixel ratio (at most 2×; past that the eye gains nothing and the GPU pays), within 16.7 million pixels (4096²) per marble and the GPU's limits.
+- Render size: `min(css × dpr, max(css × 1.5, 320))` device pixels, with `dpr` the device pixel ratio at most 2× (past that the eye gains nothing and the GPU pays). So a small marble gets the full ratio and a large one 1.5×, never under 320 px: its soft pigment looks the same and the GPU shades 44 % fewer pixels (F-106). Within 16.7 million pixels (4096²) per marble and the GPU's limits.
 - Transparent background, premultiplied alpha; the shader writes `color * coverage, coverage`.
 - Animate only while visible on screen; still otherwise.
 - Web: every marble on a page renders through one shared WebGL2 context and is copied into its own element's canvas.
