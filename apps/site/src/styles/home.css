@@ -328,50 +328,54 @@ body { overscroll-behavior-y: none; }
 .demo { position: fixed; inset: 0; z-index: 11; pointer-events: none; --glass-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05)); --glass-line: rgba(255, 255, 255, 0.16); --glass-shine: inset 0 1px 1px rgba(255, 255, 255, 0.38), inset 0 -1px 2px rgba(255, 255, 255, 0.07); }
 .demo__orb { position: fixed; left: 0; top: 0; transform-origin: 0 0; will-change: transform; z-index: 3; }
 .demo__home { display: block; }
+/* Marble on the walk: the scene marble's spot, a little smaller (F-102), held still */
+.demo__home--marble { position: fixed; --m: calc(var(--size) * 0.8); left: calc(var(--cx) - var(--m) / 2); top: calc(var(--cy) - var(--m) / 2); width: var(--m); height: var(--m); }
 html[data-demo="walk"] .gmarble[data-front], html[data-demo="stage"] [data-testid="main-marble"] { filter: opacity(0) !important; transition: filter 0.2s ease; }
 .gmarble, [data-testid="main-marble"] { transition: filter 0.35s ease 0.05s; }
 
 /* The state's word under the marble, as under the intro's (F-66): smaller here, beside the controls */
-.demo .stage-caption { position: fixed; left: var(--cx); right: auto; top: min(calc(var(--cy) + var(--size) / 2 + 30px), calc(var(--room-b) - 30px)); transform: translateX(-50%); font-size: 20px; letter-spacing: 0.24em; opacity: 0; transition: opacity 0.35s ease; }
+.demo .stage-caption { position: fixed; left: var(--cx); right: auto; top: min(calc(var(--cy) + var(--size) * 0.4 + 30px), calc(var(--room-b) - 30px)); transform: translateX(-50%); font-size: 17px; letter-spacing: 0.24em; opacity: 0; transition: opacity 0.35s ease; }
 .demo[data-live][data-seen="none"] .demo__caption--scene { opacity: 1; }
+.demo[data-live][data-seen="none"] .demo__caption--scene, .demo .demo__caption--scene { transition: opacity 0.35s ease; }
 
 /* Shared entrance: each interface fades and rises into place; leaving, it fades back */
 .demo__chat, .demo__call { opacity: 0; visibility: hidden; transition: opacity 0.42s ease, translate 0.6s var(--ease), visibility 0s linear 0.42s; translate: 0 14px; }
 .demo[data-seen="bar"] .demo__chat, .demo[data-seen="call"] .demo__call { opacity: 1; visibility: visible; translate: 0 0; transition: opacity 0.5s ease 0.12s, translate 0.7s var(--ease) 0.12s, visibility 0s; }
 
-/* The chat bar: the marble open in the middle above it, or closed into its voice button */
-.demo__chat { --w: min(540px, calc(var(--room-r) - var(--room-l))); --h: min(var(--size), calc(var(--room-b) - var(--room-t) - 168px)); --top: clamp(var(--room-t), calc(var(--cy) - var(--h) / 2), calc(var(--room-b) - 168px - var(--h))); --left: clamp(var(--room-l), calc(var(--cx) - var(--w) / 2), calc(var(--room-r) - var(--w))); }
+/* The chatbox: the marble open in the middle above it, or closed into its voice button */
+.demo__chat { --w: min(440px, calc(var(--room-r) - var(--room-l))); --h: min(calc(var(--size) * 0.56), calc(var(--room-b) - var(--room-t) - 168px)); --top: clamp(var(--room-t), calc(var(--cy) - var(--h) / 2), calc(var(--room-b) - 168px - var(--h))); --left: clamp(var(--room-l), calc(var(--cx) - var(--w) / 2), calc(var(--room-r) - var(--w))); }
 .demo__home--above { position: fixed; left: calc(var(--left) + var(--w) / 2 - var(--h) / 2); top: var(--top); width: var(--h); height: var(--h); }
 .demo .demo__caption--above { left: calc(var(--left) + var(--w) / 2); top: calc(var(--top) + var(--h) + 24px); }
 .demo[data-seen="bar"][data-open] .demo__caption--above { opacity: 1; transition-delay: 0.5s; }
-.demo__bar { position: fixed; left: var(--left); top: calc(var(--top) + var(--h) + 86px); width: var(--w); height: 64px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 12px; border-radius: 32px; background: var(--glass-fill); border: 1px solid var(--glass-line); box-shadow: var(--glass-shine), 0 22px 44px -20px rgba(0, 0, 0, 0.7); -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6); pointer-events: auto; }
+.demo__bar { position: fixed; left: var(--left); top: calc(var(--top) + var(--h) + 76px); width: var(--w); height: 56px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 10px; border-radius: 28px; background: var(--glass-fill); border: 1px solid var(--glass-line); box-shadow: var(--glass-shine), 0 22px 44px -20px rgba(0, 0, 0, 0.7); -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6); pointer-events: auto; }
 .demo__bar-plus { display: inline-grid; place-items: center; width: 40px; height: 40px; color: var(--text); }
 .demo__bar-plus svg { width: 22px; height: 22px; }
-.demo__bar-text { flex: 1; min-width: 0; font-size: 17px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.demo__glass { display: inline-grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 50%; color: var(--text); background: var(--glass-fill); border: 1px solid var(--glass-line); box-shadow: var(--glass-shine); -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5); }
+.demo__bar-text { flex: 1; min-width: 0; font-size: 15px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.demo__glass { display: inline-grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 50%; color: var(--text); background: var(--glass-fill); border: 1px solid var(--glass-line); box-shadow: var(--glass-shine); -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5); }
 .demo__glass svg { width: 20px; height: 20px; }
-.demo__glass--small { width: 44px; height: 44px; }
+.demo__glass--small { width: 38px; height: 38px; }
 /* Its main button: the marble closed into it, or (open) a close key in the marble's own pigment */
 .demo__glass--accent { background: color-mix(in srgb, var(--d1) 78%, #000); border-color: transparent; color: #fff; animation: demo-key-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .demo__glass--accent:hover { background: color-mix(in srgb, var(--d1) 88%, #000); }
-.demo__slot { display: inline-grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 50%; }
-.demo__slot .demo__home { width: 40px; height: 40px; }
+.demo__slot { display: inline-grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 50%; }
+.demo__slot .demo__home { width: 36px; height: 36px; }
 .demo__slot:focus-visible, .demo__glass--accent:focus-visible { outline-offset: 2px; }
 @keyframes demo-key-in { from { opacity: 0; transform: scale(0.6); } }
 
 /* The call: a phone's voice-call screen. Its name and clock at the top, the marble in the middle with its state under
    it, a row of glass keys at the bottom (End in red). Scaled to fit the room (--fit). */
-.demo__call { --cw: calc(300px * var(--fit)); --ch: calc(580px * var(--fit)); position: fixed; left: clamp(var(--room-l), calc(var(--cx) - var(--cw) / 2), calc(var(--room-r) - var(--cw))); top: clamp(var(--room-t), calc(var(--cy) - var(--ch) / 2), calc(var(--room-b) - var(--ch))); width: 300px; height: 580px; transform: scale(var(--fit)); transform-origin: 0 0; box-sizing: border-box; display: grid; grid-template-rows: auto 1fr auto auto; justify-items: center; padding: 58px 26px 44px; border-radius: 46px; overflow: hidden; color: #fff; background: radial-gradient(120% 70% at 25% 0%, color-mix(in srgb, var(--d1) 34%, #0b0b0d), transparent 72%), radial-gradient(110% 70% at 85% 100%, color-mix(in srgb, var(--d2) 30%, #0b0b0d), transparent 72%), #0b0b0d; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22), 0 40px 80px -30px rgba(0, 0, 0, 0.8); }
+.demo__call { --cw: calc(272px * var(--fit)); --ch: calc(520px * var(--fit)); position: fixed; left: clamp(var(--room-l), calc(var(--cx) - var(--cw) / 2), calc(var(--room-r) - var(--cw))); top: clamp(var(--room-t), calc(var(--cy) - var(--ch) / 2), calc(var(--room-b) - var(--ch))); width: 272px; height: 520px; transform: scale(var(--fit)); transform-origin: 0 0; box-sizing: border-box; display: grid; grid-template-rows: auto 1fr auto auto; justify-items: center; padding: 52px 28px 40px; border-radius: 42px; overflow: hidden; color: #fff; background: radial-gradient(120% 70% at 25% 0%, color-mix(in srgb, var(--d1) 34%, #0b0b0d), transparent 72%), radial-gradient(110% 70% at 85% 100%, color-mix(in srgb, var(--d2) 30%, #0b0b0d), transparent 72%), #0b0b0d; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22), 0 40px 80px -30px rgba(0, 0, 0, 0.8); }
 .demo__call-top { display: grid; justify-items: center; gap: 6px; text-align: center; }
-.demo__call-name { font-family: var(--display); font-size: 30px; font-weight: 500; letter-spacing: -0.01em; }
-.demo__call-clock { font-size: 16px; color: rgba(255, 255, 255, 0.62); font-variant-numeric: tabular-nums; }
-.demo__home--call { align-self: center; width: 156px; height: 156px; }
-.demo .demo__caption--call { position: static; transform: none; font-size: 13px; letter-spacing: 0.26em; color: rgba(255, 255, 255, 0.72); margin-bottom: 34px; opacity: 1; }
-.demo__call-keys { display: flex; gap: 22px; }
-.demo__key { display: grid; justify-items: center; gap: 8px; font-size: 12px; color: rgba(255, 255, 255, 0.78); }
-.demo__key .demo__glass { width: 64px; height: 64px; background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.09)); color: #fff; }
-.demo__key .demo__glass svg { width: 24px; height: 24px; }
-.demo__key .demo__glass--end { background: #ff3b30; border-color: transparent; box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35); }
+.demo__call-name { font-family: var(--display); font-size: 26px; font-weight: 500; letter-spacing: -0.01em; }
+.demo__call-clock { font-size: 14px; color: rgba(255, 255, 255, 0.62); font-variant-numeric: tabular-nums; }
+.demo__home--call { align-self: center; width: 132px; height: 132px; }
+.demo .demo__caption--call { position: static; transform: none; font-size: 12px; letter-spacing: 0.26em; color: rgba(255, 255, 255, 0.72); margin-bottom: 30px; opacity: 1; }
+/* Three keys, icons only (F-103): round glass, the icon dead centre, End in red */
+.demo__call-keys { display: flex; gap: 20px; }
+.demo__key.demo__glass { width: 52px; height: 52px; padding: 0; background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.09)); color: #fff; }
+.demo__glass svg { display: block; }
+.demo__key.demo__glass svg { width: 21px; height: 21px; }
+.demo__key.demo__glass--end { background: #ff3b30; border-color: transparent; box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35); }
 
 @media (prefers-reduced-motion: reduce) {
   .demo__chat, .demo__call, .demo[data-seen="bar"] .demo__chat, .demo[data-seen="call"] .demo__call { transition: opacity 0.3s ease, visibility 0s; translate: none; }

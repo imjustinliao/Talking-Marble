@@ -5,11 +5,11 @@ import { useSimulatedLevel } from '../simulated';
 import { Caption } from './Caption';
 import { CloseIcon, MicOffIcon, PhoneOffIcon, PlusIcon, SpeakerIcon } from './icons';
 
-/** Where the marble is seen (F-99): on its own, above a chat bar, or in a call. */
+/** Where the marble is seen (F-99): on its own, above a chatbox, or in a call. */
 export type SeenIn = 'none' | 'bar' | 'call';
 export const SEEN_IN: { id: SeenIn; label: string }[] = [
-  { id: 'none', label: 'On its own' },
-  { id: 'bar', label: 'Chat bar' },
+  { id: 'none', label: 'Marble' },
+  { id: 'bar', label: 'Chatbox' },
   { id: 'call', label: 'Call' },
 ];
 
@@ -24,7 +24,7 @@ type Box = { x: number; y: number; s: number };
 /**
  * The marble seen in an everyday voice interface (F-99). A picture of a UI, laid over the stage: the big marble in
  * the scene steps aside and one marble of the demo's own takes its place, flying between spots (the scene's spot, a
- * chat bar's voice button, the middle above the bar, a call screen) along a short arc. Each spot is an empty element
+ * chatbox's voice button, the middle above the bar, a call screen) along a short arc. Each spot is an empty element
  * marked `data-home`; the marble re-measures its spot every frame, so it follows it as the layout moves, and a new
  * spot starts a fresh flight from wherever it is drawn now (so it can turn back mid-flight). Nothing else moves the
  * page: the controls stay where they are. The talk-to-it conversation needs a voice model and is a later plan.
@@ -33,12 +33,15 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
   seen: SeenIn; anchor: DemoAnchor; live: boolean; state: string; emotion?: string | null; halo: boolean | number;
   palette: readonly string[]; presets?: Record<string, OrbPreset>; name: string;
 }) {
-  // In the chat bar the marble starts in the middle above it (like an open voice chat); its button closes it into the bar.
+  // In the chatbox the marble starts in the middle above it (like an open voice chat); its button closes it into the bar.
   const [open, setOpen] = useState(true);
   useEffect(() => { if (seen === 'bar') setOpen(true); }, [seen]);
-  const shown = live && seen !== 'none';
-  // Not shown (another step, the shot left, or on its own): home to the scene's spot.
-  const home = !shown ? 'scene' : seen === 'call' ? 'call' : seen === 'bar' ? (open ? 'above' : 'slot') : 'scene';
+  // On the walk the demo's marble stands in for Marble too (a little smaller than the scene's, F-102), so every view
+  // is drawn by it and held still; in Create, Marble is the stage marble itself.
+  const standIn = anchor.marble === 'walk';
+  const shown = live && (seen !== 'none' || standIn);
+  // Not shown (another step, the shot left): home to the scene's spot, then hand back.
+  const home = !shown ? 'scene' : seen === 'call' ? 'call' : seen === 'bar' ? (open ? 'above' : 'slot') : 'marble';
   // The demo's marble stays drawn until it has flown back to the scene's spot, then hands back to the scene.
   const [present, setPresent] = useState(false);
   useEffect(() => { if (shown) setPresent(true); }, [shown]);
@@ -69,6 +72,11 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
     if (!on) return;
     const el = layer.current!, node = orb.current;
     let frame = 0;
+    // Where the chrome is laid out: measured once, then held still (F-102). The scene's marble drifts a little at rest;
+    // the interfaces must not. Measured again only after a resize, or when the marble's spot really moves (> 60 px).
+    let held: { cx: number; cy: number; size: number } | null = null;
+    const onResize = () => { held = null; };
+    addEventListener('resize', onResize);
     const scene = () => document.querySelector<HTMLElement>(anchor.marble === 'stage'
       ? '[data-testid="main-marble"] [data-talking-marble]'
       : '.gmarble[data-front] [data-talking-marble]');
@@ -77,7 +85,8 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
       // Lay the chrome out around the scene's spot, inside the room the panel leaves.
       const spot = scene()?.getBoundingClientRect();
       const panel = document.querySelector(anchor.panel)?.getBoundingClientRect();
-      if (spot && panel) {
+      if (spot && panel && (!held || Math.abs(spot.left + spot.width / 2 - held.cx) > 60 || Math.abs(spot.top + spot.height / 2 - held.cy) > 60 || Math.abs(spot.width - held.size) > 60)) {
+        held = { cx: spot.left + spot.width / 2, cy: spot.top + spot.height / 2, size: spot.width };
         const narrow = innerWidth < 720;
         // The room beside the panel on the marble's side (the walk's marble is right of its panel, Create's left), or above
         // the panel on a phone.
@@ -88,9 +97,9 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
             ? { l: panel.right + 40, r: innerWidth - 84, t: 76, b: innerHeight - 120 }
             : { l: 40, r: panel.left - 48, t: 76, b: innerHeight - 40 };
         const v = (k: string, n: number) => el.style.setProperty(k, `${Math.round(n)}px`);
-        v('--cx', spot.left + spot.width / 2); v('--cy', spot.top + spot.height / 2); v('--size', spot.width);
+        v('--cx', held.cx); v('--cy', held.cy); v('--size', held.size);
         v('--room-l', room.l); v('--room-r', room.r); v('--room-t', room.t); v('--room-b', room.b);
-        el.style.setProperty('--fit', String(Math.min(1, (room.b - room.t) / 600, (room.r - room.l) / 320)));
+        el.style.setProperty('--fit', String(Math.min(0.9, (room.b - room.t) / 600, (room.r - room.l) / 320)));
         const want = Math.round(spot.width);
         if (Math.abs(want - base) / base > 0.15) setBase(want);
       }
@@ -117,7 +126,7 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
       if (!shown && !flight.current && homeRef.current === 'scene') setPresent(false);
     };
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    return () => { cancelAnimationFrame(frame); removeEventListener('resize', onResize); };
   }, [on, present, shown, base, anchor.marble, anchor.panel]);
 
   // The call's clock, from when it starts.
@@ -134,6 +143,8 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
   const tint = { '--d1': palette[1], '--d2': palette[2], '--d3': palette[3] } as CSSProperties;
   return createPortal(
     <div ref={layer} className="demo" data-seen={shown ? seen : 'none'} data-live={live || undefined} data-open={open || undefined} style={tint}>
+      {/* Marble (F-102): where the marble rests on its own, held still, its state under it. */}
+      <span className="demo__home demo__home--marble" data-home="marble" />
       {/* The call (F-99): a phone's voice-call screen, its glass buttons pictures only. */}
       <div className="demo__call" aria-hidden="true">
         <div className="demo__call-top">
@@ -143,12 +154,12 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
         <span className="demo__home demo__home--call" data-home="call" />
         <Caption word={state} className="demo__caption demo__caption--call" />
         <div className="demo__call-keys">
-          <span className="demo__key"><span className="demo__glass"><SpeakerIcon /></span>speaker</span>
-          <span className="demo__key"><span className="demo__glass"><MicOffIcon /></span>mute</span>
-          <span className="demo__key"><span className="demo__glass demo__glass--end"><PhoneOffIcon /></span>end</span>
+          <span className="demo__key demo__glass"><SpeakerIcon /></span>
+          <span className="demo__key demo__glass"><MicOffIcon /></span>
+          <span className="demo__key demo__glass demo__glass--end"><PhoneOffIcon /></span>
         </div>
       </div>
-      {/* The chat bar (F-99): the marble opens from the bar's voice button to the middle above it, and closes back. */}
+      {/* The chatbox (F-99): the marble opens from the bar's voice button to the middle above it, and closes back. */}
       <div className="demo__chat">
         <span className="demo__home demo__home--above" data-home="above" />
         <Caption word={state} className="demo__caption demo__caption--above" />

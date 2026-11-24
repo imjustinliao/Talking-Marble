@@ -106,8 +106,8 @@ if (view === 'states') {
     ? h('div', { style: { width: 'min(100vw, 100vh)' } }, h(TalkingMarble, { label: 'full', style: { display: 'block' } }))
     : sizes.map(size => cell(`${size}`, h(TalkingMarble, { size, label: `size ${size}`, state: params.get('state') ?? 'idle' })))));
 } else if (view === 'fidelity') {
-  // One still frame of the original look at rest (DES-01), drawn through the shared renderer exactly as a
-  // marble is, compared with the reference images in e2e/fixtures/fidelity/ (pixel-identical to the original orb).
+  // One still frame of the reference look at rest (DES-01), drawn through the shared renderer exactly as a
+  // marble is, compared with the reference images in e2e/fixtures/fidelity/ (the reference orb, softer light of F-104).
   const palette = (params.get('palette') ?? 'pearl') as PaletteName;
   const time = Number(params.get('t') ?? 2.5);
   const size = Number(params.get('size') ?? 240);

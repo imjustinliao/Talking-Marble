@@ -45,7 +45,7 @@ describe('core data', () => {
     const declared = [...fragmentSource.matchAll(/uniform (?:float|vec3) (\w+);/g)].map(m => m[1]);
     for (const u of declared) if (!/^uBase$|^uColor\d$/.test(u!)) expect(set).toContain(u);
   });
-  it('gives the original uniforms at rest (idle is the original orb)', () => {
+  it('gives the original uniforms at rest (idle is the reference orb)', () => {
     const u = uniformsOf(createMotion(), easedFrom(resolveState('idle')).x, 0, false);
     expect(u).toMatchObject({ uWarp: 2.2, uScale: 1.2, uSoftness: 1, uDetail: 0.5, uGrain: 1, uContrast: 1, uGlow: 0, uBrightness: 1, uWaveAmp: 0, uRippleAmp: 0, uVortex: 0, uChop: 0, uLevel: 0 });
     expect(u.uWarp).toBe(2.2);

@@ -62,7 +62,7 @@ for (const { w, h, scheme, shots } of RUNS) {
       const want = expectedShot(u);
       const { area, covered } = await marbleInFrame(page);
       // With all six in view, each marble is small there.
-      const overview = u > 3 && u < 5;
+      const overview = u > STOPS.all - 1 && u < STOPS.create;
       expect(area, `marble in frame at ${u} screens`).toBeGreaterThan(Math.min(w, h) * Math.min(w, h) * (overview ? 0.005 : 0.03));
       await expect(page.locator('.experience'), `live shot at ${u} screens`).toHaveAttribute('data-shot', want.id);
       if (wide) await expect(page.getByRole('navigation', { name: 'Shots' }).locator('[aria-current="step"]'), `index at ${u}`).toContainText(want.label);
@@ -94,7 +94,7 @@ for (const { w, h, scheme, shots } of RUNS) {
             for (const [edge, gap] of Object.entries(await fits(page))) expect(gap, `${edge} in a call`).toBeGreaterThanOrEqual(edge === 'inner' ? 0 : -1);
             await page.screenshot({ path: `test-results/site/shot-${w}-${scheme}-palettes-call.png` });
             expect(Math.abs((await first.boundingBox())!.y - before), 'the walk moved').toBeLessThanOrEqual(1);
-            await option(page.locator('#palettes'), 'Seen in', 'On its own').pick();
+            await option(page.locator('#palettes'), 'Seen in', 'Marble').pick();
           }
           if (want.id === 'create') {
             for (const name of ['Motion', 'Try it', 'Code', 'Colours']) {
@@ -179,13 +179,13 @@ test('reduced motion: no intro, no camera moves, the shots cross-fade', async ({
   const world = () => page.locator('.world').evaluate(el => el.style.transform);
   const opacities = () => page.locator('.shot').evaluateAll(els => els.map(e => (e as HTMLElement).style.opacity));
   // Halfway between two shots, one is fully shown and the camera holds its keyframe, still.
-  await page.evaluate(() => scrollTo(0, innerHeight * 4.4)); // between All palettes (4) and Create (5)
+  await page.evaluate(() => scrollTo(0, innerHeight * 5.4)); // between All palettes (5) and Create (6)
   await page.waitForTimeout(300);
   expect(await opacities()).toEqual(['0', '0', '1', '0', '0']);
   const a = await world();
   await page.waitForTimeout(500);
   expect(await world()).toBe(a);
-  await page.evaluate(() => scrollTo(0, innerHeight * 4.6));
+  await page.evaluate(() => scrollTo(0, innerHeight * 5.6));
   await page.waitForTimeout(100);
   expect(await opacities()).toEqual(['0', '0', '0', '1', '0']);
   expect(await world()).not.toBe(a); // a cut to the next keyframe, not a move
@@ -255,7 +255,7 @@ for (const [w, h] of [[1280, 800], [375, 812]] as const) {
       return d / innerHeight;
     });
     const at: Record<string, number> = {};
-    for (const [name, u] of Object.entries({ top: 0, walkStart: 1, walkEnd: 3, all: 4, create: 5, guide: 6 })) {
+    for (const [name, u] of Object.entries({ top: 0, walkStart: STOPS.palettes, walkEnd: STOPS.all - 1, all: STOPS.all, create: STOPS.create, guide: STOPS.guide })) {
       await page.evaluate(v => scrollTo(0, v * innerHeight), u);
       await page.waitForTimeout(1600);
       at[name] = await size();
@@ -286,7 +286,7 @@ test('the walk keeps every marble at one height; all six gather; the plain globe
   expect(line.length).toBeGreaterThan(1);
   expect(Math.max(...line) - Math.min(...line)).toBeLessThan(60);
   // In Create the stage marble is the plain globe, not a palette (F-61).
-  await page.evaluate(() => scrollTo(0, innerHeight * 5));
+  await page.evaluate(v => scrollTo(0, innerHeight * v), STOPS.create);
   await settled(page, 'create');
   await expect(page.getByTestId('main-marble')).toHaveAttribute('data-colors', '#ededeb #c9c9c6 #b1b1ae #dcdcd9');
   expect(+(await page.locator('.stage-marble').evaluate(el => getComputedStyle(el).opacity))).toBe(1);
@@ -302,19 +302,24 @@ test('the path is magnetic near a place, gliding there; far from every place it 
     await page.waitForTimeout(1600); // settle, then a glide of at most a second
     return at();
   };
-  expect(await rest(3.8)).toBe(STOPS.all);
-  expect(await rest(4.2)).toBe(STOPS.all);
-  expect(await rest(4.8)).toBe(STOPS.create);
-  expect(await rest(5.8)).toBe(STOPS.guide);
+  expect(await rest(4.8)).toBe(STOPS.all);
+  expect(await rest(5.2)).toBe(STOPS.all);
+  expect(await rest(5.8)).toBe(STOPS.create);
+  expect(await rest(6.8)).toBe(STOPS.guide);
   expect(await rest(0.15)).toBe(STOPS.top);
-  // In the middle of a long move it does not jump.
-  expect(await rest(3.5)).toBe(3.5);
+  // On the walk (F-105) every stop settles on the nearest marble (one every 0.6 screens), however far between two.
+  expect(await rest(1.25)).toBe(1);
+  expect(await rest(1.35)).toBe(1.6);
+  expect(await rest(2.45)).toBe(2.2);
+  expect(await rest(3.75)).toBe(4);
+  // In the middle of a long move between shots it does not jump.
+  expect(await rest(5.5)).toBe(5.5);
   // The glide is gradual, not a jump: part way through, it is between where it stopped and where it is going.
-  await page.evaluate(() => scrollTo(0, 4.75 * innerHeight));
+  await page.evaluate(() => scrollTo(0, 5.75 * innerHeight));
   await page.waitForTimeout(450);
   const mid = await at();
-  expect(mid).toBeGreaterThan(4.75);
-  expect(mid).toBeLessThan(5);
+  expect(mid).toBeGreaterThan(5.75);
+  expect(mid).toBeLessThan(6);
 });
 
 test('the intro names the state its marble is in, as the demo changes (F-66)', async ({ page }) => {

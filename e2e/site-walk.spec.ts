@@ -76,7 +76,7 @@ const spotBox = (page: Page, home: string) => page.locator(`.demo [data-home="${
 const near = (a: { x: number; y: number; width: number } | null, b: { x: number; y: number; width: number } | null) =>
   !!a && !!b && Math.abs(a.x + a.width / 2 - (b.x + b.width / 2)) < 3 && Math.abs(a.width - b.width) < 3;
 
-test('seen in (F-99): on its own, in a chat bar (open and closed into its button) and in a call; the controls never move; the scene marble steps aside and comes back', async ({ page }) => {
+test('seen in (F-99, F-102): Marble, in a chatbox (open and closed into its button) and in a call; the controls never move; the scene marble steps aside and comes back', async ({ page }) => {
   const errors = trackErrors(page);
   await open(page);
   const seen = (name: string) => option(walkShot(page), 'Seen in', name).pick();
@@ -84,12 +84,16 @@ test('seen in (F-99): on its own, in a chat bar (open and closed into its button
   const controls = () => walkShot(page).locator('.try').evaluate(el => { const r = el.getBoundingClientRect(); return [r.top, r.height]; });
   const at = [await firstLine(), ...(await controls())];
   const front = page.locator('.gmarble[data-front]');
-  // On its own: the state's word under the marble, as under the intro's.
+  // Marble (F-102): the demo's marble stands in for the scene's, a little smaller and held still, its state's word under it.
+  await expect.poll(async () => near(await orbBox(page), await spotBox(page, 'marble')), { timeout: 3000 }).toBe(true);
+  await expect.poll(() => front.evaluate(el => getComputedStyle(el).filter)).toBe('opacity(0)');
+  const sceneSize = (await front.locator('[data-talking-marble]').boundingBox())!.width;
+  expect((await orbBox(page))!.width).toBeLessThan(sceneSize * 0.9);
   await expect(page.locator('.demo__caption--scene .stage-caption__word').last()).toHaveText('speaking');
   await option(walkShot(page), 'State', 'searching').pick();
   await expect(page.locator('.demo__caption--scene .stage-caption__word').last()).toHaveText('searching');
-  // The chat bar: the marble in the middle above it, a close key in its pigment; closing flies it into the bar's button.
-  await seen('Chat bar');
+  // The chatbox: the marble in the middle above it, a close key in its pigment; closing flies it into the bar's button.
+  await seen('Chatbox');
   await expect(page.locator('.demo')).toHaveAttribute('data-seen', 'bar');
   await expect.poll(() => front.evaluate(el => getComputedStyle(el).filter)).toBe('opacity(0)');
   await expect.poll(async () => near(await orbBox(page), await spotBox(page, 'above')), { timeout: 3000 }).toBe(true);
@@ -110,23 +114,28 @@ test('seen in (F-99): on its own, in a chat bar (open and closed into its button
   expect(c.x + c.width).toBeLessThanOrEqual(vp.width);
   expect(c.y).toBeGreaterThanOrEqual(0);
   expect(c.y + c.height).toBeLessThanOrEqual(vp.height);
-  // Back on its own: the demo's marble flies home and hands back to the scene's.
-  await seen('On its own');
-  await expect(page.locator('.demo__orb')).toHaveCount(0, { timeout: 3000 });
-  await expect.poll(() => front.evaluate(el => getComputedStyle(el).filter)).toBe('none');
+  // Back to Marble: it flies to its resting spot. Leaving the walk hands back to the scene's marble.
+  await seen('Marble');
+  await expect.poll(async () => near(await orbBox(page), await spotBox(page, 'marble')), { timeout: 3000 }).toBe(true);
+  // Held still (F-102): nothing drifts with the scene.
+  const a = await orbBox(page); await page.waitForTimeout(1200); const b = await orbBox(page);
+  expect(Math.abs(a!.x - b!.x) + Math.abs(a!.y - b!.y)).toBeLessThan(0.5);
   // Nothing in the panel moved at any point.
   expect([await firstLine(), ...(await controls())].map(Math.round)).toEqual(at.map(Math.round));
+  await goToShot(page, 'Create your own');
+  await expect(page.locator('.demo__orb')).toHaveCount(0, { timeout: 4000 });
+  await expect.poll(() => front.evaluate(el => getComputedStyle(el).filter)).toBe('none');
   expect(errors).toEqual([]);
 });
 
 for (const scheme of ['dark'] as const) {
-  test(`the walk is axe clean, on its own, in the chat bar and in a call (${scheme})`, async ({ page }) => {
+  test(`the walk is axe clean, on its own, in the chatbox and in a call (${scheme})`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     await goToShot(page, 'Palettes');
     const axe = () => new AxeBuilder({ page }).include('#palettes').include('.demo').withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
     expect((await axe()).violations.map(v => v.id)).toEqual([]);
-    for (const name of ['Chat bar', 'Call']) {
+    for (const name of ['Chatbox', 'Call']) {
       await option(walkShot(page), 'Seen in', name).pick();
       await page.waitForTimeout(500);
       expect((await axe()).violations.map(v => `${name} ${v.id}`)).toEqual([]);

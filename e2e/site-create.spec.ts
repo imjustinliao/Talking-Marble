@@ -101,7 +101,7 @@ test('try it: every state and emotion, your own state too, the halo strength int
   await expect(page.locator('#guide').getByLabel('usage', { exact: true })).toContainText('presets={presets}');
 });
 
-test('try it: seen in a call and a chat bar (F-99), standing in for your marble, with its name', async ({ page }) => {
+test('try it: seen in a call and a chatbox (F-99), standing in for your marble, with its name', async ({ page }) => {
   await open(page);
   await step(page, 'Name').dispatchEvent('click');
   await create(page).getByRole('textbox', { name: 'Name your marble' }).fill('Nova');
@@ -113,7 +113,7 @@ test('try it: seen in a call and a chat bar (F-99), standing in for your marble,
   // The call sits on the marble's side of the page, clear of the panel.
   const c = (await page.locator('.demo__call').boundingBox())!, panel = (await page.locator('#create .shot__panel').boundingBox())!;
   expect(c.x + c.width).toBeLessThan(panel.x);
-  await option(create(page), 'Seen in', 'Chat bar').pick();
+  await option(create(page), 'Seen in', 'Chatbox').pick();
   await expect(page.locator('.demo')).toHaveAttribute('data-seen', 'bar');
   // Leaving Try it puts your marble back.
   await step(page, 'Code').dispatchEvent('click');

@@ -35,6 +35,11 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-105 | The walk's magnet is too narrow: a scroll skips marbles | built 0.18.1: 0.6 screens per marble (walk 3 screens), and on the walk a stop always settles on the nearest marble | |
+| F-104 | The marble is a bit too bright by default: show its texture and pattern, keep a subtle glow | built 0.18.1 (package): softer light and halo; the idle reference frames re-recorded for the new look | |
+| F-103 | Call keys too big, icons off-centre, labels under them: icons only, and retune the call screen | built 0.18.1 | |
+| F-102 | The interfaces move left and right with the scene: hold them still; and make the walk's marble, the open chatbox and the call smaller | built 0.18.1: layout measured once and held; the demo's marble stands in for Marble on the walk at 0.8× | |
+| F-101 | Seen in's options read Marble, Chatbox, Call | built 0.18.1 | |
 | F-100 | Remove the device list under the Guide | built 0.18.0 | |
 | F-99 | Remove Talk (needs an API; a future plan); keep a demo on the walk and in Create: no UI, a chat bar (the marble flies from the bar's button to the middle and back), a call like a phone's; the state word under the marble as on the intro; nothing below moves; spacing; glass | built 0.18.0: Seen in (On its own, Chat bar, Call), one flying marble re-measuring its spot each frame; Talk recorded under product.md › Later | |
 | F-98 | The link card is not quite left-aligned | built 0.17.0: title, line and command on one left edge (the command set off by a rule, not an indented pill); the card renders in the site's display face; the link video adds searching | |

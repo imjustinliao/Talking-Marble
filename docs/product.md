@@ -94,7 +94,7 @@ Stable IDs by area. The boxes are acceptance items: tick one only after it was c
 
 ### SITE-10: The experience, v2 (owner, 2026-11-23, F-22)
 - [ ] Intro complete on its own; the scroll below is an optional experience
-- [ ] Walk the six built-in palettes (colours fixed): try every state, emotion and halo on each, and see the marble in front on its own, in a chat bar or in a call (F-99)
+- [ ] Walk the six built-in palettes (colours fixed): try every state, emotion and halo on each, and see the marble in front on its own, in a chatbox or in a call (F-99)
 - [ ] Pull back over all six and pick one to start from
 - [ ] **Create your own** in steps: Name, Colours, Motion, Try it, Code, with Export preset (replaces SITE-04's playground; F-86)
 - [ ] **Guide**: numbered steps for install, usage with your marble, voice SDK snippets and the docs (replaces SITE-05's tabs)
@@ -120,7 +120,7 @@ Voice interfaces live everywhere, so the marble should too. Each step is a small
 
 - The native ports: now PLAT-01.
 - Electron and Tauri: v1 is plain web, so it runs in both; a check there comes later.
-- **Talk to it** (owner, 2026-11-23; removed from the site 2026-11-24, F-99, until it can be real): a Talk button on the walk and in Create that opens a real conversation with a voice model, shown in the Seen in interfaces (the chat bar's voice button, the call's keys). Needs a small backend (the model's key stays on a server, never in the site) and the mic. Direction, provider and cost to agree with the owner first. The package itself still brings no voice side.
+- **Talk to it** (owner, 2026-11-23; removed from the site 2026-11-24, F-99, until it can be real): a Talk button on the walk and in Create that opens a real conversation with a voice model, shown in the Seen in interfaces (the chatbox's voice button, the call's keys). Needs a small backend (the model's key stays on a server, never in the site) and the mic. Direction, provider and cost to agree with the owner first. The package itself still brings no voice side.
 
 ## Not doing
 

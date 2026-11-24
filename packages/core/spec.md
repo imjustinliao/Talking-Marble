@@ -9,12 +9,12 @@ The platform-neutral contract. Every port (web, SwiftUI, React Native, Compose, 
 | `shader/orb.frag.glsl` | The orb, GLSL ES 3.0. Ports translate it line for line (Metal, SkSL/AGSL, Flutter fragment shaders). |
 | `shader/orb.vert.glsl` | A full-screen quad: `vUv` from -1 to 1 across the orb's square. |
 | `presets/palettes.json` | Named palettes: four sRGB hex colors each, ground then three pigments. |
-| `presets/states.json` | `base` (every parameter's resting value: the original orb) and the seven built-in `states`, each only the parameters it changes. |
+| `presets/states.json` | `base` (every parameter's resting value: the reference orb) and the seven built-in `states`, each only the parameters it changes. |
 | `presets/emotions.json` | The eight built-in emotions (`muted`, `happy`, `calm`, `excited`, `curious`, `surprised`, `concerned`, `sad`), which layer on a state. |
 
 ## One material
 
-The marble's pigment, colors and lighting never change between states or emotions. A preset changes only energy (speed, folds, vein size), motion (the pattern moving like water, the whole marble moving) and brightness. `idle` is the original orb exactly: every parameter at its `base` value gives the original shader's frame, pixel for pixel. The only way a preset changes color is its own `colors`.
+The marble's pigment, colors and lighting never change between states or emotions. A preset changes only energy (speed, folds, vein size), motion (the pattern moving like water, the whole marble moving) and brightness. `idle` is the reference orb exactly: every parameter at its `base` value gives the reference frame (the original orb's pigment and form under the softer light of F-104: less white highlight, sheen, rim and lift, so the pattern and its veins read through a subtle glow), pixel for pixel. The only way a preset changes color is its own `colors`.
 
 ## Colors
 
@@ -51,7 +51,7 @@ A preset is plain data: any subset of these, plus optional `colors` (four hex co
 | `size` | 0.5–1.2 | 1 | Size within its box (never changes layout) |
 | `reactivity` | 0–1 | 0 | How strongly it answers audio; 0 ignores audio |
 
-The halo is drawn softer than the original orb's (F-64: two layers of light at about three quarters of the original strength), and the component's `halo` prop scales it: `true` is 1, `false` 0, a number from 0 to 1.5 a strength.
+The halo is drawn softer than the original orb's (F-64, then F-104: two layers of light, pigment 2 at 0.4 and pigment 1 at 0.24 alpha, a little over half the original strength), and the component's `halo` prop scales it: `true` is 1, `false` 0, a number from 0 to 1.5 a strength.
 
 ### Resolution
 

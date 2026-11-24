@@ -25,7 +25,8 @@ export const SHOTS: { id: ShotId; label: string }[] = [
 ];
 
 /** Scroll length of the walk along the palette gallery, in screens. */
-export const WALK_SCREENS = 2;
+// 0.6 screens of scroll per marble (F-105): room enough that one flick of a trackpad lands on the next marble, not past it.
+export const WALK_SCREENS = 3;
 /** Where each shot sits along the scroll, in screens; the walk spans [palettes, palettes + WALK_SCREENS]. */
 export const STOPS: Record<ShotId, number> = {
   top: 0, palettes: 1, all: 2 + WALK_SCREENS, create: 3 + WALK_SCREENS, guide: 4 + WALK_SCREENS,

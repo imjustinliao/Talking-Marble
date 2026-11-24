@@ -7,7 +7,8 @@
 // - Search: a lens magnifies the centre and the pattern streams out of it, with a ping of light travelling outward.
 // - Output: ACES filmic fit (Narkowicz), sRGB encode, interleaved gradient noise dither (Jimenez 2014).
 // One material in every state: states change only energy, motion and brightness (core/spec.md).
-// With every uniform at its resting value (spec.md › Parameters) this is the original orb, pixel for pixel.
+// With every uniform at its resting value (spec.md › Parameters) this is the reference orb: the original's
+// pigment and form under softer white light (F-104), so the pattern and its veins read through a subtle glow.
 // Uniforms are defined in core/spec.md › Uniforms. Colors arrive in linear light.
 precision highp float;
 in vec2 vUv;
@@ -106,10 +107,11 @@ void main() {
   float softbox = pow(max(dot(reflected, key), 0.0), 22.0);
   float ribbon = exp(-pow((reflected.x + .57) * 8.0, 2.0) - pow((reflected.y - .48) * 2.4, 2.0));
   float back = pow(max(dot(n, normalize(vec3(.9, -.25, .2))), 0.0), 6.0);
-  vec3 lit = color * (.48 + diffuse * .62);
+  // Softer than the original (F-104; was .48 + .62 diffuse, softbox .65, ribbon .23, rim .22 + .34 back).
+  vec3 lit = color * (.38 + diffuse * .56);
   lit += color * uGlow * (1.0 - rim) * (.6 + .4 * n.z);              // a little light from within
-  lit += vec3(1.0, .97, .92) * (softbox * .65 + ribbon * .23);
-  lit += mix(vec3(.83, .91, 1.0), uColor3, .22) * rim * (.22 + back * .34);
+  lit += vec3(1.0, .97, .92) * (softbox * .38 + ribbon * .12);
+  lit += mix(vec3(.83, .91, 1.0), uColor3, .22) * rim * (.15 + back * .24);
   lit += uColor1 * back * .075;
   float ping = fract(uScanPhase * .42);                              // a ping of light travels out from the centre
   lit *= 1.0 + uScan * .16 * (1.0 - ping) * exp(-pow((length(uv) - ping * 1.15) * 9.0, 2.0));

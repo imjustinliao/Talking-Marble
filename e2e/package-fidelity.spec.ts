@@ -1,7 +1,8 @@
-// DES-01: the orb at rest keeps the original look. Each palette's frame (t = 2.5 s, 240 px) is compared
-// with a reference image in e2e/fixtures/fidelity/, rendered by this package on 2026-11-23 after it was
-// verified pixel-identical to the original orb. Run with UPDATE_REFERENCE=1 to rewrite the references,
-// only after deliberately changing the look at rest (and say so in the commit).
+// DES-01: the orb at rest keeps the reference look. Each palette's frame (t = 2.5 s, 240 px) is compared
+// with a reference image in e2e/fixtures/fidelity/: the reference orb, first verified pixel-identical to the
+// original orb (2026-11-23), re-recorded on 2026-11-24 with the softer light of F-104 (owner-requested).
+// Run with UPDATE_REFERENCE=1 to rewrite the references, only after deliberately changing the look at rest
+// (and say so in the commit).
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { expect, test } from '../packages/react/test/page/fixture';
 
@@ -9,7 +10,7 @@ const dir = 'e2e/fixtures/fidelity';
 const update = process.env.UPDATE_REFERENCE === '1';
 
 for (const palette of ['pearl', 'ember', 'lagoon', 'ink', 'rose', 'aurora']) {
-  test(`keeps the original look at rest: ${palette}`, async ({ page, testPage }) => {
+  test(`keeps the reference look at rest: ${palette}`, async ({ page, testPage }) => {
     await page.goto(`${testPage}?view=fidelity&palette=${palette}&t=2.5&size=240`);
     await expect(page.locator('body')).toHaveAttribute('data-done', 'true');
     const shot = await page.locator('#ours').screenshot({ omitBackground: true });

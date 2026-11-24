@@ -67,9 +67,9 @@ test('every marble on the page draws from one shared WebGL context', async ({ pa
   await page.goto('/');
   await walk(page);
   const marbles = page.locator('[data-talking-marble]');
-  // The logo, the stage marble and the six gallery marbles (the UIs shown while talking come and go with Talk).
-  expect(await marbles.count()).toBe(8);
-  for (const m of await marbles.all()) await expect(m).toHaveAttribute('data-ready', 'true');
+  // The six on the walk, the stage marble and the logo; plus, on the walk, the demo's marble standing in for the front
+  // one (F-102), which hands back when you leave. Every marble there is draws, through the one context.
+  await expect.poll(() => marbles.evaluateAll(els => els.length >= 8 && els.length <= 9 && els.every(e => e.getAttribute('data-ready') === 'true'))).toBe(true);
   expect(await page.evaluate(() => (window as unknown as { __gl: number }).__gl)).toBe(1);
 });
 

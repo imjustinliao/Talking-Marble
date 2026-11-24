@@ -95,9 +95,9 @@ describe('CSS layers', () => {
     expect(css.endsWith(palettes.ember[0])).toBe(true);
   });
   it('scales the halo and fallback shading with the orb', () => {
-    expect(haloShadow(palettes.pearl, 100)).toBe(`0 0 11.0px 2.5px ${rgba('#61d9d0', 0.52)}, 0 0 26.0px 5.0px ${rgba('#ef9fc5', 0.32)}`);
+    expect(haloShadow(palettes.pearl, 100)).toBe(`0 0 11.0px 2.5px ${rgba('#61d9d0', 0.4)}, 0 0 26.0px 5.0px ${rgba('#ef9fc5', 0.24)}`);
     // Tighter at small sizes.
-    expect(haloShadow(palettes.pearl, 100, 0.5)).toBe(`0 0 7.7px 1.8px ${rgba('#61d9d0', 0.52)}, 0 0 18.2px 3.5px ${rgba('#ef9fc5', 0.32)}`);
+    expect(haloShadow(palettes.pearl, 100, 0.5)).toBe(`0 0 7.7px 1.8px ${rgba('#61d9d0', 0.4)}, 0 0 18.2px 3.5px ${rgba('#ef9fc5', 0.24)}`);
     expect(fallbackShadow(200)).toContain('inset -13.4px -16.6px 33.4px');
   });
   it('writes rgba from hex', () => {

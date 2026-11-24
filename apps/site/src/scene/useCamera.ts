@@ -159,11 +159,13 @@ export function useCamera() {
       if (touching || glide) return; // a finger still on the screen, or already gliding
       const u = screens();
       if (u >= STOPS.guide - 0.001) return;
-      const to = magnet(u, MAGNET_REACH);
+      // On the walk every stop settles on the nearest marble (F-105), so scrolling never leaves you between two or past one.
+      const onWalk = u > STOPS.palettes - 0.3 && u < STOPS.palettes + WALK_SCREENS + 0.3;
+      const to = magnet(u, onWalk ? Infinity : MAGNET_REACH);
       if (to === null || Math.abs(to - u) < 0.004) return;
       if (state.current.reduced) { scrollTo({ top: to * innerHeight, behavior: 'auto' }); return; }
       const from = scrollY, dist = to * innerHeight - from;
-      const ms = 520 + Math.min(1, Math.abs(to - u) / MAGNET_REACH) * 480;
+      const ms = 520 + Math.min(1, Math.abs(to - u) / 0.3) * 480;
       const t0 = performance.now();
       const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
       let set = from;

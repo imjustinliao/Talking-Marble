@@ -44,7 +44,7 @@ export const paramRanges: Record<NumericKey, readonly [number, number]> = {
   size: [0.5, 1.2], reactivity: [0, 1],
 };
 
-/** The resting values: the original orb. */
+/** The resting values: the reference orb. */
 export const baseParams: OrbParams = stateData.base as OrbParams;
 /** The built-in states, each only the parameters it changes. */
 export const states: Record<BuiltInState, OrbPreset> = stateData.states as Record<BuiltInState, OrbPreset>;

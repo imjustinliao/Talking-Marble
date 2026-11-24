@@ -37,9 +37,9 @@ export const SHOTS = [
   { id: 'guide', label: 'Guide' },
 ] as const;
 
-/** Where each shot sits along the scroll, in screens (the walk spans 1 to 3), worked out independently of the site. */
-export const WALK = [1, 3] as const;
-export const STOPS: Record<string, number> = { top: 0, palettes: 1, all: 4, create: 5, guide: 6 };
+/** Where each shot sits along the scroll, in screens (the walk spans 1 to 4, F-105), worked out independently of the site. */
+export const WALK = [1, 4] as const;
+export const STOPS: Record<string, number> = { top: 0, palettes: 1, all: 5, create: 6, guide: 7 };
 export const BUILT_INS = ['Pearl', 'Ember', 'Lagoon', 'Ink', 'Rose', 'Aurora'];
 
 /** The shot nearest scroll position u (screens): anywhere on the walk is Palettes. */
