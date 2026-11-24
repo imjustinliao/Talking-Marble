@@ -19,8 +19,8 @@
 <p align="center">
   <img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-black" />
   <img alt="React 18 or newer" src="https://img.shields.io/badge/React-18%2B-black" />
-  <img alt="Web Component" src="https://img.shields.io/badge/Web%20Component-any%20framework-black" />
-  <img alt="About 15 kB gzipped" src="https://img.shields.io/badge/size-~15%20kB%20gzipped-black" />
+  <img alt="Web Component" src="https://img.shields.io/badge/Web_Component-any_framework-black" />
+  <img alt="About 15 kB gzipped" src="https://img.shields.io/badge/gzipped-15_kB-black" />
 </p>
 
 ---
