@@ -39,7 +39,6 @@ const StageMarble = memo(function StageMarble({ active, hidden }: { active: Shot
   const wish = useStage(active);
   const pick = usePick();
   const standIn = useStandingIn();
-  const scrolling = useScrolling();
   const voice = wish.voice ?? { kind: 'sim' as const };
   const sim = useSimulatedLevel(voice.kind === 'sim' && !hidden);
   const size = wish.size === undefined || wish.size === 'full' ? MARBLE : wish.size;
@@ -72,7 +71,7 @@ const StageMarble = memo(function StageMarble({ active, hidden }: { active: Shot
         halo={wish.halo ?? true}
         level={voice.kind === 'level' ? voice.level : sim}
         label={wish.label || 'Talking Marble'}
-        paused={hidden || standIn.stage || scrolling}
+        paused={hidden || standIn.stage}
         className="reflect"
       />
       {/* The intro's demo says which state it is in (F-66); the marble's own label announces it to screen readers. */}
@@ -122,7 +121,10 @@ function GalleryOrbs({ gallery, refs }: { gallery: GalleryProps; refs: MutableRe
         return (
           <GalleryOrb
             key={m.id} k={k} refs={refs} x={p.x} z={p.z} marble={m} onPick={gallery.onPick}
-            state={state} emotion={trying.emotion} halo={trying.halo} front={k === gallery.front} shown={shown} hold={scrolling}
+            state={state} emotion={trying.emotion} halo={trying.halo} front={k === gallery.front} shown={shown}
+            // The marble in front keeps moving through a scroll (F-112); the side ones sliding past hold their frame, so a
+            // scroll costs one marble's motion, not six.
+            hold={scrolling && k !== gallery.front}
             // Only marbles in view take the voice: the rest keep a constant level and so never re-render with it.
             level={!shown || state === 'thinking' ? 0 : sim}
           />

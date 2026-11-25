@@ -1,9 +1,9 @@
 import { createStore } from './store';
 
 /**
- * Whether the page is being scrolled right now (F-108). While it is, every marble in the scene holds its current frame
- * (the camera still moves them smoothly), so the GPU spends each scroll frame on the move alone, not on shading
- * several marbles too. They carry on 220 ms after the last scroll; their pigment moves slowly, so the pause is not seen.
+ * Whether the page is being scrolled right now (raised on each scroll, cleared 220 ms after the last). The demo hides
+ * the state's word under the marble while it is up (F-111). The marble in front, the stage's and the demo's keep
+ * moving throughout; only the side marbles sliding past hold their frame (F-112).
  */
 const scrolling = createStore<{ on: boolean }>({ on: false });
 let timer = 0;
@@ -16,5 +16,5 @@ export function markScrolling() {
 }
 
 export const useScrolling = () => scrolling.use().on;
-/** The same, outside React (read each frame). */
+/** Read each frame, outside React. */
 export const isScrolling = () => scrolling.get().on;
