@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { expect, test, type Page } from '@playwright/test';
-import { SHOTS, STOPS, expectedShot, goToShot, option, settled, skipIntro, trackErrors } from './site-helpers';
+import { BUILT_INS, SHOTS, STOPS, expectedShot, goToShot, option, settled, skipIntro, trackErrors } from './site-helpers';
 
 const { default: AxeBuilder } = createRequire(new URL('../apps/site/package.json', import.meta.url))('@axe-core/playwright') as typeof import('@axe-core/playwright');
 
@@ -343,4 +343,27 @@ test('the intro names the state its marble is in, as the demo changes (F-66)', a
   // Only on the intro.
   await goToShot(page, 'Palettes');
   await expect(caption).not.toHaveAttribute('data-on');
+});
+
+test('one path (F-117): a click travels along it, eased and one way; back from all six it lands on the last palette, from the top on the first', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/');
+  await skipIntro(page);
+  const index = (label: string) => page.getByRole('navigation', { name: 'Shots' }).getByRole('link', { name: label, exact: true });
+  const trip = async (label: string) => {
+    const record = page.evaluate(() => new Promise<number[]>(done => { const xs: number[] = []; const t0 = performance.now(); const f = (n: number) => { xs.push(scrollY / innerHeight); if (n - t0 < 3200) requestAnimationFrame(f); else done(xs); }; requestAnimationFrame(f); }));
+    await index(label).click();
+    const xs = await record;
+    const steps = xs.slice(1).map((v, i) => v - xs[i]!).filter(d => Math.abs(d) > 1e-4);
+    expect(steps.length, `${label}: travels over many frames`).toBeGreaterThan(20);
+    expect(steps.every(d => Math.sign(d) === Math.sign(steps[0]!)), `${label}: one way`).toBe(true);
+    expect(Math.max(...steps.map(Math.abs)), `${label}: no jump`).toBeLessThan(0.2);
+  };
+  await trip('All palettes');
+  await expect.poll(() => page.evaluate(() => Math.round(scrollY / innerHeight))).toBe(STOPS.all);
+  await trip('Palettes');
+  await expect(page.locator('#palettes .walk__name')).toHaveText(BUILT_INS.at(-1)!);
+  await trip('Talking Marble');
+  await trip('Palettes');
+  await expect(page.locator('#palettes .walk__name')).toHaveText(BUILT_INS[0]!);
 });

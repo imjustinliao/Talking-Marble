@@ -38,7 +38,7 @@ export function useCamera() {
   // u: where the page is scrolled (screens). v: where the scene is shown, gliding after u (F-116): everything (the
   // camera, the panels' fades, the marbles gathering into rows, which marbles draw) follows v, so a wheel's steps or a
   // jump never make one part leap ahead of another.
-  const state = useRef({ narrow, reduced, intro, u: 0, v: 0, vv: 0, painted: -1 });
+  const state = useRef({ narrow, reduced, intro, u: 0, v: 0, vv: 0, painted: -1, direct: false });
   state.current.narrow = narrow;
   state.current.reduced = reduced;
   state.current.intro = intro;
@@ -107,7 +107,8 @@ export function useCamera() {
     // The scene's position glides after the scroll: a critically damped spring (about 0.9 s), in small sub-steps.
     const vDt = Math.min(0.25, (now - last) / 1000) || 1 / 60;
     let vMoving = false;
-    if (rd) { st.v = st.u; st.vv = 0; }
+    // Reduced motion, or a trip along the path (already eased): the scene is exactly where the page is.
+    if (rd || st.direct) { st.v = st.u; st.vv = 0; }
     else {
       const w = 6, n = Math.max(1, Math.ceil(vDt / (1 / 120))), h = vDt / n;
       // At most 1.2 views a second: a quick flick or a far scroll becomes a steady, eased move, never a lurch.
@@ -234,28 +235,41 @@ export function useCamera() {
   /** Moves to a shot by scrolling there; the camera follows. */
   const heading = useRef<ShotId | null>(null); // where a jump is going, so quick key presses add up
   useEffect(() => { if (heading.current === active) heading.current = null; }, [active]);
-  const cutTimer = useRef(0);
+  const travel = useRef(0);
   const goTo = useCallback((id: ShotId, walkIndex?: number) => {
     heading.current = state.current.reduced ? null : id;
-    let u = stopOf(id);
-    if (id === 'palettes' && walkIndex !== undefined) u += (Math.max(0, Math.min(GALLERY - 1, walkIndex)) / (GALLERY - 1)) * WALK_SCREENS;
     const st = state.current;
-    // A near place: the page moves there at once and the scene glides after it (F-116). A far one (more than about a
-    // view and a half away): the scene fades through dark and comes back there, rather than racing through every
-    // view between.
-    if (st.reduced || Math.abs(u - st.v) <= 1.6) { scrollTo({ top: u * innerHeight, behavior: 'auto' }); return; }
-    const root = document.documentElement;
-    clearTimeout(cutTimer.current);
-    root.setAttribute('data-cut', '');
-    cutTimer.current = window.setTimeout(() => {
-      scrollTo({ top: u * innerHeight, behavior: 'auto' });
-      st.u = screens(); st.v = st.u; st.vv = 0;
-      spring.current?.snap(poseAt(st.v, st.narrow, st.reduced));
-      paint(st.v);
-      wake();
-      requestAnimationFrame(() => root.removeAttribute('data-cut'));
-    }, 230);
-  }, [paint, wake]);
+    let u = stopOf(id);
+    if (id === 'palettes') {
+      // The walk spans a stretch of the path: you arrive at its near end (F-117). Coming back from all six or later,
+      // that is its last marble; coming from the intro, its first. A chosen marble (the stepper) is gone to directly.
+      if (walkIndex !== undefined) u += (Math.max(0, Math.min(GALLERY - 1, walkIndex)) / (GALLERY - 1)) * WALK_SCREENS;
+      else if (st.v > u + WALK_SCREENS) u += WALK_SCREENS;
+    }
+    cancelAnimationFrame(travel.current);
+    if (st.reduced) { scrollTo({ top: u * innerHeight, behavior: 'auto' }); return; }
+    // One path from the first view to the last (F-117): going to any view, backward or forward, travels along it,
+    // through what lies between, eased in and out; longer trips take a little longer (0.7 s to 2.6 s). The scene
+    // follows the page exactly while it travels. Any wheel, touch, key or click takes over at once.
+    const from = scrollY, to = u * innerHeight, dist = Math.abs(to - from) / innerHeight;
+    if (dist < 0.002) return;
+    const ms = Math.min(2600, 700 + dist * 360);
+    const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const t0 = performance.now();
+    let set = from;
+    const stop = () => { cancelAnimationFrame(travel.current); travel.current = 0; st.direct = false; off(); };
+    const off = () => { removeEventListener('wheel', stop); removeEventListener('touchstart', stop); removeEventListener('pointerdown', stop); };
+    addEventListener('wheel', stop, { passive: true }); addEventListener('touchstart', stop, { passive: true }); addEventListener('pointerdown', stop, { passive: true });
+    st.direct = true;
+    const step = (now: number) => {
+      if (Math.abs(scrollY - set) > 2) { stop(); return; } // something else moved the page: it takes over
+      const t = Math.min(1, (now - t0) / ms);
+      set = Math.round(from + (to - from) * ease(t));
+      scrollTo({ top: set, behavior: 'instant' });
+      if (t < 1) travel.current = requestAnimationFrame(step); else stop();
+    };
+    travel.current = requestAnimationFrame(step);
+  }, []);
   useEffect(() => {
     const drop = () => { heading.current = null; }; // scrolling by hand takes over from a jump
     addEventListener('wheel', drop, { passive: true });

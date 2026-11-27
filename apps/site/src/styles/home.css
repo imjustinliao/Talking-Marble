@@ -386,8 +386,3 @@ html[data-demo="walk"] .gallery, html[data-demo="stage"] [data-testid="main-marb
   .demo__glass--accent { animation: none; }
 }
 @media (max-width: 720px) { .demo .stage-caption { font-size: 14px; } .demo .demo__caption--above { top: calc(var(--top) + var(--h) + 14px); } .demo__bar { top: calc(var(--top) + var(--h) + 54px); height: 56px; } .demo__chat { --h: min(var(--size), calc(var(--room-b) - var(--room-t) - 124px)); --top: clamp(var(--room-t), calc(var(--cy) - var(--h) / 2), calc(var(--room-b) - 124px - var(--h))); } }
-
-/* A far jump between views (F-116): the scene fades through dark and comes back at the new place, rather than racing
-   through every view between. The top bar stays. */
-.cut { position: fixed; inset: 0; z-index: 30; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.36s ease; }
-html[data-cut] .cut { opacity: 1; transition-duration: 0.22s; }
