@@ -35,6 +35,7 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-115 | The film button: round with a play icon, no text; closing should be smooth, not sudden; a real player bar to slide, with the time | built 0.19.1 | |
 | F-114 | Add the launch film (v4) to the hero with a play button and basic play/pause; host on GitHub if possible (free), else Vercel; update README and docs | built 0.19.0: Watch the film beside Docs and GitHub opens it over the page (play/pause, progress line, Esc); the file is in the repo, streamed by jsDelivr from GitHub, the site's copy on Vercel as fallback; README section, llms.txt | |
 | F-113 | The intro-to-walk hand-off shows two circles; scrolling can stop between places (walk, all six, Create) | built 0.19.0: the gallery marble matches the stage marble exactly (it was 44 px smaller); the walk is framed from further back instead; every stop glides to the nearest place | |
 | F-112 | While scrolling, the marble's motion stops: it should be smooth and continuous | built 0.18.7: the marble in front, the stage's and the demo's keep moving through a scroll; only the side marbles sliding past hold their frame (one marble's motion per scroll, not six) | |

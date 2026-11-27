@@ -137,6 +137,10 @@ test('the launch film (F-114): Watch the film opens it over the page; it plays, 
   await expect.poll(() => video.evaluate(v => !(v as HTMLVideoElement).paused), { timeout: 5000 }).toBe(true);
   await dialog.getByRole('button', { name: 'Pause' }).click();
   await expect.poll(() => video.evaluate(v => (v as HTMLVideoElement).paused)).toBe(true);
+  // The scrubber moves the film, and the time says where it is (F-115).
+  await dialog.getByRole('slider', { name: 'Seek' }).fill('20');
+  await expect.poll(() => video.evaluate(v => Math.round((v as HTMLVideoElement).currentTime))).toBe(20);
+  await expect(dialog.locator('.film__time')).toHaveText(/^0:20 \/ 0:3\d$/);
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
   await expect(open).toBeFocused();
