@@ -35,6 +35,7 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-118 | The side index's travel is a bit too fast; optimise performance again for all devices and systems | built 0.19.6: calmer travel (1.5 s a view, at most 3.6 s); the demo reads the page far less (layout reads while scrolling 384 → 103 ms per test run); on low-power devices the fog and the logo marble hold still while scrolling. At a 4× slowed CPU: intro 60 fps, walk at rest 58, trips 40–51, scrolling 35 | |
 | F-117 | No black cut: one flow from view 1 to 5; going back from 3 to 2 lands at the walk's end, not its start; clicks travel smoothly backward or forward | built 0.19.5: index clicks travel the path (eased, 0.7–2.6 s), arriving at the near end of a view | |
 | F-116 | Moving between views is not smooth back and forth (Guide back up, all six back to the walk) | built 0.19.2: the whole scene follows one gliding position (camera, fades, gathering, panels); (a fade-through for far jumps was tried and removed, F-117); marbles walked past show only as they near their place in the rows. Largest single-frame move scrolling from all six back: 995 → 277 px; the index jump Guide → top: 8 panel switches → 1 | |
 | F-115 | The film button: round with a play icon, no text; closing should be smooth, not sudden; a real player bar to slide, with the time | built 0.19.1 | |

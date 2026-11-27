@@ -1,5 +1,6 @@
 import { TalkingMarble } from 'talking-marble';
 import { colorsOf } from '../palettes';
+import { isLowPower } from '../perf';
 import { usePick } from '../scene/pick';
 import { FilmButton } from './Film';
 import { BookIcon, GitHubIcon, XIcon } from './icons';
@@ -20,7 +21,8 @@ export function TopBar({ page }: { page: 'home' | 'docs' }) {
       <header className="topbar">
         <a className="brand" href={page === 'home' ? '#top' : base}>
           <span className="brand__logo" aria-hidden="true">
-            <TalkingMarble size={30} state="idle" palette={colorsOf(palette)} halo={false} decorative />
+            {/* Still on a low-power device (F-118): one marble less to draw each frame. */}
+            <TalkingMarble size={30} state="idle" palette={colorsOf(palette)} halo={false} decorative paused={isLowPower()} />
           </span>
           Talking Marble
         </a>

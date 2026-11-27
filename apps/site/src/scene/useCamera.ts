@@ -249,11 +249,11 @@ export function useCamera() {
     cancelAnimationFrame(travel.current);
     if (st.reduced) { scrollTo({ top: u * innerHeight, behavior: 'auto' }); return; }
     // One path from the first view to the last (F-117): going to any view, backward or forward, travels along it,
-    // through what lies between, eased in and out; longer trips take a little longer (0.7 s to 2.6 s). The scene
+    // through what lies between, eased in and out, at a calm pace (1.5 s for one view, at most 3.6 s; F-118). The scene
     // follows the page exactly while it travels. Any wheel, touch, key or click takes over at once.
     const from = scrollY, to = u * innerHeight, dist = Math.abs(to - from) / innerHeight;
     if (dist < 0.002) return;
-    const ms = Math.min(2600, 700 + dist * 360);
+    const ms = Math.min(3600, 1000 + dist * 520); // a calm pace (F-118): one view in about 1.5 s, never over 3.6 s
     const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
     const t0 = performance.now();
     let set = from;

@@ -94,13 +94,16 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
     // Measured only when something can have changed: a flight, a new spot, or every half second (a held layout, a
     // marble that rests): the page is not read every frame (F-106).
     let lastMeasure = 0, lastHome = '';
-    let moving = false, stillSince = 0, lastCx: number | null = null, sampledAt = 0;
+    let moving = false, stillSince = 0, lastCx: number | null = null, sampledAt = 0, scrolledAt = -1e9;
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
       // While the page scrolls, while the camera glides, or when the marble has come to rest somewhere other than where
       // the layout was measured, the state's word hides (F-111); once the marble is still, the layout is measured afresh
       // and the word fades back in, centred under it. The marble is sampled ten times a second, not every frame.
-      if (now - sampledAt >= 100) {
+      // Each read makes the browser lay out the moving scene, so it is read often only just after a scroll or a trip
+      // (ten times a second), and once a second otherwise (F-118).
+      if (isScrolling()) scrolledAt = now;
+      if (now - sampledAt >= (now - scrolledAt < 1500 ? 100 : 1000)) {
         sampledAt = now;
         const r = scene()?.getBoundingClientRect();
         if (r && r.width) {
@@ -116,6 +119,8 @@ export function Demo({ seen, anchor, live, state, emotion, halo, palette, preset
       // Marble re-measures when the marble moves; the chatbox and call keep their place (only a resize, or the marble
       // really moving, over 60 px, moves them: F-102).
       if (moving && seenRef.current === 'none') held = null;
+      // Moving in Marble with no flying marble: nothing to lay out until it rests, so nothing is read (F-118).
+      if (moving && seenRef.current === 'none' && !flight.current && !node) return;
       if (!flight.current && held && homeRef.current === lastHome && now - lastMeasure < 500 && !(!shown && homeRef.current === 'scene')) return;
       lastMeasure = now; lastHome = homeRef.current;
       // Lay the chrome out around the scene's spot, inside the room the panel leaves.

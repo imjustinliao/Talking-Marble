@@ -126,6 +126,7 @@ test('the intro plays on load and any key skips it', async ({ page }) => {
 });
 
 test('the index and Page Up / Page Down move between shots', async ({ page }) => {
+  test.setTimeout(90_000); // trips travel the path at a calm pace now (F-118)
   await page.goto('/');
   await page.waitForTimeout(2800); // the intro ends by itself
   for (const s of SHOTS.slice(1)) { await page.keyboard.press('PageDown'); await settled(page, s.id); }
@@ -346,12 +347,13 @@ test('the intro names the state its marble is in, as the demo changes (F-66)', a
 });
 
 test('one path (F-117): a click travels along it, eased and one way; back from all six it lands on the last palette, from the top on the first', async ({ page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(90_000);
   await page.goto('/');
   await skipIntro(page);
   const index = (label: string) => page.getByRole('navigation', { name: 'Shots' }).getByRole('link', { name: label, exact: true });
   const trip = async (label: string) => {
-    const record = page.evaluate(() => new Promise<number[]>(done => { const xs: number[] = []; const t0 = performance.now(); const f = (n: number) => { xs.push(scrollY / innerHeight); if (n - t0 < 3200) requestAnimationFrame(f); else done(xs); }; requestAnimationFrame(f); }));
+    // Recorded until the page has been still for half a second (a trip takes up to 3.6 s, F-118).
+    const record = page.evaluate(() => new Promise<number[]>(done => { const xs: number[] = []; let still = 0, last = -1; const f = (n: number) => { const u = scrollY / innerHeight; xs.push(u); if (Math.abs(u - last) > 1e-4) still = n; last = u; if (xs.length < 20 || n - still < 500) requestAnimationFrame(f); else done(xs); }; requestAnimationFrame(f); }));
     await index(label).click();
     const xs = await record;
     const steps = xs.slice(1).map((v, i) => v - xs[i]!).filter(d => Math.abs(d) > 1e-4);

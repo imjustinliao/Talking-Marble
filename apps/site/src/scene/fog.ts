@@ -1,3 +1,5 @@
+import { isLowPower } from '../perf';
+import { isScrolling } from './scrolling';
 /**
  * Fog with real airflow (F-54): a small 2D fluid simulation behind the scene. The pointer is a hand moving through
  * mist: it pushes the air, the air stays incompressible (so it flows around and curls), small swirls are kept alive,
@@ -302,7 +304,8 @@ export function createFog(canvas: HTMLCanvasElement, opts: { still: boolean; low
   const tick = (now: number) => {
     frame = 0;
     if (document.hidden) return;
-    if (now - last >= 1000 / fps - 2) { last = now; step(now); }
+    // On a low-power device the air holds still while the page scrolls (F-118): the frame goes to the move.
+    if (now - last >= 1000 / fps - 2 && !(isLowPower() && isScrolling())) { last = now; step(now); }
     if (!opts.still) frame = requestAnimationFrame(tick);
   };
   const wake = () => { if (!frame && !document.hidden) frame = requestAnimationFrame(tick); };
