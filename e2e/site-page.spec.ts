@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { expect, test } from '@playwright/test';
-import { goToShot, trackErrors, walk } from './site-helpers';
+import { goToShot, skipIntro, trackErrors, walk } from './site-helpers';
 
 // @axe-core/playwright is a site dev dependency (root dev tools are Main's), so resolve it from apps/site/.
 const { default: AxeBuilder } = createRequire(new URL('../apps/site/package.json', import.meta.url))('@axe-core/playwright') as typeof import('@axe-core/playwright');
@@ -117,3 +117,28 @@ for (const scheme of ['dark'] as const) {
     });
   }
 }
+
+test('the launch film (F-114): Watch the film opens it over the page; it plays, pauses, and Esc closes it', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('/');
+  await skipIntro(page);
+  const open = page.getByRole('button', { name: 'Watch the film' });
+  await open.click();
+  const dialog = page.getByRole('dialog', { name: 'Talking Marble launch film' });
+  await expect(dialog).toBeVisible();
+  const video = dialog.locator('video');
+  // Two sources: GitHub through jsDelivr, then the site's own copy; the poster loads at once.
+  await expect(video.locator('source')).toHaveCount(2);
+  expect(await video.getAttribute('poster')).toContain('launch-poster.jpg');
+  // Play and pause from its one key (headless browsers may refuse to start audio, so the key is driven directly).
+  await video.evaluate(v => { (v as HTMLVideoElement).muted = true; });
+  // It starts playing as it opens where the browser allows sound; otherwise its key starts it.
+  if (await video.evaluate(v => (v as HTMLVideoElement).paused)) await dialog.getByRole('button', { name: 'Play' }).click();
+  await expect.poll(() => video.evaluate(v => !(v as HTMLVideoElement).paused), { timeout: 5000 }).toBe(true);
+  await dialog.getByRole('button', { name: 'Pause' }).click();
+  await expect.poll(() => video.evaluate(v => (v as HTMLVideoElement).paused)).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(open).toBeFocused();
+  expect(errors).toEqual([]);
+});

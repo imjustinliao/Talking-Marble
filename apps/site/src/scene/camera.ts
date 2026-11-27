@@ -126,8 +126,9 @@ const NARROW_FRAMES: Record<Framed, Framing> = {
 const walkFraming = (narrow: boolean, k: number, n: number): Framing => {
   const t = n > 1 ? k / (n - 1) : 0;
   return narrow
-    ? { fx: 0, fy: -0.25, size: 0.19 + 0.06 * t, pitch: 12 }
-    : { fx: 0.13, fy: 0.02, size: 0.3 + 0.1 * t, yaw: 3, pitch: 7, roll: -1.2 };
+    // A little smaller than before (F-102, F-113): framed from further back rather than drawn smaller.
+    ? { fx: 0, fy: -0.25, size: 0.17 + 0.055 * t, pitch: 12 }
+    : { fx: 0.13, fy: 0.02, size: 0.27 + 0.09 * t, yaw: 3, pitch: 7, roll: -1.2 };
 };
 /** Moving in on the marble, the same marble in the same colours, before its sisters appear beside it. */
 const APPROACH_WIDE: Framing = { fx: 0.13, fy: 0.04, size: 0.25, yaw: 2, pitch: 8, roll: -1 };
@@ -211,8 +212,6 @@ export function nearestShot(u: number): ShotId {
 export const restingPlaces = (): number[] => [
   STOPS.top, ...Array.from({ length: GALLERY }, (_, k) => W0 + (k / (GALLERY - 1)) * WALK_SCREENS), STOPS.all, STOPS.create, STOPS.guide,
 ];
-/** How close (in screens) a stop has to be for the magnet to pull (F-80): near, never a long jump. */
-export const MAGNET_REACH = 0.28;
 /** The resting place nearest to `u` screens, or null when none is within `reach`. */
 export function magnet(u: number, reach = Infinity): number | null {
   const near = restingPlaces().reduce((a, b) => (Math.abs(b - u) < Math.abs(a - u) ? b : a));

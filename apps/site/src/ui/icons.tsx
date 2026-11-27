@@ -24,3 +24,5 @@ export const XIcon = () => <Mark d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.
 export const CloseIcon = () => <Icon d="M6.5 6.5l11 11M17.5 6.5l-11 11" />;
 export const MicOffIcon = () => <Icon d="M15 10V6a3 3 0 0 0-5.7-1.3M9 9v3a3 3 0 0 0 4.9 2.3M6 11a6 6 0 0 0 9.6 4.8M18 11a6 6 0 0 1-.4 2.2M12 17v4M4 4l16 16" />;
 export const SpeakerIcon = () => <Icon d="M3.5 10v4h3.5l4.5 4V6L7 10zM15 9a4 4 0 0 1 0 6M17.8 6.5a7.5 7.5 0 0 1 0 11" />;
+export const PlayIcon = () => <Icon d="M8 5.8v12.4a.8.8 0 0 0 1.2.7l10-6.2a.8.8 0 0 0 0-1.4l-10-6.2A.8.8 0 0 0 8 5.8z" />;
+export const PauseIcon = () => <Icon d="M8 5.5v13M16 5.5v13" />;

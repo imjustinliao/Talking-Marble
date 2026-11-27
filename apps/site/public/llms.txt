@@ -14,7 +14,7 @@ Key facts:
 - Preset format (any subset; out-of-range values are clamped): `speed` 0–4 (default 1), `turbulence` 0–1 (0.5), `veins` 0–1 (0.5), `softness` 0–1 (0.5), `detail` 0–1 (0.5), `spin` −2–2 (0), `waves` 0–1 (0), `ripples` 0–1 (0), `rippleDirection` "out" or "in" ("out"), `whirl` 0–3 (0), `chop` 0–1 (0), `scan` 0–1 (0; searching's lens and outward stream), `glow` 0–1 (0), `brightness` 0.5–1.5 (1), `halo` 0–1 (0.5), `breath` 0–1 (0), `beat` 0–1.5 (0), `bounce` 0–1 (0), `sway` 0–1 (0), `wobble` 0–1 (0), `shake` 0–1 (0), `size` 0.5–1.2 (1), `reactivity` 0–1 (0; 0 ignores audio), plus optional `colors` (four hex colors) and `label`.
 - Audio: only states that listen react (`listening` gently, `speaking` fully, or any preset with `reactivity` above 0). The level is smoothed. One shared AudioContext, resumed on the next click, tap or key if the browser blocked it. Audio is analyzed in the browser and never sent anywhere.
 - Accessibility: an image named for its state ("Assistant, listening"), or decorative; reduced motion gives a still frame; no flashing.
-- Performance: every orb on a page shares one WebGL2 context; at most 30 frames a second, only while on screen and the tab is visible; sharp from 20 px to full screen; server-renders as a CSS picture of the orb.
+- Performance: every orb on a page shares one WebGL2 context; at most 30 frames a second, only while on screen and the tab is visible; sharp from 20 px to full screen (up to 2× pixel density small, 1.5× large); under sustained load it lowers its drawing resolution in steps, down to half, and restores it with headroom; server-renders as a CSS picture of the orb.
 - Exports (`talking-marble/element` adds `TalkingMarbleElement` and `defineTalkingMarble`): `TalkingMarble`, `palettes`, `states`, `emotions`, each built-in emotion by name (`happy` … `muted`), `resolveState`, `resolvePalette`, and types `OrbState`, `BuiltInState`, `OrbEmotion`, `BuiltInEmotion`, `OrbPreset`, `OrbParams`, `ResolvedPreset`, `OrbPalette`, `OrbColors`, `PaletteName`, `OrbAudioSource`, `TalkingMarbleProps`.
 
 ## Docs
@@ -27,7 +27,7 @@ Key facts:
 - [Preset format](https://talking-marble.vercel.app/docs/#presets): every field with its range and default
 - [Audio](https://talking-marble.vercel.app/docs/#audio): MediaStream, media element, AudioNode or a level number
 - [Accessibility](https://talking-marble.vercel.app/docs/#accessibility): labels, decorative use, reduced motion, no flashing
-- [Performance](https://talking-marble.vercel.app/docs/#performance): the shared renderer, pausing, sizes, server rendering
+- [Performance](https://talking-marble.vercel.app/docs/#performance): the shared renderer, pausing, sizes, adaptive resolution, server rendering
 - [Recipes](https://talking-marble.vercel.app/docs/#recipes): wiring LiveKit Agents, ElevenLabs Agents and OpenAI Realtime (state mapping and where to get the audio)
 
 ## Site
@@ -36,6 +36,8 @@ Key facts:
 - [All palettes](https://talking-marble.vercel.app/#all): all six together
 - [Create your own](https://talking-marble.vercel.app/#create): name your marble, pick its colours, shape its motion, try it, then copy the code or export the preset
 - [Guide](https://talking-marble.vercel.app/#guide): install and usage with your marble, for React or the Web Component, and a prompt for your AI coding agent
+
+- [Launch film](https://cdn.jsdelivr.net/gh/imjustinliao/Talking-Marble@main/apps/site/public/film/launch.mp4): 35 s, with sound, the marble through all seven states
 
 ## Source
 

@@ -1,6 +1,7 @@
 import { TalkingMarble } from 'talking-marble';
 import { colorsOf } from '../palettes';
 import { usePick } from '../scene/pick';
+import { FilmButton } from './Film';
 import { BookIcon, GitHubIcon, XIcon } from './icons';
 
 export const GITHUB = 'https://github.com/imjustinliao/Talking-Marble';
@@ -29,9 +30,10 @@ export function TopBar({ page }: { page: 'home' | 'docs' }) {
 }
 
 /** Docs and GitHub, as buttons with their icons (in the intro and the Guide). */
-export function LinkButtons() {
+export function LinkButtons({ film = false }: { film?: boolean }) {
   return (
     <div className="links">
+      {film && <FilmButton />}
       <a className="btn btn--link" href={`${base}docs/`}><BookIcon />Docs</a>
       <a className="btn btn--link" href={GITHUB}><GitHubIcon />GitHub</a>
     </div>

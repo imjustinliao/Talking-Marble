@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { GALLERY, MARBLE, NARROW, SHOTS, STOPS, TOTAL, WALK_SCREENS, billboard, setGallerySpacing, createSpring, curvePoint, drift, gather, gridPoint, introPose, stageHome, nearestShot, poseAt, presence, stopOf, viewZoom, walkPosition, magnet, MAGNET_REACH, worldTransform, type ShotId } from './camera';
+import { GALLERY, MARBLE, NARROW, SHOTS, STOPS, TOTAL, WALK_SCREENS, billboard, setGallerySpacing, createSpring, curvePoint, drift, gather, gridPoint, introPose, stageHome, nearestShot, poseAt, presence, stopOf, viewZoom, walkPosition, magnet, worldTransform, type ShotId } from './camera';
 import { isLowPower } from '../perf';
 import { markScrolling } from './scrolling';
 
@@ -143,10 +143,9 @@ export function useCamera() {
   const wake = useCallback(() => { if (!frameId.current) frameId.current = requestAnimationFrame(t => tick(t)); }, [tick]);
 
   useEffect(() => {
-    // The whole path is magnetic (F-52, F-67, F-80): when scrolling stops close to a place (a shot, or a marble on
-    // the walk), it glides the rest of the way, slowly, easing in and out. Stopped far from every place (in the
-    // middle of a long move between shots) it stays put, so a small scroll never turns into a big sudden move. Any
-    // wheel, touch, key or click stops a glide at once. Past the guide (the footer) it rests where it is.
+    // The whole path is magnetic (F-52, F-67, F-80, F-113): when scrolling stops, it glides to the nearest place (a
+    // shot, or a marble on the walk), slowly, easing in and out, so you are never left between two. Any wheel, touch,
+    // key or click stops a glide at once. Past the guide (the footer) it rests where it is.
     let settle = 0, touching = false, glide = 0;
     const stopGlide = () => { cancelAnimationFrame(glide); glide = 0; };
     const onTouch = (e: TouchEvent) => { touching = e.type === 'touchstart'; stopGlide(); if (!touching) { clearTimeout(settle); settle = window.setTimeout(snap, 260); } };
@@ -160,9 +159,9 @@ export function useCamera() {
       if (touching || glide) return; // a finger still on the screen, or already gliding
       const u = screens();
       if (u >= STOPS.guide - 0.001) return;
-      // On the walk every stop settles on the nearest marble (F-105), so scrolling never leaves you between two or past one.
-      const onWalk = u > STOPS.palettes - 0.3 && u < STOPS.palettes + WALK_SCREENS + 0.3;
-      const to = magnet(u, onWalk ? Infinity : MAGNET_REACH);
+      // Every stop settles on the nearest place (F-105, F-113): a marble on the walk, all six, Create your own, the
+      // Guide. Scrolling never leaves you stranded between two; the glide is at most about half a screen, eased.
+      const to = magnet(u);
       if (to === null || Math.abs(to - u) < 0.004) return;
       if (state.current.reduced) { scrollTo({ top: to * innerHeight, behavior: 'auto' }); return; }
       const from = scrollY, dist = to * innerHeight - from;

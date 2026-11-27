@@ -31,7 +31,7 @@ export function Hero() {
       <div className="hero__actions">
         <CopyButton className="install-pill" text={INSTALL} what="install command" label={<code>{INSTALL}</code>} />
       </div>
-      <LinkButtons />
+      <LinkButtons film />
     </div>
   );
 }

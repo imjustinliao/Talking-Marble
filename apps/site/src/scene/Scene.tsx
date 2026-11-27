@@ -96,10 +96,10 @@ export interface GalleryProps {
 /**
  * Every gallery marble draws at one size and is scaled up in the scene (F-54, F-109): the front one is never resized
  * when you walk on (a resize clears its canvas, which flashed, e.g. Aurora arriving at all six), and none is drawn
- * larger than it shows. The walk's marbles also show a little smaller (F-102).
+ * larger than it shows. Scaled to exactly the stage marble's size, so the hand-off from the intro to the walk lands
+ * one circle on the other (F-113); the walk shows its marbles smaller by framing them from a little further back.
  */
 const GALLERY_DRAW = 220;
-const GALLERY_SHOW = 0.84;
 
 /**
  * The gallery's marbles, all showing what you are trying (F-22): the same state, emotion and halo, a simulated voice
@@ -148,7 +148,7 @@ const GalleryOrb = memo(function GalleryOrb({ k, refs, x, z, marble: m, onPick, 
             palette={m.colors as string[]} state={state} emotion={emotion ?? undefined}
             level={level}
             size={GALLERY_DRAW} decorative paused={!shown || hold} halo={halo} className="reflect"
-            style={{ transform: `scale(${(CURVE_SIZE * GALLERY_SHOW) / GALLERY_DRAW})`, transformOrigin: '50% 100%' }}
+            style={{ transform: `scale(${CURVE_SIZE / GALLERY_DRAW})`, transformOrigin: '50% 100%' }}
           />
         </span>
         {/* Its palette's name, shown with all six (F-60) */}

@@ -294,7 +294,7 @@ test('the walk keeps every marble at one height; all six gather; the plain globe
   expect(await page.locator('.gmarble__orb').evaluateAll(els => Math.max(...els.map(e => +getComputedStyle(e).opacity)))).toBeLessThan(0.05);
 });
 
-test('the path is magnetic near a place, gliding there; far from every place it stays put (F-67, F-80)', async ({ page }) => {
+test('the path is magnetic: every stop glides to the nearest place, never left between two (F-67, F-80, F-113)', async ({ page }) => {
   await page.goto('/');
   await skipIntro(page);
   const at = () => page.evaluate(() => Math.round((scrollY / innerHeight) * 100) / 100);
@@ -313,8 +313,12 @@ test('the path is magnetic near a place, gliding there; far from every place it 
   expect(await rest(1.35)).toBe(1.6);
   expect(await rest(2.45)).toBe(2.2);
   expect(await rest(3.75)).toBe(4);
-  // In the middle of a long move between shots it does not jump.
-  expect(await rest(5.5)).toBe(5.5);
+  // Between shots too, it never leaves you stranded (F-113): every stop settles on the nearer place.
+  expect(await rest(0.6)).toBe(STOPS.palettes);
+  expect(await rest(4.45)).toBe(4);
+  expect(await rest(4.6)).toBe(STOPS.all);
+  expect(await rest(5.45)).toBe(STOPS.all);
+  expect(await rest(5.6)).toBe(STOPS.create);
   // The glide is gradual, not a jump: part way through, it is between where it stopped and where it is going.
   await page.evaluate(() => scrollTo(0, 5.75 * innerHeight));
   await page.waitForTimeout(450);

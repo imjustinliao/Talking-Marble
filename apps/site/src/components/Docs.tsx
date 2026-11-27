@@ -330,7 +330,8 @@ export function Docs() {
           <ul>
             <li><strong>One renderer</strong>: every orb on a page draws through one shared WebGL2 context (browsers allow about 16), each into its own element. Thirty orbs cost one context.</li>
             <li><strong>Only when seen</strong>: orbs draw at most 30 frames a second, only while on screen and while the tab is visible. <code>paused</code> stops one on demand.</li>
-            <li><strong>Sharp at any size</strong>: the canvas renders at the element&apos;s CSS size times the device pixel ratio (up to 3×), within 4096 × 4096 pixels per orb.</li>
+            <li><strong>Sharp at any size</strong>: the canvas renders at the element&apos;s CSS size times the device pixel ratio, up to 2× for small orbs and 1.5× for large ones (never under 320 px: their soft pigment looks the same, with far fewer pixels to draw), within 4096 × 4096 pixels per orb.</li>
+            <li><strong>Smooth on slower devices</strong>: if frames start arriving late, the renderer lowers its drawing resolution in steps, down to half, and sharpens again once there is headroom. The orb&apos;s size on the page never changes.</li>
             <li><strong>Small sizes</strong>: below 48 px the orb broadens its veins, drops grain and fine detail, and keeps still in place, so a 20 px orb beside a line of text still reads as itself.</li>
             <li><strong>Server rendering</strong>: it renders on the server as a CSS picture of the orb in its own colours, which it also shows until WebGL2 is ready, when WebGL2 is missing, and while a lost GPU context restores.</li>
             <li><strong>Layout</strong>: the orb never changes its box. A moving orb can swell and bounce past it, so near a screen edge give it about 20% room, or put <code>overflow-x: clip</code> on its container.</li>

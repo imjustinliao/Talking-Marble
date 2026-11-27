@@ -13,7 +13,7 @@
   <a href="https://talking-marble.vercel.app/"><strong>Website</strong></a> ·
   <a href="https://talking-marble.vercel.app/docs/"><strong>Docs</strong></a> ·
   <a href="https://talking-marble.vercel.app/#create"><strong>Make your own</strong></a> ·
-  <a href="docs/media/demo.mp4">Video</a>
+  <a href="https://cdn.jsdelivr.net/gh/imjustinliao/Talking-Marble@main/apps/site/public/film/launch.mp4"><strong>Launch film</strong></a>
 </p>
 
 <p align="center">
@@ -37,6 +37,12 @@ It is only the visual. You bring your own voice AI (OpenAI Realtime, ElevenLabs,
 - **Listens to any audio.** A `MediaStream`, an `<audio>` element, a Web Audio node, or just a number from 0 to 1.
 - **Yours to style.** Six palettes, or any four colours; eight emotions; your own states.
 - **Light and careful.** About 15 kB gzipped, no dependencies, one shared WebGL context for every marble on the page, paused when off screen, accessible by default.
+
+## Watch the launch film
+
+<p align="center"><a href="https://cdn.jsdelivr.net/gh/imjustinliao/Talking-Marble@main/apps/site/public/film/launch.mp4"><img src="apps/site/public/film/launch-poster.jpg" alt="The launch film's title: the words Talking Marble over misty mountains at night" width="640" /></a></p>
+
+35 seconds, with sound: the marble through all seven states. Also on the [website](https://talking-marble.vercel.app/) (Watch the film).
 
 ## Install
 
@@ -241,7 +247,8 @@ Also exported: `palettes`, `states`, `emotions` and each emotion by name, `resol
 - **Reduced motion** is respected: the marble shows a still frame, and states still show through its brightness and size.
 - **No flashing.** Changes ease in, never strobe.
 - **Every marble on a page shares one WebGL context**, draws at most 30 frames a second, and stops while off screen or in a background tab.
-- **Sharp at any size**, from a 20 px icon to full screen.
+- **Smooth on slower devices**: if frames start arriving late, it lowers its drawing resolution in steps, down to half, and sharpens again once there is headroom. Its size on the page never changes.
+- **Sharp at any size**, from a 20 px icon to full screen. Large marbles draw at up to 1.5× pixel density (their soft pigment looks the same) and small ones at up to 2×.
 - **Server rendering** works: on the server, and where WebGL is unavailable, it shows a CSS picture of the marble.
 
 It runs wherever a modern browser does: phones, tablets, laptops and desktops, and desktop apps built on web technology such as Electron and Tauri. Native versions for iOS, Android, React Native and Flutter are planned.
