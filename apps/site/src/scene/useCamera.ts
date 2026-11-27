@@ -110,7 +110,8 @@ export function useCamera() {
     if (rd) { st.v = st.u; st.vv = 0; }
     else {
       const w = 6, n = Math.max(1, Math.ceil(vDt / (1 / 120))), h = vDt / n;
-      for (let i = 0; i < n; i++) { st.vv += (w * w * (st.u - st.v) - 2 * w * st.vv) * h; st.v += st.vv * h; }
+      // At most 1.2 views a second: a quick flick or a far scroll becomes a steady, eased move, never a lurch.
+      for (let i = 0; i < n; i++) { st.vv += (w * w * (st.u - st.v) - 2 * w * st.vv) * h; st.vv = Math.max(-1.2, Math.min(1.2, st.vv)); st.v += st.vv * h; }
       if (Math.abs(st.u - st.v) < 0.0005 && Math.abs(st.vv) < 0.005) { st.v = st.u; st.vv = 0; } else vMoving = true;
     }
     const u = st.v;
