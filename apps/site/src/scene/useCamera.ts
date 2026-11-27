@@ -17,6 +17,8 @@ const isShot = (id: string): id is ShotId => SHOTS.some(s => s.id === id);
  * and each shot fades with how present it is. The world transform and the opacities are written directly each
  * frame; React only hears when the nearest shot, or the set of shots on screen, changes.
  */
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
 export function useCamera() {
   const world = useRef<HTMLDivElement>(null);
   const shots = useRef<Partial<Record<ShotId, HTMLElement | null>>>({});
@@ -33,7 +35,10 @@ export function useCamera() {
   const [intro, setIntro] = useState<'run' | 'done'>(() => (reduced ? 'done' : 'run'));
   // For CSS: 'play' while the intro runs (and after), 'skip' once skipped, none with reduced motion.
   const [introMode, setIntroMode] = useState<'play' | 'skip' | undefined>(() => (intro === 'run' ? 'play' : undefined));
-  const state = useRef({ narrow, reduced, intro, u: 0 });
+  // u: where the page is scrolled (screens). v: where the scene is shown, gliding after u (F-116): everything (the
+  // camera, the panels' fades, the marbles gathering into rows, which marbles draw) follows v, so a wheel's steps or a
+  // jump never make one part leap ahead of another.
+  const state = useRef({ narrow, reduced, intro, u: 0, v: 0, vv: 0, painted: -1 });
   state.current.narrow = narrow;
   state.current.reduced = reduced;
   state.current.intro = intro;
@@ -71,10 +76,13 @@ export function useCamera() {
     const leaving = u > STOPS.all && u < STOPS.create ? (rd ? (best === 'all' ? 1 : 0) : Math.max(0, 1 - (u - STOPS.all) / 0.6)) : -1;
     // The ones still to come recede to the right; the ones walked past fade quickly (they pass behind the words).
     const walkFade = (k: number) => Math.max(0, k >= step ? 1 - (k - step) * 0.55 : 1 - (step - k) * 1.25);
-    const fadeAt = (k: number) => (between >= 0 ? walkFade(k) + (1 - walkFade(k)) * between
+    const gathered = rd ? (best === 'all' ? 1 : 0) : gather(u);
+    // Between the walk and all six, a marble that was out of view on the walk shows only as it nears its place in the
+    // rows (F-116): it fades in as it arrives and out as it leaves, so none sweeps across the screen while visible.
+    const near = (g: number) => { const t = clamp01((g - 0.9) / 0.1); return t * t * (3 - 2 * t); };
+    const fadeAt = (k: number) => (between >= 0 ? walkFade(k) + (1 - walkFade(k)) * near(gathered)
       : leaving >= 0 ? leaving : u >= STOPS.create ? 0 : Math.max(on('all'), on('palettes') * walkFade(k)));
     const { orbs, pools, main, mainPool, galleryEl } = gallery.current;
-    const gathered = rd ? (best === 'all' ? 1 : 0) : gather(u);
     orbs.forEach((el, k) => { if (el) el.style.opacity = fadeAt(k).toFixed(3); });
     // Pools of light belong to the line on the floor; they fade as the marbles rise into rows.
     pools.forEach((el, k) => { if (el) el.style.opacity = (fadeAt(k) * (1 - gathered)).toFixed(3); });
@@ -94,12 +102,26 @@ export function useCamera() {
 
   /** One frame: spring the camera toward the scroll's target pose, with a slow handheld drift on top. */
   const tick = useCallback(function tickFrame(now: number, last = now) {
-    const { narrow: nw, reduced: rd, intro: it, u } = state.current;
+    const st = state.current;
+    const { narrow: nw, reduced: rd, intro: it } = st;
+    // The scene's position glides after the scroll: a critically damped spring (about 0.9 s), in small sub-steps.
+    const vDt = Math.min(0.25, (now - last) / 1000) || 1 / 60;
+    let vMoving = false;
+    if (rd) { st.v = st.u; st.vv = 0; }
+    else {
+      const w = 6, n = Math.max(1, Math.ceil(vDt / (1 / 120))), h = vDt / n;
+      for (let i = 0; i < n; i++) { st.vv += (w * w * (st.u - st.v) - 2 * w * st.vv) * h; st.v += st.vv * h; }
+      if (Math.abs(st.u - st.v) < 0.0005 && Math.abs(st.vv) < 0.005) { st.v = st.u; st.vv = 0; } else vMoving = true;
+    }
+    const u = st.v;
+    // Repainted only when the scene's position changed (a page at rest writes nothing).
+    if (u !== st.painted) { st.painted = u; paint(u); }
     const target = poseAt(u, nw, rd);
     const s = (spring.current ??= createSpring(it === 'run' ? introPose(nw) : target));
-    let moving = false;
-    if (rd) s.snap(target);
-    else moving = s.step(target, Math.min(0.25, (now - last) / 1000) || 1 / 60, it === 'run' ? 2.6 : 6.5);
+    let moving = vMoving;
+    // The intro flies in on its own slow spring; after it, the camera sits exactly on the scene's gliding position.
+    if (rd || it !== 'run') s.snap(target);
+    else moving = s.step(target, vDt, 2.6) || moving;
     // The drift settles for a moment after a click or key press, so nothing moves under the pointer.
     const hold = now < holdUntil.current ? 0 : 1;
     const dt = ((now - last) / 1000) || 1 / 60;
@@ -181,7 +203,7 @@ export function useCamera() {
     };
     const onScroll = () => {
       markScrolling();
-      state.current.u = screens(); paint(state.current.u); wake();
+      state.current.u = screens(); wake();
       clearTimeout(settle);
       if (!glide) settle = window.setTimeout(snap, 200);
     };
@@ -206,17 +228,33 @@ export function useCamera() {
       removeEventListener('wheel', onInput); removeEventListener('keydown', onInput); removeEventListener('pointerdown', onInput); stopGlide();
     };
   }, [paint, wake]);
-  useEffect(() => { paint(state.current.u); wake(); }, [narrow, reduced, paint, wake]);
+  useEffect(() => { state.current.painted = state.current.v; paint(state.current.v); wake(); }, [narrow, reduced, paint, wake]);
 
   /** Moves to a shot by scrolling there; the camera follows. */
   const heading = useRef<ShotId | null>(null); // where a jump is going, so quick key presses add up
   useEffect(() => { if (heading.current === active) heading.current = null; }, [active]);
+  const cutTimer = useRef(0);
   const goTo = useCallback((id: ShotId, walkIndex?: number) => {
     heading.current = state.current.reduced ? null : id;
     let u = stopOf(id);
     if (id === 'palettes' && walkIndex !== undefined) u += (Math.max(0, Math.min(GALLERY - 1, walkIndex)) / (GALLERY - 1)) * WALK_SCREENS;
-    scrollTo({ top: u * innerHeight, behavior: state.current.reduced ? 'auto' : 'smooth' });
-  }, []);
+    const st = state.current;
+    // A near place: the page moves there at once and the scene glides after it (F-116). A far one (more than about a
+    // view and a half away): the scene fades through dark and comes back there, rather than racing through every
+    // view between.
+    if (st.reduced || Math.abs(u - st.v) <= 1.6) { scrollTo({ top: u * innerHeight, behavior: 'auto' }); return; }
+    const root = document.documentElement;
+    clearTimeout(cutTimer.current);
+    root.setAttribute('data-cut', '');
+    cutTimer.current = window.setTimeout(() => {
+      scrollTo({ top: u * innerHeight, behavior: 'auto' });
+      st.u = screens(); st.v = st.u; st.vv = 0;
+      spring.current?.snap(poseAt(st.v, st.narrow, st.reduced));
+      paint(st.v);
+      wake();
+      requestAnimationFrame(() => root.removeAttribute('data-cut'));
+    }, 230);
+  }, [paint, wake]);
   useEffect(() => {
     const drop = () => { heading.current = null; }; // scrolling by hand takes over from a jump
     addEventListener('wheel', drop, { passive: true });

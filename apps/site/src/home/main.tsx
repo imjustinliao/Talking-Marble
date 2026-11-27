@@ -66,6 +66,8 @@ function Home() {
         <div className="track" aria-hidden="true" style={{ height: `${(TOTAL + 1) * 100}vh` }} />
       </main>
       <ShotIndex shots={SHOTS} active={active} />
+      {/* A far jump fades through this (F-116) */}
+      <div className="cut" aria-hidden="true" />
     </div>
   );
 }

@@ -35,6 +35,7 @@ Statuses: proposed · approved · in progress · in review · done
 
 | ID | Owner's request (short) | Status | Commit |
 |----|-------------------------|--------|--------|
+| F-116 | Moving between views is not smooth back and forth (Guide back up, all six back to the walk) | built 0.19.2: the whole scene follows one gliding position (camera, fades, gathering, panels); a jump of more than a view and a half fades through dark; marbles walked past show only as they near their place in the rows. Largest single-frame move scrolling from all six back: 995 → 277 px; the index jump Guide → top: 8 panel switches → 1 | |
 | F-115 | The film button: round with a play icon, no text; closing should be smooth, not sudden; a real player bar to slide, with the time | built 0.19.1 | |
 | F-114 | Add the launch film (v4) to the hero with a play button and basic play/pause; host on GitHub if possible (free), else Vercel; update README and docs | built 0.19.0: Watch the film beside Docs and GitHub opens it over the page (play/pause, progress line, Esc); the file is in the repo, streamed by jsDelivr from GitHub, the site's copy on Vercel as fallback; README section, llms.txt | |
 | F-113 | The intro-to-walk hand-off shows two circles; scrolling can stop between places (walk, all six, Create) | built 0.19.0: the gallery marble matches the stage marble exactly (it was 44 px smaller); the walk is framed from further back instead; every stop glides to the nearest place | |

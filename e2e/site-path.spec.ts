@@ -167,7 +167,9 @@ test('keyboard only: Tab reaches every shot in order and every control, the came
   expect(order).toEqual(withControls);
   // Count at the gallery's first palette, as Tab found it ("Previous palette" is disabled there).
   await page.evaluate(() => scrollTo(0, innerHeight));
-  await page.waitForTimeout(600);
+  // The scene glides there (F-116): wait until the walk shows its first palette.
+  await expect(page.locator('#palettes .stepper__count')).toHaveText('1 / 6');
+  await expect(page.locator('#palettes').getByRole('button', { name: 'Previous palette' })).toBeDisabled();
   const all = await tabbable();
   const missed = all.filter(id => !seen.has(id));
   expect(await page.evaluate(ids => ids.map(id => document.querySelector(`[data-tab-id="${id}"]`)!.outerHTML.slice(0, 90)), missed)).toEqual([]);
